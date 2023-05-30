@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System;
 using System.ComponentModel;
 using Microsoft.SemanticKernel.SkillDefinition;
 
@@ -38,4 +39,60 @@ public sealed class MathSkill
         [SKName("input"), Description("The value to subtract")] int value,
         [Description("Amount to subtract")] int amount) =>
         value - amount;
+
+    // ----
+
+    [SKFunction(), Description("Returns the absolute value of a specified number")]
+    public double Abs(
+        [Description("The number for which to return the absolute value")] double input) =>
+        Math.Abs(input);
+
+    [SKFunction, Description("Returns the angle whose cosine is the specified number")]
+    public double Acos(
+        [Description("A number representing a cosine, where the number must be greater than or equal to -1, but less than or equal to 1")] double input) =>
+        Math.Acos(input);
+
+    [SKFunction, Description("Returns the angle whose sine is the specified number")]
+    public double Asin(
+        [Description("A number representing a sine, where the number must be greater than or equal to -1, but less than or equal to 1")] double input) =>
+        Math.Asin(input);
+
+    [SKFunction, Description("Returns the angle, measured in radians, whose tangent is the specified number")]
+    public double Atan(
+        [Description("A number representing a tangent")] double input) =>
+        Math.Atan(input);
+
+    [SKFunction, Description("Returns the angle whose tangent is the quotient of two specified numbers")]
+    public double Atan2(
+        [Description("The y coordinate of a point")] double y,
+        [Description("The x coordinate of a point")] double x) =>
+        Math.Atan2(y, x);
+
+    [SKFunction, Description("Returns the cosine of the specified angle")]
+    public double Cos(
+        [Description("An angle, measured in radians.")] double input) =>
+        Math.Cos(input);
+
+    [SKFunction, Description("Returns the hyperbolic cosine of the specified angle")]
+    public double Cosh(
+        [Description("An angle, measured in radians.")] double input) =>
+        Math.Cosh(input);
+
+    [SKFunction, Description("Returns e raised to the specified power")]
+    public double Exp(
+        [Description("A number specifying a power")] double input) =>
+        Math.Exp(input);
+
+    [SKFunction, Description("Returns the remainder resulting from the division of a specified number by another specified number")]
+    public double IEEERemainder(
+        [Description("A number specifying a power")] double input) =>
+        Math.Exp(input);
+
+    // Only available on .NET Core:
+    // Acosh
+    // Asinh
+    // Atanh
+    // Cbrt
+    // CopySign
+
 }
