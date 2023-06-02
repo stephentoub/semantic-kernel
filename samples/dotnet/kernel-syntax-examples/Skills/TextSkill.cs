@@ -1,45 +1,31 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.SemanticKernel.SkillDefinition;
 
 namespace Skills;
 
-public class TextSkill
+public sealed class TextSkill
 {
-    [SKFunction("Remove spaces to the left of a string")]
-    [SKFunctionInput(Description = "Text to edit")]
-    public string LStrip(string input)
-    {
-        return input.TrimStart();
-    }
+    [SKFunction, Description("Remove spaces to the left of a string")]
+    public string LStrip([Description("Text to edit")] string input) =>
+        input.TrimStart();
 
-    [SKFunction("Remove spaces to the right of a string")]
-    [SKFunctionInput(Description = "Text to edit")]
-    public string RStrip(string input)
-    {
-        return input.TrimEnd();
-    }
+    [SKFunction, Description("Remove spaces to the right of a string")]
+    public string RStrip([Description("Text to edit")] string input) =>
+        input.TrimEnd();
 
-    [SKFunction("Remove spaces to the left and right of a string")]
-    [SKFunctionInput(Description = "Text to edit")]
-    public string Strip(string input)
-    {
-        return input.Trim();
-    }
+    [SKFunction, Description("Remove spaces to the left and right of a string")]
+    public string Strip([Description("Text to edit")] string input) =>
+        input.Trim();
 
-    [SKFunction("Change all string chars to uppercase")]
-    [SKFunctionInput(Description = "Text to uppercase")]
-    public string Uppercase(string input)
-    {
-        return input.ToUpperInvariant();
-    }
+    [SKFunction, Description("Change all string chars to uppercase")]
+    public string Uppercase([Description("Text to uppercase")] string input) =>
+        input.ToUpperInvariant();
 
-    [SKFunction("Change all string chars to lowercase")]
-    [SKFunctionInput(Description = "Text to lowercase")]
+    [SKFunction, Description("Change all string chars to lowercase")]
     [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "By design.")]
-    public string Lowercase(string input)
-    {
-        return input.ToLowerInvariant();
-    }
+    public string Lowercase([Description("Text to lowercase")] string input) =>
+        input.ToLowerInvariant();
 }

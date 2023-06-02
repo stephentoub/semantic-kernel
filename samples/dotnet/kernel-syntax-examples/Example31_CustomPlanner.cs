@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.XPath;
@@ -79,7 +80,7 @@ internal static class Example31_CustomPlanner
 
     private static async Task RememberFactsAsync(IKernel kernel)
     {
-        kernel.ImportSkill(new TextMemorySkill("contextQueryMemories", "0.3", "5"));
+        kernel.ImportSkill(new TextMemorySkill("contextQueryMemories", 0.3, 5));
 
         List<string> memoriesToSave = new()
         {
@@ -136,11 +137,9 @@ internal static class Example31_CustomPlanner
 // Example Skill that can process XML Markup created by ContextQuery
 public class MarkupSkill
 {
-    [SKFunction("Run Markup")]
-    [SKFunctionName("RunMarkup")]
-    public async Task<SKContext> RunMarkupAsync(SKContext context)
+    [SKFunction, Description("Run Markup")]
+    public async Task<string> RunMarkupAsync([SKName("input")] string docString, SKContext context)
     {
-        string docString = context.Variables.Input;
         var plan = docString.FromMarkup("Run a piece of xml markup", context);
 
         Console.WriteLine("Markup plan:");
@@ -148,8 +147,7 @@ public class MarkupSkill
         Console.WriteLine();
 
         var result = await plan.InvokeAsync();
-        context.Variables.Update(result.Result);
-        return context;
+        return result.Result;
     }
 }
 

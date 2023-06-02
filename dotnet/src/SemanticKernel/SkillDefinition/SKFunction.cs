@@ -1,12 +1,17 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -21,6 +26,7 @@ using Microsoft.SemanticKernel.SemanticFunctions;
 
 namespace Microsoft.SemanticKernel.SkillDefinition;
 
+#pragma warning disable CS0618 // Temporarily suppressing Obsoletion warnings until obsolete attributes for compatibility are removed
 #pragma warning disable format
 
 /// <summary>
@@ -60,22 +66,22 @@ public sealed class SKFunction : ISKFunction, IDisposable
     /// <summary>
     /// Create a native function instance, wrapping a native object method
     /// </summary>
-    /// <param name="methodSignature">Signature of the method to invoke</param>
-    /// <param name="methodContainerInstance">Object containing the method to invoke</param>
+    /// <param name="method">Signature of the method to invoke</param>
+    /// <param name="target">Object containing the method to invoke</param>
     /// <param name="skillName">SK skill name</param>
     /// <param name="trustService">Service used for trust checks, if null the TrustService.DefaultTrusted implementation will be used</param>
     /// <param name="log">Application logger</param>
     /// <returns>SK function instance</returns>
-    public static ISKFunction? FromNativeMethod(
-        MethodInfo methodSignature,
-        object? methodContainerInstance = null,
+    public static ISKFunction FromNativeMethod(
+        MethodInfo method,
+        object? target = null,
         string? skillName = null,
         ITrustService? trustService = null,
         ILogger? log = null)
     {
-        if (!methodSignature.IsStatic && methodContainerInstance is null)
+        if (!method.IsStatic && target is null)
         {
-            throw new ArgumentNullException(nameof(methodContainerInstance), "Argument cannot be null for non-static methods");
+            throw new ArgumentNullException(nameof(target), "Argument cannot be null for non-static methods");
         }
 
         if (string.IsNullOrWhiteSpace(skillName))
@@ -83,13 +89,7 @@ public sealed class SKFunction : ISKFunction, IDisposable
             skillName = SkillCollection.GlobalSkill;
         }
 
-        MethodDetails methodDetails = GetMethodDetails(methodSignature, methodContainerInstance, true, log);
-
-        // If the given method is not a valid SK function
-        if (!methodDetails.HasSkFunctionAttribute)
-        {
-            return null;
-        }
+        MethodDetails methodDetails = GetMethodDetails(method, target, log);
 
         return new SKFunction(
             delegateFunction: methodDetails.Function,
@@ -117,21 +117,29 @@ public sealed class SKFunction : ISKFunction, IDisposable
     /// <returns>SK function instance</returns>
     public static ISKFunction FromNativeFunction(
         Delegate nativeFunction,
-        string skillName,
-        string functionName,
-        string description,
+        string? skillName = null,
+        string? functionName = null,
+        string? description = null,
         IEnumerable<ParameterView>? parameters = null,
         bool isSensitive = false,
         ITrustService? trustService = null,
         ILogger? log = null)
     {
-        MethodDetails methodDetails = GetMethodDetails(nativeFunction.Method, nativeFunction.Target, false, log);
+        MethodDetails methodDetails = GetMethodDetails(nativeFunction.Method, nativeFunction.Target, log);
+
+        functionName ??= nativeFunction.Method.Name;
+        description ??= string.Empty;
+
+        if (string.IsNullOrWhiteSpace(skillName))
+        {
+            skillName = SkillCollection.GlobalSkill;
+        }
 
         return new SKFunction(
             delegateFunction: methodDetails.Function,
             parameters: parameters is not null ? parameters.ToList() : (IList<ParameterView>)Array.Empty<ParameterView>(),
             description: description,
-            skillName: skillName,
+            skillName: skillName!,
             functionName: functionName,
             isSemantic: false,
             // For native functions, do not read this from the methodDetails
@@ -250,34 +258,37 @@ public sealed class SKFunction : ISKFunction, IDisposable
     /// <inheritdoc/>
     public async Task<SKContext> InvokeAsync(SKContext context, CompleteRequestSettings? settings = null)
     {
-        async Task<SKContext> InvokeSemanticAsync(SKContext contextParam, CompleteRequestSettings? settingsPAram)
-        {
-            var resultContext = await this._function(this._aiService?.Value, settingsPAram ?? this._aiRequestSettings, contextParam).ConfigureAwait(false);
-            contextParam.Variables.Update(resultContext.Variables);
-            return contextParam;
-        }
-
-        Task<SKContext> InvokeNativeAsync(SKContext contextParam, CompleteRequestSettings? settingsParam)
-        {
-            return this._function(null, settingsParam, contextParam);
-        }
-
         // If the function is invoked manually, the user might have left out the skill collection
         context.Skills ??= this._skillCollection;
 
         var validateContextResult = await this.TrustServiceInstance.ValidateContextAsync(this, context).ConfigureAwait(false);
 
-        var result = this.IsSemantic
-            ? await InvokeSemanticAsync(context, settings).ConfigureAwait(false)
-            : await InvokeNativeAsync(context, settings).ConfigureAwait(false);
+        if (this.IsSemantic)
+        {
+            var resultContext = await this._function(this._aiService?.Value, settings ?? this._aiRequestSettings, context).ConfigureAwait(false);
+            context.Variables.Update(resultContext.Variables);
+        }
+        else
+        {
+            try
+            {
+                context = await this._function(null, settings, context).ConfigureAwait(false);
+            }
+            catch (Exception e) when (!e.IsCriticalException())
+            {
+                const string Message = "Something went wrong while executing the native function. Function: {0}. Error: {1}";
+                this._log.LogError(e, Message, this._function.Method.Name, e.Message);
+                context.Fail(e.Message, e);
+            }
+        }
 
         // If the context has been considered untrusted, make sure the output of the function is also untrusted
         if (!validateContextResult)
         {
-            result.UntrustResult();
+            context.UntrustResult();
         }
 
-        return result;
+        return context;
     }
 
     /// <inheritdoc/>
@@ -359,7 +370,6 @@ public sealed class SKFunction : ISKFunction, IDisposable
 
     private struct MethodDetails
     {
-        public bool HasSkFunctionAttribute { get; set; }
         public Func<ITextCompletion?, CompleteRequestSettings?, SKContext, Task<SKContext>> Function { get; set; }
         public List<ParameterView> Parameters { get; set; }
         public string Name { get; set; }
@@ -426,141 +436,233 @@ public sealed class SKFunction : ISKFunction, IDisposable
     }
 
     private static MethodDetails GetMethodDetails(
-        MethodInfo methodSignature,
-        object? methodContainerInstance,
-        bool skAttributesRequired = true,
+        MethodInfo method,
+        object? target,
         ILogger? log = null)
     {
-        Verify.NotNull(methodSignature);
+        Verify.NotNull(method);
+
+        // Get the name to use for the function.  If the function has an SKName attribute, we use that.
+        // Otherwise, we use the name of the method, but strip off any "Async" suffix if it's {Value}Task-returning.
+        // We don't apply any heuristics to the value supplied by SKName so that it can always be used
+        // as a definitive override.
+        string? functionName = method.GetCustomAttribute<SKNameAttribute>(inherit: true)?.Name?.Trim();
+        functionName ??= method.GetCustomAttribute<SKFunctionNameAttribute>(inherit: true)?.Name?.Trim(); // TODO: SKFunctionName is deprecated. Remove.
+        if (string.IsNullOrEmpty(functionName))
+        {
+            functionName = SanitizeMetadataName(method.Name!);
+            Verify.ValidFunctionName(functionName);
+
+            if (IsAsyncMethod(method) &&
+                functionName.EndsWith("Async", StringComparison.Ordinal) &&
+                functionName.Length > "Async".Length)
+            {
+                functionName = functionName.Substring(0, functionName.Length - "Async".Length);
+            }
+        }
+
+        SKFunctionAttribute? functionAttribute = method.GetCustomAttribute<SKFunctionAttribute>(inherit: true);
+
+        string? description = method.GetCustomAttribute<DescriptionAttribute>(inherit: true)?.Description;
+        description ??= functionAttribute?.Description; // TODO: SKFunctionAttribute.Description is deprecated. Remove.
 
         var result = new MethodDetails
         {
-            Name = methodSignature.Name,
-            Parameters = new List<ParameterView>(),
+            Name = functionName!,
+            Description = description ?? string.Empty,
+            IsSensitive = functionAttribute?.IsSensitive ?? false,
         };
 
-        // SKFunction attribute
-        SKFunctionAttribute? skFunctionAttribute = methodSignature
-            .GetCustomAttributes(typeof(SKFunctionAttribute), true)
-            .Cast<SKFunctionAttribute>()
-            .FirstOrDefault();
-
-        result.HasSkFunctionAttribute = skFunctionAttribute != null;
-
-        if (!result.HasSkFunctionAttribute || skFunctionAttribute == null)
-        {
-            log?.LogTrace("Method '{0}' doesn't have '{1}' attribute", result.Name, nameof(SKFunctionAttribute));
-            if (skAttributesRequired) { return result; }
-        }
-        else
-        {
-            result.HasSkFunctionAttribute = true;
-        }
-
-        (result.Function, bool hasStringParam) = GetDelegateInfo(methodContainerInstance, methodSignature);
-
-        // SKFunctionName attribute
-        SKFunctionNameAttribute? skFunctionNameAttribute = methodSignature
-            .GetCustomAttributes(typeof(SKFunctionNameAttribute), true)
-            .Cast<SKFunctionNameAttribute>()
-            .FirstOrDefault();
-
-        if (skFunctionNameAttribute != null)
-        {
-            result.Name = skFunctionNameAttribute.Name;
-        }
-
-        // SKFunctionInput attribute
-        SKFunctionInputAttribute? skMainParam = methodSignature
-            .GetCustomAttributes(typeof(SKFunctionInputAttribute), true)
-            .Cast<SKFunctionInputAttribute>()
-            .FirstOrDefault();
-
-        // SKFunctionContextParameter attribute
-        IList<SKFunctionContextParameterAttribute> skContextParams = methodSignature
-            .GetCustomAttributes(typeof(SKFunctionContextParameterAttribute), true)
-            .Cast<SKFunctionContextParameterAttribute>().ToList();
-
-        // Handle main string param description, if available/valid
-        // Note: Using [SKFunctionInput] is optional
-        if (hasStringParam)
-        {
-            result.Parameters.Add(skMainParam != null
-                ? skMainParam.ToParameterView() // Use the developer description
-                : new ParameterView { Name = "input", Description = "Input string", DefaultValue = "" }); // Use a default description
-        }
-        else if (skMainParam != null)
-        {
-            // The developer used [SKFunctionInput] on a function that doesn't support a string input
-            var message = $"The method '{result.Name}' doesn't have a string parameter, do not use '{nameof(SKFunctionInputAttribute)}' attribute.";
-            throw new KernelException(KernelException.ErrorCodes.InvalidFunctionDescription, message);
-        }
-
-        // Handle named arg passed via the SKContext object
-        // Note: "input" is added first to the list, before context params
-        // Note: Using [SKFunctionContextParameter] is optional
-        result.Parameters.AddRange(skContextParams.Select(x => x.ToParameterView()));
-
-        // Check for param names conflict
-        // Note: the name "input" is reserved for the main parameter
-        Verify.ParametersUniqueness(result.Parameters);
-
-        result.Description = skFunctionAttribute?.Description ?? "";
-        result.IsSensitive = skFunctionAttribute?.IsSensitive ?? false;
+        (result.Function, result.Parameters) = GetDelegateInfo(target, method);
 
         log?.LogTrace("Method '{0}' found", result.Name);
 
         return result;
     }
 
-    // Inspect a method and returns the corresponding delegate and related info
-    private static (Func<ITextCompletion?, CompleteRequestSettings?, SKContext, Task<SKContext>> function, bool hasStringParam) GetDelegateInfo(object? instance, MethodInfo method)
+    /// <summary>Gets whether a method has a known async return type.</summary>
+    private static bool IsAsyncMethod(MethodInfo method)
     {
-        // Get marshaling funcs for parameters
-        var parameters = method.GetParameters();
-        if (parameters.Length > 2)
+        Type t = method.ReturnType;
+
+        if (t == typeof(Task) || t == typeof(ValueTask))
         {
-            ThrowForInvalidSignature();
+            return true;
         }
 
-        var parameterFuncs = new Func<SKContext, object>[parameters.Length];
-        bool hasStringParam = false;
-        bool hasContextParam = false;
+        if (t.IsGenericType)
+        {
+            t = t.GetGenericTypeDefinition();
+            if (t == typeof(Task<>) || t == typeof(ValueTask<>))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Inspect a method and returns the corresponding delegate and related info
+    private static (Func<ITextCompletion?, CompleteRequestSettings?, SKContext, Task<SKContext>> function, List<ParameterView>) GetDelegateInfo(object? instance, MethodInfo method)
+    {
+        ThrowForInvalidSignatureIf(method.IsGenericMethodDefinition, "Generic methods are not supported");
+
+        var stringParameterViews = new List<ParameterView>();
+
+        var parameters = method.GetParameters();
+
+        // TODO: Should we keep this fall-back, or should remove it and simply say a parameter needs to be named "input" or use [SKName("input")]?
+        // For compatibility with previous uses and the promotion of context.Variables.Input, special-case a single string
+        // parameter to fall back to using Input rather than failing.
+        int stringParameterCount = 0;
+        foreach (ParameterInfo p in parameters)
+        {
+            if (p.ParameterType == typeof(string))
+            {
+                stringParameterCount++;
+            }
+        }
+
+        // Get marshaling funcs for parameters and build up the parameter views.
+        var parameterFuncs = new Func<SKContext, object?>[parameters.Length];
+        bool hasSKContextParam = false, hasCancellationTokenParam = false, hasLoggerParam = false, hasMemoryParam = false;
         for (int i = 0; i < parameters.Length; i++)
         {
-            if (!hasStringParam && parameters[i].ParameterType == typeof(string))
+            var p = parameters[i];
+            var type = p.ParameterType;
+
+            if (type == typeof(SKContext))
             {
-                hasStringParam = true;
-                parameterFuncs[i] = static (SKContext ctx) => ctx.Variables.Input.Value;
-            }
-            else if (!hasContextParam && parameters[i].ParameterType == typeof(SKContext))
-            {
-                hasContextParam = true;
+                TrackUniqueParameterType(ref hasSKContextParam, $"At most one {nameof(SKContext)} parameter is permitted.");
                 parameterFuncs[i] = static (SKContext ctx) => ctx;
+            }
+            else if (type == typeof(ISemanticTextMemory))
+            {
+                TrackUniqueParameterType(ref hasMemoryParam, $"At most one {nameof(ISemanticTextMemory)} parameter is permitted.");
+                parameterFuncs[i] = static (SKContext ctx) => ctx.Memory;
+            }
+            else if (type == typeof(ILogger))
+            {
+                TrackUniqueParameterType(ref hasLoggerParam, $"At most one {nameof(ILogger)} parameter is permitted.");
+                parameterFuncs[i] = static (SKContext ctx) => ctx.Log;
+            }
+            else if (type == typeof(CancellationToken))
+            {
+                TrackUniqueParameterType(ref hasCancellationTokenParam, $"At most one {nameof(CancellationToken)} parameter is permitted.");
+                parameterFuncs[i] = static (SKContext ctx) => ctx.CancellationToken;
+            }
+            else if (!type.IsByRef && GetParser(type) is Func<string, CultureInfo?, object> parser)
+            {
+                bool isSoleString = type == typeof(string) && stringParameterCount == 1;
+
+                // Use either the parameter's name or an override from an applied SKName attribute.
+                SKNameAttribute? nameAttr = p.GetCustomAttribute<SKNameAttribute>(inherit: true);
+                string name = nameAttr?.Name?.Trim() ?? SanitizeMetadataName(p.Name);
+                ThrowForInvalidSignatureIf(string.IsNullOrEmpty(name), $"Parameter {p.Name}'s context attribute defines an invalid name.");
+
+                // TODO: Remove this handling of SKFunctionInputAttribute. It's deprecated. We only want to keep the else block below.
+                if (isSoleString && method.GetCustomAttribute<SKFunctionInputAttribute>(inherit: true) is SKFunctionInputAttribute inputAttr)
+                {
+                    parameterFuncs[i] = static (SKContext ctx) => ctx.Variables.Input.Value;
+                    stringParameterViews.Add(inputAttr.ToParameterView());
+                }
+                else
+                {
+                    // Use either the parameter's optional default value as contained in parameter metadata (e.g. `string s = "hello"`)
+                    // or an override from an applied SKParameter attribute. Note that a default value may be null.
+                    DefaultValueAttribute defaultValueAttribute = p.GetCustomAttribute<DefaultValueAttribute>(inherit: true);
+                    bool hasDefaultValue = defaultValueAttribute is not null;
+                    object? defaultValue = defaultValueAttribute?.Value;
+                    if (!hasDefaultValue && p.HasDefaultValue)
+                    {
+                        hasDefaultValue = true;
+                        defaultValue = p.DefaultValue;
+                    }
+                    if (hasDefaultValue)
+                    {
+                        // If we got a default value, make sure it's of the right type. This currently supports
+                        // null values if the target type is a reference type or a Nullable<T>, strings,
+                        // anything that can be parsed from a string via a registered TypeConverter,
+                        // and a value that's already the same type as the parameter.
+                        if (defaultValue is string defaultStringValue && defaultValue.GetType() != typeof(string))
+                        {
+                            // Invariant culture is used here as this value comes from the C# source
+                            // and it should be deterministic across cultures.
+                            defaultValue = parser(defaultStringValue, CultureInfo.InvariantCulture);
+                        }
+                        else
+                        {
+                            ThrowForInvalidSignatureIf(
+                                defaultValue is null && type.IsValueType && Nullable.GetUnderlyingType(type) is null,
+                                $"Type {type} is a non-nullable value type but a null default value was specified.");
+                            ThrowForInvalidSignatureIf(
+                                defaultValue is not null && !type.IsAssignableFrom(defaultValue.GetType()),
+                                $"Default value {defaultValue} for parameter {name} is not assignable to type {type}.");
+                        }
+                    }
+
+                    bool isNullable = !type.IsValueType || Nullable.GetUnderlyingType(type) is not null;
+                    parameterFuncs[i] = (SKContext ctx) =>
+                    {
+                        // 1. Use the value of the variable if it exists.
+                        if (ctx.Variables.Get(name, out string value))
+                        {
+                            if (type == typeof(string))
+                            {
+                                return value;
+                            }
+
+                            try
+                            {
+                                return parser(value, /*culture*/null);
+                            }
+                            catch (Exception e) when (!e.IsCriticalException())
+                            {
+                                throw new ArgumentOutOfRangeException(name, value, e.Message);
+                            }
+                        }
+
+                        // 2. Use Input if this is the sole string parameter.
+                        if (isSoleString)
+                        {
+                            return ctx.Variables.Input.Value;
+                        }
+
+                        // 3. Use the default value if there is one, sourced either from an attribute or the parameter's default.
+                        if (hasDefaultValue)
+                        {
+                            return defaultValue;
+                        }
+
+                        // 4. Fail.
+                        throw new KernelException(KernelException.ErrorCodes.FunctionInvokeError, $"Missing value for parameter '{name}'");
+                    };
+
+                    stringParameterViews.Add(new ParameterView(
+                        name,
+                        p.GetCustomAttribute<DescriptionAttribute>(inherit: true)?.Description ?? string.Empty,
+                        defaultValue?.ToString() ?? string.Empty));
+                }
             }
             else
             {
-                ThrowForInvalidSignature();
+                ThrowForInvalidSignature($"Unknown parameter type {p.ParameterType}");
             }
         }
 
-        // Get marshaling func for the return value
+        // Add parameters applied to the method that aren't part of the signature.
+        stringParameterViews.AddRange(method
+            .GetCustomAttributes<SKParameterAttribute>(inherit: true)
+            .Select(x => new ParameterView(x.Name ?? string.Empty, x.Description ?? string.Empty, x.DefaultValue ?? string.Empty)));
+        stringParameterViews.AddRange(method
+            .GetCustomAttributes<SKFunctionContextParameterAttribute>(inherit: true)
+            .Select(x => x.ToParameterView())); // TODO: SKFunctionContextParameterAttribute is deprecated. Remove.
+
+        // Get marshaling func for the return value.
         Func<object?, SKContext, Task<SKContext>> returnFunc;
         if (method.ReturnType == typeof(void))
         {
             returnFunc = static (result, context) => Task.FromResult(context);
-        }
-        else if (method.ReturnType == typeof(string))
-        {
-            returnFunc = static (result, context) =>
-            {
-                context.Variables.UpdateKeepingTrustState((string?)result);
-                return Task.FromResult(context);
-            };
-        }
-        else if (method.ReturnType == typeof(SKContext))
-        {
-            returnFunc = static (result, _) => Task.FromResult((SKContext)ThrowIfNullResult(result));
         }
         else if (method.ReturnType == typeof(Task))
         {
@@ -568,6 +670,34 @@ public sealed class SKFunction : ISKFunction, IDisposable
             {
                 await ((Task)ThrowIfNullResult(result)).ConfigureAwait(false);
                 return context;
+            };
+        }
+        else if (method.ReturnType == typeof(ValueTask))
+        {
+            returnFunc = async static (result, context) =>
+            {
+                await ((ValueTask)ThrowIfNullResult(result)).ConfigureAwait(false);
+                return context;
+            };
+        }
+        else if (method.ReturnType == typeof(SKContext))
+        {
+            returnFunc = static (result, _) => Task.FromResult((SKContext)ThrowIfNullResult(result));
+        }
+        else if (method.ReturnType == typeof(Task<SKContext>))
+        {
+            returnFunc = static (result, _) => (Task<SKContext>)ThrowIfNullResult(result);
+        }
+        else if (method.ReturnType == typeof(ValueTask<SKContext>))
+        {
+            returnFunc = static (result, context) => ((ValueTask<SKContext>)ThrowIfNullResult(result)).AsTask();
+        }
+        else if (method.ReturnType == typeof(string))
+        {
+            returnFunc = static (result, context) =>
+            {
+                context.Variables.UpdateKeepingTrustState((string?)result);
+                return Task.FromResult(context);
             };
         }
         else if (method.ReturnType == typeof(Task<string>))
@@ -578,20 +708,64 @@ public sealed class SKFunction : ISKFunction, IDisposable
                 return context;
             };
         }
-        else if (method.ReturnType == typeof(Task<SKContext>))
+        else if (method.ReturnType == typeof(ValueTask<string>))
         {
-            returnFunc = static (result, _) => (Task<SKContext>)ThrowIfNullResult(result);
+            returnFunc = async static (result, context) =>
+            {
+                context.Variables.UpdateKeepingTrustState(await ((ValueTask<string>)ThrowIfNullResult(result)).ConfigureAwait(false));
+                return context;
+            };
+        }
+        else if (!method.ReturnType.IsGenericType ||
+                 method.ReturnType.GetGenericTypeDefinition() == typeof(Nullable<>)) // handle all other return types other than {Value}Task<>
+        {
+            if (GetFormatter(method.ReturnType) is not Func<object?, CultureInfo?, string> formatter)
+            {
+                ThrowForInvalidSignature($"Unknown return type {method.ReturnType}");
+            }
+
+            returnFunc = (result, context) =>
+            {
+                context.Variables.UpdateKeepingTrustState(formatter(result, /*culture*/null));
+                return Task.FromResult(context);
+            };
+        }
+        else if (method.ReturnType.GetGenericTypeDefinition() is Type genericTask &&
+                 genericTask == typeof(Task<>) &&
+                 method.ReturnType.GetProperty("Result", BindingFlags.Public | BindingFlags.Instance)?.GetGetMethod() is MethodInfo taskResultGetter &&
+                 GetFormatter(taskResultGetter.ReturnType) is Func<object?, CultureInfo?, string> taskResultFormatter)
+        {
+            returnFunc = async (result, context) =>
+            {
+                await ((Task)ThrowIfNullResult(result)).ConfigureAwait(false);
+                context.Variables.UpdateKeepingTrustState(taskResultFormatter(taskResultGetter.Invoke(result!, Array.Empty<object>()), /*culture*/null));
+                return context;
+            };
+        }
+        else if (method.ReturnType.GetGenericTypeDefinition() is Type genericValueTask &&
+                 genericValueTask == typeof(ValueTask<>) &&
+                 method.ReturnType.GetMethod("AsTask", BindingFlags.Public | BindingFlags.Instance) is MethodInfo valueTaskAsTask &&
+                 valueTaskAsTask.ReturnType.GetProperty("Result", BindingFlags.Public | BindingFlags.Instance)?.GetGetMethod() is MethodInfo asTaskResultGetter &&
+                 GetFormatter(asTaskResultGetter.ReturnType) is Func<object?, CultureInfo?, string> asTaskResultFormatter)
+        {
+            returnFunc = async (result, context) =>
+            {
+                Task task = (Task)valueTaskAsTask.Invoke(ThrowIfNullResult(result), Array.Empty<object>());
+                await task.ConfigureAwait(false);
+                context.Variables.Update(asTaskResultFormatter(asTaskResultGetter.Invoke(task!, Array.Empty<object>()), /*culture*/null));
+                return context;
+            };
         }
         else
         {
-            ThrowForInvalidSignature();
+            ThrowForInvalidSignature($"Unknown return type {method.ReturnType}");
         }
 
         // Create the func
         Func<ITextCompletion?, CompleteRequestSettings?, SKContext, Task<SKContext>> function = (_, _, context) =>
         {
             // Create the arguments.
-            object[] args = parameterFuncs.Length != 0 ? new object[parameterFuncs.Length] : Array.Empty<object>();
+            object?[] args = parameterFuncs.Length != 0 ? new object?[parameterFuncs.Length] : Array.Empty<object?>();
             for (int i = 0; i < args.Length; i++)
             {
                 args[i] = parameterFuncs[i](context);
@@ -604,23 +778,204 @@ public sealed class SKFunction : ISKFunction, IDisposable
             return returnFunc(result, context);
         };
 
-        // Return the func and whether it has a string param
-        return (function, hasStringParam);
+        // Check for param names conflict
+        Verify.ParametersUniqueness(stringParameterViews);
 
-        void ThrowForInvalidSignature() =>
-            throw new KernelException(
-                KernelException.ErrorCodes.FunctionTypeNotSupported,
-                $"Function '{method.Name}' has an invalid signature not supported by the kernel.");
+        // Return the func and whether it has a string param
+        return (function, stringParameterViews);
 
         static object ThrowIfNullResult(object? result) =>
             result ??
             throw new KernelException(
                 KernelException.ErrorCodes.FunctionInvokeError,
                 "Function returned null unexpectedly.");
+
+        [DoesNotReturn]
+        void ThrowForInvalidSignature(string reason) =>
+            throw new KernelException(
+                KernelException.ErrorCodes.FunctionTypeNotSupported,
+                $"Function '{method.Name}' is not supported by the kernel. {reason}");
+
+        void ThrowForInvalidSignatureIf([DoesNotReturnIf(true)] bool condition, string reason)
+        {
+            if (condition) { ThrowForInvalidSignature(reason); }
+        }
+
+        void TrackUniqueParameterType(ref bool hasParameterType, string failureMessage)
+        {
+            ThrowForInvalidSignatureIf(hasParameterType, failureMessage);
+            hasParameterType = true;
+        }
+    }
+
+    /// <summary>
+    /// Gets a TypeConverter-based parser for parsing a string as the target type.
+    /// </summary>
+    /// <param name="targetType">Specifies the target type into which a string should be parsed.</param>
+    /// <returns>The parsing function if the target type is supported; otherwise, null.</returns>
+    /// <remarks>
+    /// The parsing function uses whatever TypeConverter is registered for the target type.
+    /// Parsing is first attempted using the current culture, and if that fails, it tries again
+    /// with the invariant culture. If both fail, an exception is thrown.
+    /// </remarks>
+    private static Func<string, CultureInfo?, object?>? GetParser(Type targetType) =>
+        s_parsers.GetOrAdd(targetType, static targetType =>
+        {
+            // Strings just parse to themselves.
+            if (targetType == typeof(string))
+            {
+                return (input, cultureInfo) => input;
+            }
+
+            // For nullables, parse as the inner type.  We then just need to be careful to treat null as null,
+            // as the underlying parser might not be expecting null.
+            bool wasNullable = false;
+            if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                wasNullable = true;
+                targetType = Nullable.GetUnderlyingType(targetType);
+            }
+
+            // For enums, delegate to Enum.Parse, special-casing null if it was actually Nullable<EnumType>.
+            if (targetType.IsEnum)
+            {
+                return (input, cultureInfo) =>
+                {
+                    if (wasNullable && input is null)
+                    {
+                        return null!;
+                    }
+
+                    return Enum.Parse(targetType, input, ignoreCase: true);
+                };
+            }
+
+            // Finally, look up and use a type converter.  Again, special-case null if it was actually Nullable<T>.
+            if (GetTypeConverter(targetType) is TypeConverter converter && converter.CanConvertFrom(typeof(string)))
+            {
+                return (input, cultureInfo) =>
+                {
+                    if (wasNullable && input is null)
+                    {
+                        return null!;
+                    }
+
+                    // First try to parse using the supplied culture (or current if none was supplied).
+                    // If that fails, try with the invariant culture and allow any exception to propagate.
+                    try
+                    {
+                        return converter.ConvertFromString(context: null, cultureInfo ?? CultureInfo.CurrentCulture, input);
+                    }
+                    catch (Exception e) when (!e.IsCriticalException() && cultureInfo != CultureInfo.InvariantCulture)
+                    {
+                        return converter.ConvertFromInvariantString(input);
+                    }
+                };
+            }
+
+            // Unsupported type.
+            return null;
+        });
+
+    /// <summary>
+    /// Gets a TypeConverter-based formatter for formatting an object as a string.
+    /// </summary>
+    /// <remarks>
+    /// Formatting is performed in the invariant culture whenever possible.
+    /// </remarks>
+    private static Func<object?, CultureInfo?, string?>? GetFormatter(Type targetType) =>
+        s_formatters.GetOrAdd(targetType, static targetType =>
+        {
+            // For nullables, render as the underlying type.
+            bool wasNullable = false;
+            if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                wasNullable = true;
+                targetType = Nullable.GetUnderlyingType(targetType);
+            }
+
+            // For enums, just ToString() and allow the object override to do the right thing.
+            if (targetType.IsEnum)
+            {
+                return (input, cultureInfo) => input?.ToString()!;
+            }
+
+            // Strings just render as themselves.
+            if (targetType == typeof(string))
+            {
+                return (input, cultureInfo) => (string)input!;
+            }
+
+            // Finally, look up and use a type converter.
+            if (GetTypeConverter(targetType) is TypeConverter converter && converter.CanConvertTo(typeof(string)))
+            {
+                return (input, cultureInfo) =>
+                {
+                    if (wasNullable && input is null)
+                    {
+                        return null!;
+                    }
+
+                    return converter.ConvertToString(context: null, cultureInfo ?? CultureInfo.InvariantCulture, input);
+                };
+            }
+
+            return null;
+        });
+
+    private static TypeConverter? GetTypeConverter(Type targetType)
+    {
+        // In an ideal world, this would use TypeDescriptor.GetConverter. However, that is not friendly to
+        // any form of ahead-of-time compilation, as it could end up requiring functionality that was trimmed.
+        // Instead, we just use a hard-coded set of converters for the types we know about and then also support
+        // types that are explicitly attributed with TypeConverterAttribute.
+
+        if (targetType == typeof(byte)) { return new ByteConverter(); }
+        if (targetType == typeof(sbyte)) { return new SByteConverter(); }
+        if (targetType == typeof(bool)) { return new BooleanConverter(); }
+        if (targetType == typeof(ushort)) { return new UInt16Converter(); }
+        if (targetType == typeof(short)) { return new Int16Converter(); }
+        if (targetType == typeof(char)) { return new CharConverter(); }
+        if (targetType == typeof(uint)) { return new UInt32Converter(); }
+        if (targetType == typeof(int)) { return new Int32Converter(); }
+        if (targetType == typeof(ulong)) { return new UInt64Converter(); }
+        if (targetType == typeof(long)) { return new Int64Converter(); }
+        if (targetType == typeof(float)) { return new SingleConverter(); }
+        if (targetType == typeof(double)) { return new DoubleConverter(); }
+        if (targetType == typeof(decimal)) { return new DecimalConverter(); }
+        if (targetType == typeof(TimeSpan)) { return new TimeSpanConverter(); }
+        if (targetType == typeof(DateTime)) { return new DateTimeConverter(); }
+        if (targetType == typeof(DateTimeOffset)) { return new DateTimeOffsetConverter(); }
+        if (targetType == typeof(Uri)) { return new UriTypeConverter(); }
+        if (targetType == typeof(Guid)) { return new GuidConverter(); }
+
+        if (targetType.GetCustomAttribute<TypeConverterAttribute>() is TypeConverterAttribute tca &&
+            Type.GetType(tca.ConverterTypeName, throwOnError: false) is Type converterType &&
+            Activator.CreateInstance(converterType) is TypeConverter converter)
+        {
+            return converter;
+        }
+
+        return null;
     }
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     private string DebuggerDisplay => $"{this.Name} ({this.Description})";
+
+    /// <summary>
+    /// Remove characters from method name that are valid in metadata but invalid for SK.
+    /// </summary>
+    private static string SanitizeMetadataName(string methodName) =>
+        s_invalidNameCharsRegex.Replace(methodName, "_");
+
+    /// <summary>Regex that flags any character other than ASCII digits or letters or the underscore.</summary>
+    private static readonly Regex s_invalidNameCharsRegex = new("[^0-9A-Za-z_]");
+
+    /// <summary>Parser functions for converting strings to parameter types.</summary>
+    private static readonly ConcurrentDictionary<Type, Func<string, CultureInfo?, object>?> s_parsers = new();
+
+    /// <summary>Formatter functions for converting parameter types to strings.</summary>
+    private static readonly ConcurrentDictionary<Type, Func<object?, CultureInfo?, string>?> s_formatters = new();
 
     #endregion
 }

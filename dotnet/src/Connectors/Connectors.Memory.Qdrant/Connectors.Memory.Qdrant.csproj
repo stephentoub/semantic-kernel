@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(RepoRoot)/dotnet/src/InternalUtilities/Linq/AsyncEnumerable.cs" />
+    <Compile Include="$(RepoRoot)/dotnet/src/InternalUtilities/src/Linq/AsyncEnumerable.cs" />
   </ItemGroup>
 
   <ItemGroup>
