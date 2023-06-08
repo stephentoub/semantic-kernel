@@ -2,7 +2,6 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -52,14 +51,8 @@ public sealed class TextMemorySkill
     /// <summary>
     /// Creates a new instance of the TextMemorySkill
     /// </summary>
-    /// <param name="collection">The default collection for Recall. Memories collection to search.</param>
-    /// <param name="relevance">The default relevance value for Recall. The relevance score, from 0.0 to 1.0, where 1.0 means perfect match.</param>
-    /// <param name="limit">The default limit for Recall. The maximum number of relevant memories to recall.</param>
-    public TextMemorySkill(string collection = DefaultCollection, double? relevance = DefaultRelevance, int? limit = DefaultLimit)
+    public TextMemorySkill()
     {
-        this._collection = collection;
-        this._relevance = relevance;
-        this._limit = limit;
     }
 
     /// <summary>
@@ -78,7 +71,6 @@ public sealed class TextMemorySkill
         [Description("The key associated with the memory to retrieve")] string key,
         SKContext context)
     {
-        collection ??= DefaultCollection;
         Verify.NotNullOrWhiteSpace(collection, $"{nameof(context)}.{nameof(context.Variables)}[{CollectionParam}]");
         Verify.NotNullOrWhiteSpace(key, $"{nameof(context)}.{nameof(context.Variables)}[{KeyParam}]");
 
@@ -104,17 +96,14 @@ public sealed class TextMemorySkill
     [SKFunction, Description("Semantic search and return up to N memories related to the input text")]
     public async Task<string> RecallAsync(
         [SKName("input"), Description("The input text to find related memories for")] string text,
-        [Description("Memories collection to search"), DefaultValue(DefaultCollection)] string? collection,
+        [Description("Memories collection to search"), DefaultValue(DefaultCollection)] string collection,
         [Description("The relevance score, from 0.0 to 1.0, where 1.0 means perfect match"), DefaultValue(DefaultRelevance)] double? relevance,
-        [Description("The maximum number of relevant memories to recall"), DefaultValue(1)] int? limit,
+        [Description("The maximum number of relevant memories to recall"), DefaultValue(DefaultLimit)] int? limit,
         SKContext context)
     {
-        Debug.Assert(nameof(collection) == nameof(CollectionParam));
-
-        collection ??= this._collection;
-        relevance ??= this._relevance ?? DefaultRelevance;
-        limit ??= this._limit ?? DefaultLimit;
         Verify.NotNullOrWhiteSpace(collection, $"{nameof(context)}.{nameof(context.Variables)}[{CollectionParam}]");
+        relevance ??= DefaultRelevance;
+        limit ??= DefaultLimit;
 
         context.Log.LogTrace("Searching memories in collection '{0}', relevance '{1}'", collection, relevance);
 
@@ -149,11 +138,10 @@ public sealed class TextMemorySkill
     [SKFunction, Description("Save information to semantic memory")]
     public async Task SaveAsync(
         [SKName("input"), Description("The information to save")] string text,
-        [Description("Memories collection associated with the information to save"), DefaultValue(DefaultCollection)] string? collection,
+        [Description("Memories collection associated with the information to save"), DefaultValue(DefaultCollection)] string collection,
         [Description("The key associated with the information to save")] string key,
         SKContext context)
     {
-        collection ??= DefaultCollection;
         Verify.NotNullOrWhiteSpace(collection, $"{nameof(context)}.{nameof(context.Variables)}[{CollectionParam}]");
         Verify.NotNullOrWhiteSpace(key, $"{nameof(context)}.{nameof(context.Variables)}[{KeyParam}]");
 
@@ -174,11 +162,10 @@ public sealed class TextMemorySkill
     /// <param name="context">Contains the memory from which to remove.</param>
     [SKFunction, Description("Remove specific memory")]
     public async Task RemoveAsync(
-        [Description("Memories collection associated with the information to save"), DefaultValue(DefaultCollection)] string? collection,
+        [Description("Memories collection associated with the information to save"), DefaultValue(DefaultCollection)] string collection,
         [Description("The key associated with the information to save")] string key,
         SKContext context)
     {
-        collection ??= DefaultCollection;
         Verify.NotNullOrWhiteSpace(collection, $"{nameof(context)}.{nameof(context.Variables)}[{CollectionParam}]");
         Verify.NotNullOrWhiteSpace(key, $"{nameof(context)}.{nameof(context.Variables)}[{KeyParam}]");
 
@@ -186,8 +173,4 @@ public sealed class TextMemorySkill
 
         await context.Memory.RemoveAsync(collection, key).ConfigureAwait(false);
     }
-
-    private readonly string _collection;
-    private readonly double? _relevance;
-    private readonly int? _limit;
 }

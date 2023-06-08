@@ -75,12 +75,13 @@ internal static class Example31_CustomPlanner
         context.Variables.Set("city", "Tacoma");
         context.Variables.Set("state", "WA");
         context.Variables.Set("country", "USA");
+        context.Variables.Set("collection", "contextQueryMemories");
         return context;
     }
 
     private static async Task RememberFactsAsync(IKernel kernel)
     {
-        kernel.ImportSkill(new TextMemorySkill("contextQueryMemories", 0.3, 5));
+        kernel.ImportSkill(new TextMemorySkill());
 
         List<string> memoriesToSave = new()
         {
@@ -137,7 +138,7 @@ internal static class Example31_CustomPlanner
 // Example Skill that can process XML Markup created by ContextQuery
 public class MarkupSkill
 {
-    [SKFunction, Description("Run Markup")]
+    [SKFunction, Description("Run Markup"), SKName("RunMarkup")]
     public async Task<string> RunMarkupAsync([SKName("input")] string docString, SKContext context)
     {
         var plan = docString.FromMarkup("Run a piece of xml markup", context);

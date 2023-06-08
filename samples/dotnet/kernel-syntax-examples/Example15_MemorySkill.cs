@@ -131,7 +131,7 @@ Answer:
         */
 
         context[TextMemorySkill.KeyParam] = "info1";
-        await memorySkill.RemoveAsync(collection: null, "info1", context);
+        await memorySkill.RemoveAsync(MemoryCollectionName, "info1", context);
 
         result = await aboutMeOracle.InvokeAsync("Tell me a bit about myself", context);
 
