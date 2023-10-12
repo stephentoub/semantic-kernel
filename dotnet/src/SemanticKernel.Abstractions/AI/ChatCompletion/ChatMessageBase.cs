@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System.Collections.Generic;
+
 namespace Microsoft.SemanticKernel.AI.ChatCompletion;
 
 /// <summary>
@@ -27,4 +29,9 @@ public abstract class ChatMessageBase
         this.Role = role;
         this.Content = content;
     }
+
+    /// <summary>
+    /// Additional information about the message that may be used by the chat completion service.
+    /// </summary>
+    public IDictionary<string, string>? AdditionalContext { get; set; }
 }

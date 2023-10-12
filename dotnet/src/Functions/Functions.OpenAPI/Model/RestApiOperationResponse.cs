@@ -10,6 +10,8 @@ namespace Microsoft.SemanticKernel.Functions.OpenAPI.Model;
 [TypeConverterAttribute(typeof(RestApiOperationResponseConverter))]
 public sealed class RestApiOperationResponse
 {
+    private static readonly RestApiOperationResponseConverter s_typeConverter = new();
+
     /// <summary>
     /// Gets the content of the response.
     /// </summary>
@@ -30,4 +32,7 @@ public sealed class RestApiOperationResponse
         this.Content = content;
         this.ContentType = contentType;
     }
+
+    /// <summary>Gets a string representation of the contents of the response.</summary>
+    public override string? ToString() => s_typeConverter.ConvertToString(this.Content);
 }
