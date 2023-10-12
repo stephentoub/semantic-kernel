@@ -32,6 +32,11 @@ public readonly struct AuthorRole : IEquatable<AuthorRole>
     public static readonly AuthorRole Tool = new("tool");
 
     /// <summary>
+    /// The role that provides responses for function invocations.
+    /// </summary>
+    public static readonly AuthorRole Function = new("function");
+
+    /// <summary>
     /// Gets the label associated with this AuthorRole.
     /// </summary>
     /// <remarks>
