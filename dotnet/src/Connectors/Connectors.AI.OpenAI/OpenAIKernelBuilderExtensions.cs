@@ -276,6 +276,7 @@ public static class OpenAIKernelBuilderExtensions
         };
 
         builder.WithAIService<IChatCompletion>(serviceId, Factory, setAsDefault);
+        builder.WithAIService<IChatCompletionWithFunctions>(serviceId, Factory, setAsDefault);
 
         // If the class implements the text completion interface, allow to use it also for semantic functions
         if (alsoAsTextCompletion && typeof(ITextCompletion).IsAssignableFrom(typeof(AzureChatCompletion)))
@@ -316,6 +317,7 @@ public static class OpenAIKernelBuilderExtensions
         };
 
         builder.WithAIService<IChatCompletion>(serviceId, Factory, setAsDefault);
+        builder.WithAIService<IChatCompletionWithFunctions>(serviceId, Factory, setAsDefault);
 
         // If the class implements the text completion interface, allow to use it also for semantic functions
         if (alsoAsTextCompletion && typeof(ITextCompletion).IsAssignableFrom(typeof(AzureChatCompletion)))
@@ -389,6 +391,7 @@ public static class OpenAIKernelBuilderExtensions
             loggerFactory);
 
         builder.WithAIService<IChatCompletion>(serviceId, Factory, setAsDefault);
+        builder.WithAIService<IChatCompletionWithFunctions>(serviceId, Factory, setAsDefault);
 
         // If the class implements the text completion interface, allow to use it also for semantic functions
         if (alsoAsTextCompletion && typeof(ITextCompletion).IsAssignableFrom(typeof(OpenAIChatCompletion)))
@@ -423,6 +426,7 @@ public static class OpenAIKernelBuilderExtensions
         };
 
         builder.WithAIService<IChatCompletion>(serviceId, Factory, setAsDefault);
+        builder.WithAIService<IChatCompletionWithFunctions>(serviceId, Factory, setAsDefault);
 
         // If the class implements the text completion interface, allow to use it also for semantic functions
         if (alsoAsTextCompletion && typeof(ITextCompletion).IsAssignableFrom(typeof(AzureChatCompletion)))
@@ -457,6 +461,7 @@ public static class OpenAIKernelBuilderExtensions
         };
 
         builder.WithAIService<IChatCompletion>(serviceId, Factory, setAsDefault);
+        builder.WithAIService<IChatCompletionWithFunctions>(serviceId, Factory, setAsDefault);
 
         // If the class implements the text completion interface, allow to use it also for semantic functions
         if (alsoAsTextCompletion && typeof(ITextCompletion).IsAssignableFrom(typeof(AzureChatCompletion)))

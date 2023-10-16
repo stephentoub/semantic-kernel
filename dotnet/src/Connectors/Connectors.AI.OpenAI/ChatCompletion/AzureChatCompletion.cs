@@ -11,6 +11,8 @@ using Microsoft.SemanticKernel.AI;
 using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.AI.TextCompletion;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI.AzureSdk;
+using Microsoft.SemanticKernel.Diagnostics;
+using Microsoft.SemanticKernel.Orchestration;
 
 namespace Microsoft.SemanticKernel.Connectors.AI.OpenAI.ChatCompletion;
 
@@ -18,7 +20,7 @@ namespace Microsoft.SemanticKernel.Connectors.AI.OpenAI.ChatCompletion;
 /// Azure OpenAI chat completion client.
 /// TODO: forward ETW logging to ILogger, see https://learn.microsoft.com/en-us/dotnet/azure/sdk/logging
 /// </summary>
-public sealed class AzureChatCompletion : AzureOpenAIClientBase, IChatCompletion, ITextCompletion
+public sealed class AzureChatCompletion : AzureOpenAIClientBase, IChatCompletionWithFunctions, ITextCompletion
 {
     /// <summary>
     /// Create an instance of the Azure OpenAI chat completion connector with API key auth
@@ -74,7 +76,19 @@ public sealed class AzureChatCompletion : AzureOpenAIClientBase, IChatCompletion
         CancellationToken cancellationToken = default)
     {
         this.LogActionDetails();
-        return this.InternalGetChatResultsAsync(chat, requestSettings, cancellationToken);
+        return this.InternalGetChatResultsAsync(chat, null, requestSettings, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public Task<IReadOnlyList<IChatResult>> GetChatCompletionsAsync(
+        ChatHistory chat,
+        SKContext context,
+        AIRequestSettings? requestSettings = null,
+        CancellationToken cancellationToken = default)
+    {
+        Verify.NotNull(context);
+        this.LogActionDetails();
+        return this.InternalGetChatResultsAsync(chat, context, requestSettings, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -84,7 +98,19 @@ public sealed class AzureChatCompletion : AzureOpenAIClientBase, IChatCompletion
         CancellationToken cancellationToken = default)
     {
         this.LogActionDetails();
-        return this.InternalGetChatStreamingResultsAsync(chat, requestSettings, cancellationToken);
+        return this.InternalGetChatStreamingResultsAsync(chat, null, requestSettings, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public IAsyncEnumerable<IChatStreamingResult> GetStreamingChatCompletionsAsync(
+        ChatHistory chat,
+        SKContext context,
+        AIRequestSettings? requestSettings = null,
+        CancellationToken cancellationToken = default)
+    {
+        Verify.NotNull(context);
+        this.LogActionDetails();
+        return this.InternalGetChatStreamingResultsAsync(chat, context, requestSettings, cancellationToken);
     }
 
     /// <inheritdoc/>

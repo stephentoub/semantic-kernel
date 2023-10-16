@@ -37,7 +37,7 @@ public class OpenAIFunctionResponse
         OpenAIFunctionResponse response = new();
         if (functionCall.Name.Contains(OpenAIFunction.NameSeparator))
         {
-            var parts = functionCall.Name.Split(new string[] { OpenAIFunction.NameSeparator }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = functionCall.Name.Split(s_nameSeparatorArray, StringSplitOptions.RemoveEmptyEntries);
             response.PluginName = parts[0];
             response.FunctionName = parts[1];
         }
@@ -54,4 +54,6 @@ public class OpenAIFunctionResponse
 
         return response;
     }
+
+    private static readonly string[] s_nameSeparatorArray = new[] { OpenAIFunction.NameSeparator };
 }

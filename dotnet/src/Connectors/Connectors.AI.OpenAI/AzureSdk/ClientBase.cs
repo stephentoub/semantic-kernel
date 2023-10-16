@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Metrics;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
@@ -16,6 +17,7 @@ using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.AI.TextCompletion;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI.ChatCompletion;
 using Microsoft.SemanticKernel.Diagnostics;
+using Microsoft.SemanticKernel.Orchestration;
 using Microsoft.SemanticKernel.Text;
 
 namespace Microsoft.SemanticKernel.Connectors.AI.OpenAI.AzureSdk;
@@ -96,7 +98,7 @@ public abstract class ClientBase
         ValidateMaxTokens(textRequestSettings.MaxTokens);
         var options = CreateCompletionsOptions(text, textRequestSettings);
 
-        Response<Completions>? response = await RunRequestAsync<Response<Completions>?>(
+        Response<Completions>? response = await RunRequestAsync(
             () => this.Client.GetCompletionsAsync(this.ModelId, options, cancellationToken)).ConfigureAwait(false);
 
         if (response is null)
@@ -134,7 +136,7 @@ public abstract class ClientBase
 
         var options = CreateCompletionsOptions(text, textRequestSettings);
 
-        Response<StreamingCompletions>? response = await RunRequestAsync<Response<StreamingCompletions>>(
+        Response<StreamingCompletions>? response = await RunRequestAsync(
             () => this.Client.GetCompletionsStreamingAsync(this.ModelId, options, cancellationToken)).ConfigureAwait(false);
 
         using StreamingCompletions streamingChatCompletions = response.Value;
@@ -159,7 +161,7 @@ public abstract class ClientBase
         {
             var options = new EmbeddingsOptions(text);
 
-            Response<Embeddings>? response = await RunRequestAsync<Response<Embeddings>?>(
+            Response<Embeddings>? response = await RunRequestAsync(
                 () => this.Client.GetEmbeddingsAsync(this.ModelId, options, cancellationToken)).ConfigureAwait(false);
 
             if (response is null)
@@ -182,74 +184,253 @@ public abstract class ClientBase
     /// Generate a new chat message
     /// </summary>
     /// <param name="chat">Chat history</param>
+    /// <param name="context">Context containing the functions available for automatic invocation during processing and to use to invoke functions as needed; may be null to indicate no functions are available</param>
     /// <param name="requestSettings">AI request settings</param>
     /// <param name="cancellationToken">Async cancellation token</param>
     /// <returns>Generated chat message in string format</returns>
     private protected async Task<IReadOnlyList<IChatResult>> InternalGetChatResultsAsync(
         ChatHistory chat,
+        SKContext? context,
         AIRequestSettings? requestSettings,
         CancellationToken cancellationToken = default)
     {
         Verify.NotNull(chat);
 
         OpenAIRequestSettings chatRequestSettings = OpenAIRequestSettings.FromRequestSettings(requestSettings);
-
         ValidateMaxTokens(chatRequestSettings.MaxTokens);
 
-        var chatOptions = CreateChatCompletionsOptions(chatRequestSettings, chat);
+        IReadOnlyList<FunctionView>? functionViews = context?.Functions?.GetFunctionViews();
+        var chatOptions = CreateChatCompletionsOptions(chatRequestSettings, chat, functionViews);
 
-        Response<ChatCompletions>? response = await RunRequestAsync<Response<ChatCompletions>?>(
-            () => this.Client.GetChatCompletionsAsync(this.ModelId, chatOptions, cancellationToken)).ConfigureAwait(false);
+        ChatCompletions? chatCompletions;
 
-        if (response is null)
+        while (true)
         {
-            throw new SKException("Chat completions null response");
+            // Make the call to the chat completion service.
+            Response<ChatCompletions> response = await RunRequestAsync(() => this.Client.GetChatCompletionsAsync(this.ModelId, chatOptions, cancellationToken)).ConfigureAwait(false);
+
+            chatCompletions = response.Value;
+            if (chatCompletions.Choices.Count == 0)
+            {
+                throw new SKException("Chat completions not found");
+            }
+
+            this.CaptureUsageDetails(chatCompletions.Usage);
+
+            var choice = chatCompletions.Choices[0];
+            if (choice.FinishReason != CompletionsFinishReason.FunctionCall ||
+                context?.Functions is null ||
+                functionViews is not { Count: > 0 })
+            {
+                // The response is not a function call, or it's a function call even though no functions were supplied (they might have
+                // been in the AIRequestSettings but that's not something we can act on here). The result of this GetChatCompletionsAsync
+                // call is the final result.
+                break;
+            }
+
+            // Handle function invocation request.
+
+            // Find the ISKFunction to invoke.
+            OpenAIFunctionResponse functionCall = OpenAIFunctionResponse.FromFunctionCall(choice.Message.FunctionCall);
+            if (!context.Functions.TryGetFunction(functionCall.PluginName, functionCall.FunctionName, out ISKFunction? function))
+            {
+                // The requested function doesn't exist.
+                throw new SKException("Requested function not found");
+            }
+
+            // Set the arguments to the function into the context in order to invoke it.
+            foreach (KeyValuePair<string, object> parameter in functionCall.Parameters)
+            {
+                context.Variables.Set(parameter.Key, parameter.Value?.ToString() ?? "");
+            }
+
+            // Invoke the function
+            FunctionResult functionResult = await function.InvokeAsync(context, requestSettings, cancellationToken).ConfigureAwait(false);
+            chatOptions.Messages.Add(new ChatMessage(ChatRole.Function, functionResult.GetValue<object>()?.ToString() ?? "") { Name = choice.Message.FunctionCall.Name });
         }
 
-        var responseData = response.Value;
-
-        if (responseData.Choices.Count == 0)
-        {
-            throw new SKException("Chat completions not found");
-        }
-
-        this.CaptureUsageDetails(responseData.Usage);
-
-        return responseData.Choices.Select(chatChoice => new ChatResult(responseData, chatChoice)).ToList();
+        return chatCompletions.Choices.Select(chatChoice => new ChatResult(chatCompletions, chatChoice)).ToList();
     }
 
     /// <summary>
     /// Generate a new chat message stream
     /// </summary>
     /// <param name="chat">Chat history</param>
+    /// <param name="context">Context containing the functions available for automatic invocation during processing and to use to invoke functions as needed; may be null to indicate no functions are available</param>
     /// <param name="requestSettings">AI request settings</param>
     /// <param name="cancellationToken">Async cancellation token</param>
     /// <returns>Streaming of generated chat message in string format</returns>
     private protected async IAsyncEnumerable<IChatStreamingResult> InternalGetChatStreamingResultsAsync(
         IEnumerable<ChatMessageBase> chat,
+        SKContext? context,
         AIRequestSettings? requestSettings,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         Verify.NotNull(chat);
 
         OpenAIRequestSettings chatRequestSettings = OpenAIRequestSettings.FromRequestSettings(requestSettings);
-
         ValidateMaxTokens(chatRequestSettings.MaxTokens);
 
-        var options = CreateChatCompletionsOptions(chatRequestSettings, chat);
+        IReadOnlyList<FunctionView>? functionViews = context?.Functions?.GetFunctionViews();
+        var chatOptions = CreateChatCompletionsOptions(chatRequestSettings, chat, functionViews);
 
-        Response<StreamingChatCompletions>? response = await RunRequestAsync<Response<StreamingChatCompletions>>(
-            () => this.Client.GetChatCompletionsStreamingAsync(this.ModelId, options, cancellationToken)).ConfigureAwait(false);
+        // Make the call to the chat completion service.
+        Response<StreamingChatCompletions> response = await RunRequestAsync(() => this.Client.GetChatCompletionsStreamingAsync(this.ModelId, chatOptions, cancellationToken)).ConfigureAwait(false);
 
-        if (response is null)
-        {
-            throw new SKException("Chat completions null response");
-        }
-
+        // Process all of the choices in the response.
         using StreamingChatCompletions streamingChatCompletions = response.Value;
         await foreach (StreamingChatChoice choice in streamingChatCompletions.GetChoicesStreaming(cancellationToken).ConfigureAwait(false))
         {
-            yield return new ChatStreamingResult(response.Value, choice);
+            // Ensure each fork has its own chat options so that added messages don't interact with each other.
+            // We also ensure the chat count is reset to 1 if it had been higher, to avoid forking out again
+            // when sending responses from function calls.
+            var newOptions = Clone(chatOptions);
+            newOptions.ChoiceCount = 1;
+            yield return new FunctionsChatStreamingResult(this, streamingChatCompletions, choice, functionViews, newOptions, context, requestSettings);
+        }
+    }
+
+    private sealed class FunctionsChatStreamingResult : IChatStreamingResult
+    {
+        private readonly ClientBase _client;
+        private readonly StreamingChatChoice _choice;
+        private readonly IReadOnlyList<FunctionView>? _functionViews;
+        private readonly ChatCompletionsOptions _chatOptions;
+        private readonly SKContext? _context;
+        private readonly AIRequestSettings? _requestSettings;
+
+        public FunctionsChatStreamingResult(
+            ClientBase client,
+            StreamingChatCompletions resultData,
+            StreamingChatChoice choice,
+            IReadOnlyList<FunctionView>? functionViews,
+            ChatCompletionsOptions chatOptions,
+            SKContext? context,
+            AIRequestSettings? requestSettings)
+        {
+            this._client = client;
+            this.ModelResult = new ModelResult(resultData);
+            this._choice = choice;
+            this._functionViews = functionViews;
+            this._chatOptions = chatOptions;
+            this._context = context;
+            this._requestSettings = requestSettings;
+        }
+
+        public ModelResult ModelResult { get; }
+
+        public async Task<ChatMessageBase> GetChatMessageAsync(CancellationToken cancellationToken = default)
+        {
+            ChatMessageBase? last = null;
+            await foreach (ChatMessageBase message in this.GetStreamingChatMessageAsync(cancellationToken).ConfigureAwait(false))
+            {
+                last = message;
+            }
+
+            return last ?? throw new SKException("Unable to get chat message from stream");
+        }
+
+        public async IAsyncEnumerable<ChatMessageBase> GetStreamingChatMessageAsync([EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            Response<StreamingChatCompletions>? response = null;
+            StreamingChatChoice choice = this._choice;
+            string? functionName;
+            StringBuilder? functionArguments = null;
+
+            do
+            {
+                functionName = null;
+                functionArguments?.Clear();
+
+                StreamingChatCompletions? streamingChatCompletions = response?.Value;
+                IAsyncEnumerator<StreamingChatChoice>? choices = null;
+                try
+                {
+                    // Stream the new chat if we have a new response to handle. `response`, and thus `streamingChatCompletions`,
+                    // will be null on first iteration.
+                    if (streamingChatCompletions is not null)
+                    {
+                        choices = streamingChatCompletions.GetChoicesStreaming(cancellationToken).GetAsyncEnumerator(cancellationToken);
+                        if (!await choices.MoveNextAsync().ConfigureAwait(false))
+                        {
+                            break;
+                        }
+
+                        choice = choices.Current;
+                    }
+
+                    // Enumerate this choice
+                    IAsyncEnumerator<ChatMessage> messagesEnumerator = choice.GetMessageStreaming(cancellationToken).GetAsyncEnumerator(cancellationToken);
+                    await using var _ = messagesEnumerator.ConfigureAwait(false);
+                    while (await messagesEnumerator.MoveNextAsync().ConfigureAwait(false))
+                    {
+                        ChatMessage? message = messagesEnumerator.Current;
+
+                        // Not a function call; yield the message. We yield each message individually as its own
+                        // result since we don't know if there will be a function call following it and we
+                        // don't want to buffer messages.
+                        if (message.FunctionCall is null)
+                        {
+                            yield return new SKChatMessage(message);
+                        }
+                        else
+                        {
+                            // Function call: gather up all parts of it to grab the function name and arguments.
+                            // It can be spread across many messages, and nothing meaningful should come after
+                            // the function's parts in the choice, so we can ignore anything there.
+                            do
+                            {
+                                // Aggregate the current message's function information.
+                                message = messagesEnumerator.Current;
+                                functionName ??= message.FunctionCall?.Name;
+                                if (message.FunctionCall?.Arguments is not null)
+                                {
+                                    (functionArguments ??= new()).Append(message.FunctionCall.Arguments);
+                                }
+                            }
+                            while (await messagesEnumerator.MoveNextAsync().ConfigureAwait(false));
+                            break;
+                        }
+                    }
+                }
+                finally
+                {
+                    if (choices is not null)
+                    {
+                        await choices.DisposeAsync().ConfigureAwait(false);
+                    }
+
+                    streamingChatCompletions?.Dispose();
+                }
+
+                // If there's no function to invoke, we're done.
+                if (functionName is null)
+                {
+                    break;
+                }
+
+                // Find the ISKFunction to invoke.
+                OpenAIFunctionResponse functionCall = OpenAIFunctionResponse.FromFunctionCall(new FunctionCall(functionName, functionArguments?.ToString() ?? ""));
+                if (this._context is null || !this._context.Functions.TryGetFunction(functionCall.PluginName, functionCall.FunctionName, out ISKFunction? function))
+                {
+                    // The requested function doesn't exist.
+                    throw new SKException("Requested function not found");
+                }
+
+                // Set the arguments to the function into the context in order to invoke it.
+                foreach (KeyValuePair<string, object> parameter in functionCall.Parameters)
+                {
+                    this._context.Variables.Set(parameter.Key, parameter.Value?.ToString() ?? "");
+                }
+
+                // Invoke the function, and store the result into the chat options for the next go around.
+                FunctionResult functionResult = await function.InvokeAsync(this._context, this._requestSettings, cancellationToken).ConfigureAwait(false);
+                this._chatOptions.Messages.Add(new ChatMessage(ChatRole.Function, functionResult.GetValue<object>()?.ToString() ?? "") { Name = function.Name });
+
+                // Make the call to the chat completion service to resubmit with the function result.
+                response = await RunRequestAsync(() => this._client.Client.GetChatCompletionsStreamingAsync(this._client.ModelId, this._chatOptions, cancellationToken)).ConfigureAwait(false);
+            }
+            while (true);
         }
     }
 
@@ -270,7 +451,7 @@ public abstract class ClientBase
     {
         ChatHistory chat = PrepareChatHistory(text, requestSettings, out OpenAIRequestSettings chatSettings);
 
-        return (await this.InternalGetChatResultsAsync(chat, chatSettings, cancellationToken).ConfigureAwait(false))
+        return (await this.InternalGetChatResultsAsync(chat, null, chatSettings, cancellationToken).ConfigureAwait(false))
             .OfType<ITextResult>()
             .ToList();
     }
@@ -282,7 +463,7 @@ public abstract class ClientBase
     {
         ChatHistory chat = PrepareChatHistory(text, requestSettings, out OpenAIRequestSettings chatSettings);
 
-        IAsyncEnumerable<IChatStreamingResult> chatCompletionStreamingResults = this.InternalGetChatStreamingResultsAsync(chat, chatSettings, cancellationToken);
+        IAsyncEnumerable<IChatStreamingResult> chatCompletionStreamingResults = this.InternalGetChatStreamingResultsAsync(chat, null, chatSettings, cancellationToken);
         await foreach (var chatCompletionStreamingResult in chatCompletionStreamingResults)
         {
             yield return (ITextStreamingResult)chatCompletionStreamingResult;
@@ -335,7 +516,10 @@ public abstract class ClientBase
         return options;
     }
 
-    private static ChatCompletionsOptions CreateChatCompletionsOptions(OpenAIRequestSettings requestSettings, IEnumerable<ChatMessageBase> chatHistory)
+    private static ChatCompletionsOptions CreateChatCompletionsOptions(
+        OpenAIRequestSettings requestSettings,
+        IEnumerable<ChatMessageBase> chatHistory,
+        IReadOnlyList<FunctionView>? functions)
     {
         if (requestSettings.ResultsPerPrompt is < 1 or > MaxResultsPerPrompt)
         {
@@ -352,7 +536,13 @@ public abstract class ClientBase
             ChoiceCount = requestSettings.ResultsPerPrompt,
         };
 
-        if (requestSettings.Functions is not null)
+        // Supplied functions take precedence over request settings functions
+        if (functions is not null)
+        {
+            options.FunctionCall = FunctionDefinition.Auto;
+            options.Functions = functions.Select(f => f.ToOpenAIFunction().ToFunctionDefinition()).ToList();
+        }
+        else if (requestSettings.Functions is not null)
         {
             if (requestSettings.FunctionCall == OpenAIRequestSettings.FunctionCallAuto)
             {
@@ -403,6 +593,35 @@ public abstract class ClientBase
         return options;
     }
 
+    private static ChatCompletionsOptions Clone(ChatCompletionsOptions original)
+    {
+        var newOptions = new ChatCompletionsOptions(original.Messages)
+        {
+            AzureExtensionsOptions = original.AzureExtensionsOptions,
+            ChoiceCount = original.ChoiceCount,
+            FrequencyPenalty = original.FrequencyPenalty,
+            FunctionCall = original.FunctionCall,
+            Functions = original.Functions,
+            MaxTokens = original.MaxTokens,
+            NucleusSamplingFactor = original.NucleusSamplingFactor,
+            PresencePenalty = original.PresencePenalty,
+            Temperature = original.Temperature,
+            User = original.User,
+        };
+
+        foreach (var s in original.StopSequences)
+        {
+            newOptions.StopSequences.Add(s);
+        }
+
+        foreach (var t in original.TokenSelectionBiases)
+        {
+            newOptions.TokenSelectionBiases.Add(t);
+        }
+
+        return newOptions;
+    }
+
     private static ChatRole GetValidChatRole(AuthorRole role)
     {
         var validRole = new ChatRole(role.Label);
@@ -430,7 +649,7 @@ public abstract class ClientBase
     {
         try
         {
-            return await request.Invoke().ConfigureAwait(false);
+            return await request().ConfigureAwait(false);
         }
         catch (RequestFailedException e)
         {
