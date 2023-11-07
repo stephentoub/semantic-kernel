@@ -73,7 +73,7 @@ public sealed class HuggingFaceTextEmbeddingGeneration : ITextEmbeddingGeneratio
 
         if (httpClient.BaseAddress == null && string.IsNullOrEmpty(endpoint))
         {
-            throw new SKException("The HttpClient BaseAddress and endpoint are both null or empty. Please ensure at least one is provided.");
+            throw new KernelException("The HttpClient BaseAddress and endpoint are both null or empty. Please ensure at least one is provided.");
         }
     }
 
@@ -130,7 +130,7 @@ public sealed class HuggingFaceTextEmbeddingGeneration : ITextEmbeddingGeneratio
         }
         else
         {
-            throw new SKException("No endpoint or HTTP client base address has been provided");
+            throw new KernelException("No endpoint or HTTP client base address has been provided");
         }
 
         return new Uri($"{baseUrl!.TrimEnd('/')}/{this._model}");

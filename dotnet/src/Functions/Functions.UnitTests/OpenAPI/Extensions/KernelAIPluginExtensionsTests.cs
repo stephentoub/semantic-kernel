@@ -31,9 +31,9 @@ public sealed class KernelAIPluginExtensionsTests : IDisposable
     private readonly Stream _openApiDocument;
 
     /// <summary>
-    /// IKernel instance.
+    /// Kernel instance.
     /// </summary>
-    private readonly IKernel _kernel;
+    private readonly Kernel _kernel;
 
     /// <summary>
     /// Creates an instance of a <see cref="KernelAIPluginExtensionsTests"/> class.
@@ -214,7 +214,7 @@ public sealed class KernelAIPluginExtensionsTests : IDisposable
         var fakePlugin = new FakePlugin();
 
         var openApiPlugins = await this._kernel.ImportPluginFunctionsAsync("fakePlugin", this._openApiDocument, executionParameters);
-        var fakePlugins = this._kernel.ImportFunctions(fakePlugin);
+        var fakePlugins = this._kernel.ImportPlugin(fakePlugin);
 
         var kernel = KernelBuilder.Create();
 

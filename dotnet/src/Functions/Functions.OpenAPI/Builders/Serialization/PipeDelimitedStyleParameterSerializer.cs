@@ -29,12 +29,12 @@ internal static class PipeDelimitedStyleParameterSerializer
 
         if (parameter.Style != RestApiOperationParameterStyle.PipeDelimited)
         {
-            throw new SKException($"Unexpected Rest Api operation parameter style `{parameter.Style}`. Parameter name `{parameter.Name}`.");
+            throw new KernelException($"Unexpected Rest Api operation parameter style `{parameter.Style}`. Parameter name `{parameter.Name}`.");
         }
 
         if (parameter.Type != ArrayType)
         {
-            throw new SKException($"Serialization of Rest API operation parameters of type `{parameter.Type}` is not supported for the `{RestApiOperationParameterStyle.PipeDelimited}` style parameters. Parameter name `{parameter.Name}`.");
+            throw new KernelException($"Serialization of Rest API operation parameters of type `{parameter.Type}` is not supported for the `{RestApiOperationParameterStyle.PipeDelimited}` style parameters. Parameter name `{parameter.Name}`.");
         }
 
         return SerializeArrayParameter(parameter, argument);
@@ -50,7 +50,7 @@ internal static class PipeDelimitedStyleParameterSerializer
     {
         if (JsonNode.Parse(argument) is not JsonArray array)
         {
-            throw new SKException($"Can't deserialize parameter name `{parameter.Name}` argument `{argument}` to JSON array.");
+            throw new KernelException($"Can't deserialize parameter name `{parameter.Name}` argument `{argument}` to JSON array.");
         }
 
         if (parameter.Expand)

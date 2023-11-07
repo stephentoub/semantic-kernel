@@ -30,7 +30,7 @@ public sealed class PromptTemplateEngineTests
     private readonly ContextVariables _variables;
     private readonly Mock<IReadOnlyFunctionCollection> _functions;
     private readonly ITestOutputHelper _logger;
-    private readonly Mock<IKernel> _kernel;
+    private readonly Mock<Kernel> _kernel;
     private readonly Mock<IFunctionRunner> _functionRunner;
     private readonly Mock<IAIServiceProvider> _serviceProvider;
     private readonly Mock<IAIServiceSelector> _serviceSelector;
@@ -41,7 +41,7 @@ public sealed class PromptTemplateEngineTests
         this._target = new BasicPromptTemplateEngine(TestConsoleLogger.LoggerFactory);
         this._variables = new ContextVariables(Guid.NewGuid().ToString("X"));
         this._functions = new Mock<IReadOnlyFunctionCollection>();
-        this._kernel = new Mock<IKernel>();
+        this._kernel = new Mock<Kernel>();
         this._functionRunner = new Mock<IFunctionRunner>();
         this._serviceProvider = new Mock<IAIServiceProvider>();
         this._serviceSelector = new Mock<IAIServiceSelector>();
@@ -152,15 +152,15 @@ public sealed class PromptTemplateEngineTests
     public async Task ItRendersCodeUsingInputAsync()
     {
         // Arrange
-        string MyFunctionAsync(SKContext context)
+        string MyFunctionAsync(KernelContext context)
         {
             this._logger.WriteLine("MyFunction call received, input: {0}", context.Variables.Input);
             return $"F({context.Variables.Input})";
         }
 
-        List<ISKFunction> functions = new()
+        List<IKernelFunction> functions = new()
         {
-            SKFunction.Create(Method(MyFunctionAsync), this),
+            KernelFunction.Create(Method(MyFunctionAsync), this),
         };
 
         Assert.NotNull(functions[0]);
@@ -183,13 +183,13 @@ public sealed class PromptTemplateEngineTests
     public async Task ItRendersCodeUsingVariablesAsync()
     {
         // Arrange
-        string MyFunctionAsync(SKContext context)
+        string MyFunctionAsync(KernelContext context)
         {
             this._logger.WriteLine("MyFunction call received, input: {0}", context.Variables.Input);
             return $"F({context.Variables.Input})";
         }
 
-        var func = SKFunction.Create(Method(MyFunctionAsync), this);
+        var func = KernelFunction.Create(Method(MyFunctionAsync), this);
 
         Assert.NotNull(func);
 
@@ -221,7 +221,7 @@ public sealed class PromptTemplateEngineTests
             return $"[{dateStr}] {name} ({age}): \"{slogan}\"";
         }
 
-        var func = SKFunction.Create(Method(MyFunctionAsync), this);
+        var func = KernelFunction.Create(Method(MyFunctionAsync), this);
 
         Assert.NotNull(func);
 
@@ -254,7 +254,7 @@ public sealed class PromptTemplateEngineTests
             return $"[{dateStr}] {name} ({age}): \"{slogan}\"";
         }
 
-        ISKFunction func = SKFunction.Create(Method(MyFunctionAsync), this);
+        IKernelFunction func = KernelFunction.Create(Method(MyFunctionAsync), this);
         Assert.NotNull(func);
 
         this._variables.Set("input", "Mario");
@@ -263,7 +263,7 @@ public sealed class PromptTemplateEngineTests
         var context = this.MockContext();
 
         // Act
-        var result = await Assert.ThrowsAsync<SKException>(() => this._target.RenderAsync(template, context));
+        var result = await Assert.ThrowsAsync<KernelException>(() => this._target.RenderAsync(template, context));
         Assert.Equal($"Named argument values need to be prefixed with a quote or {Symbols.VarPrefix}.", result.Message);
     }
 
@@ -282,7 +282,7 @@ public sealed class PromptTemplateEngineTests
             return $"[{dateStr}] {name} ({age}): \"{slogan}\"";
         }
 
-        ISKFunction func = SKFunction.Create(Method(MyFunctionAsync), this);
+        IKernelFunction func = KernelFunction.Create(Method(MyFunctionAsync), this);
 
         Assert.NotNull(func);
 
@@ -310,31 +310,31 @@ public sealed class PromptTemplateEngineTests
         this._variables.Update("BAR");
         this._variables.Set("myVar", "BAZ");
 
-        string MyFunction1Async(SKContext context)
+        string MyFunction1Async(KernelContext context)
         {
             this._logger.WriteLine("MyFunction1 call received, input: {0}", context.Variables.Input);
             context.Variables.Update("foo");
             return "F(OUTPUT-FOO)";
         }
-        string MyFunction2Async(SKContext context)
+        string MyFunction2Async(KernelContext context)
         {
             // Input value should be "BAR" because the variable $input is immutable in MyFunction1
             this._logger.WriteLine("MyFunction2 call received, input: {0}", context.Variables.Input);
             context.Variables.Set("myVar", "bar");
             return context.Variables.Input;
         }
-        string MyFunction3Async(SKContext context)
+        string MyFunction3Async(KernelContext context)
         {
             // Input value should be "BAZ" because the variable $myVar is immutable in MyFunction2
             this._logger.WriteLine("MyFunction3 call received, input: {0}", context.Variables.Input);
             return context.Variables.TryGetValue("myVar", out string? value) ? value : "";
         }
 
-        var functions = new List<ISKFunction>()
+        var functions = new List<IKernelFunction>()
         {
-            SKFunction.Create(Method(MyFunction1Async), this, "func1"),
-            SKFunction.Create(Method(MyFunction2Async), this, "func2"),
-            SKFunction.Create(Method(MyFunction3Async), this, "func3")
+            KernelFunction.Create(Method(MyFunction1Async), this, "func1"),
+            KernelFunction.Create(Method(MyFunction2Async), this, "func2"),
+            KernelFunction.Create(Method(MyFunction3Async), this, "func3")
         };
 
         this.MockFunctionRunner(functions);
@@ -350,14 +350,14 @@ public sealed class PromptTemplateEngineTests
     public async Task ItRendersAsyncCodeUsingVariablesAsync()
     {
         // Arrange
-        Task<string> MyFunctionAsync(SKContext context)
+        Task<string> MyFunctionAsync(KernelContext context)
         {
             // Input value should be "BAR" because the variable $myVar is passed in
             this._logger.WriteLine("MyFunction call received, input: {0}", context.Variables.Input);
             return Task.FromResult(context.Variables.Input);
         }
 
-        ISKFunction func = SKFunction.Create(Method(MyFunctionAsync), this);
+        IKernelFunction func = KernelFunction.Create(Method(MyFunctionAsync), this);
         Assert.NotNull(func);
 
         this._variables.Set("myVar", "BAR");
@@ -377,31 +377,31 @@ public sealed class PromptTemplateEngineTests
         return method.Method;
     }
 
-    private void MockFunctionRunner(ISKFunction function)
+    private void MockFunctionRunner(IKernelFunction function)
     {
         this._functionRunner.Setup(r => r.RunAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ContextVariables>(), It.IsAny<CancellationToken>()))
             .Returns<string, string, ContextVariables, CancellationToken>((pluginName, functionName, variables, cancellationToken) =>
             {
-                var context = new SKContext(this._functionRunner.Object, this._serviceProvider.Object, this._serviceSelector.Object, variables);
+                var context = new KernelContext(this._functionRunner.Object, this._serviceProvider.Object, this._serviceSelector.Object, variables);
                 return function.InvokeAsync(context, null, cancellationToken);
             });
     }
 
-    private void MockFunctionRunner(List<ISKFunction> functions)
+    private void MockFunctionRunner(List<IKernelFunction> functions)
     {
         this._functionRunner.Setup(r => r.RunAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ContextVariables>(), It.IsAny<CancellationToken>()))
             .Returns<string, string, ContextVariables, CancellationToken>((pluginName, functionName, variables, cancellationToken) =>
             {
-                var context = new SKContext(this._functionRunner.Object, this._serviceProvider.Object, this._serviceSelector.Object, variables);
+                var context = new KernelContext(this._functionRunner.Object, this._serviceProvider.Object, this._serviceSelector.Object, variables);
                 var function = functions.First(f => f.PluginName == functionName);
 
                 return function.InvokeAsync(context, null, cancellationToken);
             });
     }
 
-    private SKContext MockContext()
+    private KernelContext MockContext()
     {
-        return new SKContext(
+        return new KernelContext(
             this._functionRunner.Object,
             this._serviceProvider.Object,
             this._serviceSelector.Object,

@@ -88,7 +88,7 @@ internal static class Extensions
         return response;
     }
 
-    internal static ISKFunction GetFunction(this IReadOnlySkillCollection skills, string skillName, string functionName)
+    internal static IKernelFunction GetFunction(this IReadOnlySkillCollection skills, string skillName, string functionName)
     {
         return skills.GetFunction(skillName, functionName);
     }
@@ -100,7 +100,7 @@ internal static class Extensions
 
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope",
         Justification = "The caller invokes native skills during a request and the HttpClient instance must remain alive for those requests to be successful.")]
-    internal static void RegisterNativeGraphSkills(this IKernel kernel, string graphToken, IEnumerable<string>? skillsToLoad = null)
+    internal static void RegisterNativeGraphSkills(this Kernel kernel, string graphToken, IEnumerable<string>? skillsToLoad = null)
     {
         IList<DelegatingHandler> handlers = GraphClientFactory.CreateDefaultHandlers(new TokenAuthenticationProvider(graphToken));
         GraphServiceClient graphServiceClient = new(GraphClientFactory.Create(handlers));
@@ -130,12 +130,12 @@ internal static class Extensions
         }
     }
 
-    internal static void RegisterTextMemory(this IKernel kernel)
+    internal static void RegisterTextMemory(this Kernel kernel)
     {
         _ = kernel.ImportSkill(new TextMemorySkill(kernel.Memory), nameof(TextMemorySkill));
     }
 
-    internal static void RegisterNativeSkills(this IKernel kernel, IEnumerable<string>? skillsToLoad = null)
+    internal static void RegisterNativeSkills(this Kernel kernel, IEnumerable<string>? skillsToLoad = null)
     {
         if (ShouldLoad(nameof(DocumentSkill), skillsToLoad))
         {
@@ -163,7 +163,7 @@ internal static class Extensions
     }
 
     internal static void RegisterSemanticSkills(
-        this IKernel kernel,
+        this Kernel kernel,
         string skillsFolder,
         ILogger logger,
         IEnumerable<string>? skillsToLoad = null)

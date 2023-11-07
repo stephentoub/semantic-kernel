@@ -151,7 +151,7 @@ public sealed class TimePlugin
     /// Get the date a provided number of days in the past
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "3"
+    /// KernelContext.Variables["input"] = "3"
     /// {{time.daysAgo}} => Sunday, January 12, 2025 9:15 PM
     /// </example>
     /// <returns> The date the provided number of days before today </returns>

@@ -231,7 +231,7 @@ internal sealed class CodeTokenizer
                     namedArgValuePrefix = currentChar;
                     if (!IsQuote((char)namedArgValuePrefix) && namedArgValuePrefix != Symbols.VarPrefix)
                     {
-                        throw new SKException($"Named argument values need to be prefixed with a quote or {Symbols.VarPrefix}.");
+                        throw new KernelException($"Named argument values need to be prefixed with a quote or {Symbols.VarPrefix}.");
                     }
                 }
                 currentTokenContent.Append(currentChar);
@@ -245,7 +245,7 @@ internal sealed class CodeTokenizer
             {
                 if (!spaceSeparatorFound)
                 {
-                    throw new SKException("Tokens must be separated by one space least");
+                    throw new KernelException("Tokens must be separated by one space least");
                 }
 
                 if (IsQuote(currentChar))
@@ -303,7 +303,7 @@ internal sealed class CodeTokenizer
                 break;
 
             case TokenTypes.None:
-                throw new SKException("Tokens must be separated by one space least");
+                throw new KernelException("Tokens must be separated by one space least");
         }
 
         return blocks;

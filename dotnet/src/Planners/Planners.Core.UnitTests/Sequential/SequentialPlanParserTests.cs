@@ -24,32 +24,32 @@ public class SequentialPlanParserTests
         this._testOutputHelper = testOutputHelper;
     }
 
-    private Mock<IKernel> CreateKernelMock(
+    private Mock<Kernel> CreateKernelMock(
         out Mock<IReadOnlyFunctionCollection> mockFunctionCollection,
         out Mock<ILogger> mockLogger)
     {
         mockFunctionCollection = new Mock<IReadOnlyFunctionCollection>();
         mockLogger = new Mock<ILogger>();
 
-        var kernelMock = new Mock<IKernel>();
+        var kernelMock = new Mock<Kernel>();
         kernelMock.SetupGet(k => k.Functions).Returns(mockFunctionCollection.Object);
         kernelMock.SetupGet(k => k.LoggerFactory).Returns(NullLoggerFactory.Instance);
 
         return kernelMock;
     }
 
-    private SKContext CreateSKContext(
+    private KernelContext CreateKernelContext(
         IFunctionRunner functionRunner,
         IAIServiceProvider serviceProvider,
         IAIServiceSelector serviceSelector,
         ContextVariables? variables = null)
     {
-        return new SKContext(functionRunner, serviceProvider, serviceSelector, variables);
+        return new KernelContext(functionRunner, serviceProvider, serviceSelector, variables);
     }
 
-    private static Mock<ISKFunction> CreateMockFunction(FunctionView functionView, string result = "")
+    private static Mock<IKernelFunction> CreateMockFunction(FunctionView functionView, string result = "")
     {
-        var mockFunction = new Mock<ISKFunction>();
+        var mockFunction = new Mock<IKernelFunction>();
         mockFunction.Setup(x => x.Describe()).Returns(functionView);
         mockFunction.Setup(x => x.Name).Returns(functionView.Name);
         mockFunction.Setup(x => x.PluginName).Returns(functionView.PluginName);
@@ -57,7 +57,7 @@ public class SequentialPlanParserTests
     }
 
     private void CreateKernelAndFunctionCreateMocks(List<(string name, string pluginName, string description, bool isSemantic, string result)> functions,
-        out IKernel kernel)
+        out Kernel kernel)
     {
         var kernelMock = this.CreateKernelMock(out var functionCollection, out _);
         kernel = kernelMock.Object;
@@ -70,7 +70,7 @@ public class SequentialPlanParserTests
         kernelMock.Setup(k => k.CreateNewContext(It.IsAny<ContextVariables>(), It.IsAny<IReadOnlyFunctionCollection>(), It.IsAny<ILoggerFactory>(), It.IsAny<CultureInfo>()))
             .Returns<ContextVariables, IReadOnlyFunctionCollection, ILoggerFactory, CultureInfo>((contextVariables, skills, loggerFactory, culture) =>
             {
-                return this.CreateSKContext(functionRunnerMock.Object, serviceProviderMock.Object, serviceSelector.Object, contextVariables);
+                return this.CreateKernelContext(functionRunnerMock.Object, serviceProviderMock.Object, serviceSelector.Object, contextVariables);
             });
 
         var functionsView = new List<FunctionView>();
@@ -83,9 +83,9 @@ public class SequentialPlanParserTests
             var mockFunction = CreateMockFunction(functionView);
             functionsView.Add(functionView);
 
-            var result = this.CreateSKContext(functionRunnerMock.Object, serviceProviderMock.Object, serviceSelector.Object);
+            var result = this.CreateKernelContext(functionRunnerMock.Object, serviceProviderMock.Object, serviceSelector.Object);
             result.Variables.Update(resultString);
-            mockFunction.Setup(x => x.InvokeAsync(It.IsAny<SKContext>(), null, It.IsAny<CancellationToken>()))
+            mockFunction.Setup(x => x.InvokeAsync(It.IsAny<KernelContext>(), null, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new FunctionResult(name, pluginName, result));
 
             if (string.IsNullOrEmpty(name))
@@ -101,7 +101,7 @@ public class SequentialPlanParserTests
             {
                 functionCollection.Setup(x => x.GetFunction(It.Is<string>(s => s == pluginName), It.Is<string>(s => s == name)))
                     .Returns(mockFunction.Object);
-                ISKFunction? outFunc = mockFunction.Object;
+                IKernelFunction? outFunc = mockFunction.Object;
                 functionCollection.Setup(x => x.TryGetFunction(It.Is<string>(s => s == name), out outFunc)).Returns(true);
                 functionCollection.Setup(x => x.TryGetFunction(It.Is<string>(s => s == pluginName), It.Is<string>(s => s == name), out outFunc)).Returns(true);
             }
@@ -181,7 +181,7 @@ public class SequentialPlanParserTests
         var planString = "<someTag>";
 
         // Act
-        Assert.Throws<SKException>(() => planString.ToPlanFromXml(GoalText, kernel.Functions.GetFunctionCallback()));
+        Assert.Throws<KernelException>(() => planString.ToPlanFromXml(GoalText, kernel.Functions.GetFunctionCallback()));
     }
 
     // Test that contains a #text node in the plan
@@ -301,7 +301,7 @@ public class SequentialPlanParserTests
         }
         else
         {
-            Assert.Throws<SKException>(() => planText.ToPlanFromXml(string.Empty, kernel.Functions.GetFunctionCallback(), allowMissingFunctions));
+            Assert.Throws<KernelException>(() => planText.ToPlanFromXml(string.Empty, kernel.Functions.GetFunctionCallback(), allowMissingFunctions));
         }
     }
 

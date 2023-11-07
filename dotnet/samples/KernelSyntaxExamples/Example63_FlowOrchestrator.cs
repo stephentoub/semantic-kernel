@@ -242,7 +242,7 @@ Do not expose the regex unless asked.
 
         private readonly AIRequestSettings _chatRequestSettings;
 
-        public ChatPlugin(IKernel kernel)
+        public ChatPlugin(Kernel kernel)
         {
             this._chat = kernel.GetService<IChatCompletion>();
             this._chatRequestSettings = new OpenAIRequestSettings
@@ -260,7 +260,7 @@ Do not expose the regex unless asked.
             [SKName("email_address")]
             [Description("The email address provided by the user, pass no matter what the value is")]
             string email,
-            SKContext context)
+            KernelContext context)
         {
             var chat = this._chat.CreateNewChat(SystemPrompt);
             chat.AddUserMessage(Goal);
@@ -302,7 +302,7 @@ Do not expose the regex unless asked.
             string emailAddress,
             [SKName("answer")][Description("answer, which is going to be the email content")]
             string answer,
-            SKContext context)
+            KernelContext context)
         {
             var contract = new Email()
             {

@@ -41,7 +41,7 @@ public static class Example62_CustomAIServiceSelector
             return;
         }
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
             .WithLoggerFactory(ConsoleLogger.LoggerFactory)
             .WithAzureOpenAIChatCompletionService(
                 deploymentName: chatDeploymentName,
@@ -65,7 +65,7 @@ public static class Example62_CustomAIServiceSelector
         await RunSemanticFunctionAsync(kernel, "Hello AI, provide an indepth description of what can you do for me as a bulleted list?", modelSettings);
     }
 
-    public static async Task RunSemanticFunctionAsync(IKernel kernel, string prompt, List<AIRequestSettings> modelSettings)
+    public static async Task RunSemanticFunctionAsync(Kernel kernel, string prompt, List<AIRequestSettings> modelSettings)
     {
         Console.WriteLine($"======== {prompt} ========");
 
@@ -147,7 +147,7 @@ public class MyAIServiceSelector : IAIServiceSelector
             }
         }
 
-        throw new SKException("Unable to find AI service to handled request.");
+        throw new KernelException("Unable to find AI service to handled request.");
     }
 
     /// <summary>

@@ -72,11 +72,11 @@ internal sealed class CodeBlock : Block, ICodeRendering
     }
 
     /// <inheritdoc/>
-    public async Task<string> RenderCodeAsync(SKContext context, CancellationToken cancellationToken = default)
+    public async Task<string> RenderCodeAsync(KernelContext context, CancellationToken cancellationToken = default)
     {
         if (!this._validated && !this.IsValid(out var error))
         {
-            throw new SKException(error);
+            throw new KernelException(error);
         }
 
         this.Logger.LogTrace("Rendering code: `{Content}`", this.Content);
@@ -91,7 +91,7 @@ internal sealed class CodeBlock : Block, ICodeRendering
                 return await this.RenderFunctionCallAsync((FunctionIdBlock)this._tokens[0], context).ConfigureAwait(false);
         }
 
-        throw new SKException($"Unexpected first token type: {this._tokens[0].Type:G}");
+        throw new KernelException($"Unexpected first token type: {this._tokens[0].Type:G}");
     }
 
     #region private ================================================================================
@@ -99,7 +99,7 @@ internal sealed class CodeBlock : Block, ICodeRendering
     private bool _validated;
     private readonly List<Block> _tokens;
 
-    private async Task<string> RenderFunctionCallAsync(FunctionIdBlock fBlock, SKContext context)
+    private async Task<string> RenderFunctionCallAsync(FunctionIdBlock fBlock, KernelContext context)
     {
         // Clone the context to avoid unexpected variable mutations from the inner function execution
         ContextVariables inputVariables = context.Variables.Clone();
@@ -180,7 +180,7 @@ internal sealed class CodeBlock : Block, ICodeRendering
             {
                 var errorMsg = "Functions support up to one positional argument";
                 this.Logger.LogError(errorMsg);
-                throw new SKException($"Unexpected first token type: {this._tokens[i].Type:G}");
+                throw new KernelException($"Unexpected first token type: {this._tokens[i].Type:G}");
             }
 
             // Sensitive data, logging as trace, disabled by default

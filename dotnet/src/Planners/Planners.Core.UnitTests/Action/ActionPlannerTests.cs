@@ -48,14 +48,14 @@ public sealed class ActionPlannerTests
         var planner = new ActionPlanner(kernel.Object);
 
         // Act & Assert
-        await Assert.ThrowsAsync<SKException>(() => planner.CreatePlanAsync("goal"));
+        await Assert.ThrowsAsync<KernelException>(() => planner.CreatePlanAsync("goal"));
     }
 
     [Fact]
     public void UsesPromptDelegateWhenProvided()
     {
         // Arrange
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
         kernel.Setup(x => x.LoggerFactory).Returns(NullLoggerFactory.Instance);
         var getPromptTemplateMock = new Mock<Func<string>>();
         var config = new ActionPlannerConfig()
@@ -98,7 +98,7 @@ This plan uses the `GitHubPlugin.PullsList` function to list the open pull reque
         var planner = new ActionPlanner(kernel.Object);
 
         // Act & Assert
-        await Assert.ThrowsAsync<SKException>(async () => await planner.CreatePlanAsync("goal"));
+        await Assert.ThrowsAsync<KernelException>(async () => await planner.CreatePlanAsync("goal"));
     }
 
     [Fact]
@@ -156,7 +156,7 @@ This plan uses the `GitHubPlugin.PullsList` function to list the open pull reque
         Assert.Equal(expected, result);
     }
 
-    private Mock<IKernel> CreateMockKernelAndFunctionFlowWithTestString(string testPlanString, Mock<IFunctionCollection>? functions = null)
+    private Mock<Kernel> CreateMockKernelAndFunctionFlowWithTestString(string testPlanString, Mock<IFunctionCollection>? functions = null)
     {
         if (functions is null)
         {
@@ -166,18 +166,18 @@ This plan uses the `GitHubPlugin.PullsList` function to list the open pull reque
         var functionRunner = new Mock<IFunctionRunner>();
         var serviceProvider = new Mock<IAIServiceProvider>();
         var serviceSelector = new Mock<IAIServiceSelector>();
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
 
-        var returnContext = new SKContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, new ContextVariables(testPlanString), functions.Object);
+        var returnContext = new KernelContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, new ContextVariables(testPlanString), functions.Object);
 
-        var context = new SKContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, functions: functions.Object);
+        var context = new KernelContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, functions: functions.Object);
 
-        var mockFunctionFlowFunction = new Mock<ISKFunction>();
+        var mockFunctionFlowFunction = new Mock<IKernelFunction>();
         mockFunctionFlowFunction.Setup(x => x.InvokeAsync(
-            It.IsAny<SKContext>(),
+            It.IsAny<KernelContext>(),
             null,
             default
-        )).Callback<SKContext, object, CancellationToken>(
+        )).Callback<KernelContext, object, CancellationToken>(
             (c, s, ct) => c.Variables.Update("Hello world!")
         ).Returns(() => Task.FromResult(new FunctionResult("FunctionName", "PluginName", returnContext, testPlanString)));
 
@@ -186,16 +186,16 @@ This plan uses the `GitHubPlugin.PullsList` function to list the open pull reque
         kernel.Setup(x => x.Functions).Returns(functions.Object);
         kernel.Setup(x => x.LoggerFactory).Returns(NullLoggerFactory.Instance);
 
-        kernel.Setup(x => x.RegisterCustomFunction(It.IsAny<ISKFunction>()))
+        kernel.Setup(x => x.RegisterCustomFunction(It.IsAny<IKernelFunction>()))
             .Returns(mockFunctionFlowFunction.Object);
 
         return kernel;
     }
 
-    // Method to create Mock<ISKFunction> objects
-    private static Mock<ISKFunction> CreateMockFunction(FunctionView functionView)
+    // Method to create Mock<IKernelFunction> objects
+    private static Mock<IKernelFunction> CreateMockFunction(FunctionView functionView)
     {
-        var mockFunction = new Mock<ISKFunction>();
+        var mockFunction = new Mock<IKernelFunction>();
         mockFunction.Setup(x => x.Describe()).Returns(functionView);
         mockFunction.Setup(x => x.Name).Returns(functionView.Name);
         mockFunction.Setup(x => x.PluginName).Returns(functionView.PluginName);
@@ -220,15 +220,15 @@ This plan uses the `GitHubPlugin.PullsList` function to list the open pull reque
             functionsView.Add(functionView);
 
             mockFunction.Setup(x =>
-                    x.InvokeAsync(It.IsAny<SKContext>(), It.IsAny<AIRequestSettings>(), It.IsAny<CancellationToken>()))
-                .Returns<SKContext, AIRequestSettings, CancellationToken>((context, settings, CancellationToken) =>
+                    x.InvokeAsync(It.IsAny<KernelContext>(), It.IsAny<AIRequestSettings>(), It.IsAny<CancellationToken>()))
+                .Returns<KernelContext, AIRequestSettings, CancellationToken>((context, settings, CancellationToken) =>
                 {
                     context.Variables.Update("MOCK FUNCTION CALLED");
                     return Task.FromResult(new FunctionResult(name, pluginName, context));
                 });
             plugins.Setup(x => x.GetFunction(pluginName, name))
                 .Returns(mockFunction.Object);
-            ISKFunction? outFunc = mockFunction.Object;
+            IKernelFunction? outFunc = mockFunction.Object;
             plugins.Setup(x => x.TryGetFunction(pluginName, name, out outFunc)).Returns(true);
         }
 

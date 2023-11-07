@@ -49,8 +49,8 @@ internal static class SequentialPlanParser
     /// <param name="getFunctionCallback">The callback to get a plugin function.</param>
     /// <param name="allowMissingFunctions">Whether to allow missing functions in the plan on creation.</param>
     /// <returns>The plan.</returns>
-    /// <exception cref="SKException">Thrown when the plan xml is invalid.</exception>
-    internal static Plan ToPlanFromXml(this string xmlString, string goal, Func<string, string, ISKFunction?> getFunctionCallback, bool allowMissingFunctions = false)
+    /// <exception cref="KernelException">Thrown when the plan xml is invalid.</exception>
+    internal static Plan ToPlanFromXml(this string xmlString, string goal, Func<string, string, IKernelFunction?> getFunctionCallback, bool allowMissingFunctions = false)
     {
         XmlDocument xmlDoc = new();
         try
@@ -85,12 +85,12 @@ internal static class SequentialPlanParser
                 }
                 catch (XmlException ex)
                 {
-                    throw new SKException($"Failed to parse plan xml strings: '{xmlString}' or '{planXml}'", ex);
+                    throw new KernelException($"Failed to parse plan xml strings: '{xmlString}' or '{planXml}'", ex);
                 }
             }
             else
             {
-                throw new SKException($"Failed to parse plan xml string: '{xmlString}'", e);
+                throw new KernelException($"Failed to parse plan xml string: '{xmlString}'", e);
             }
         }
 
@@ -174,7 +174,7 @@ internal static class SequentialPlanParser
                             }
                             else
                             {
-                                throw new SKException($"Failed to find function '{pluginFunctionName}' in plugin '{pluginName}'.");
+                                throw new KernelException($"Failed to find function '{pluginFunctionName}' in plugin '{pluginName}'.");
                             }
                         }
                     }

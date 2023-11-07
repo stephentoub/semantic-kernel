@@ -26,7 +26,7 @@ namespace NCalcPlugins;
 /// </example>
 public class LanguageCalculatorPlugin
 {
-    private readonly ISKFunction _mathTranslator;
+    private readonly IKernelFunction _mathTranslator;
     private const string MathTranslatorPrompt =
         @"Translate a math problem into a expression that can be executed using .net NCalc library. Use the output of running this code to answer the question.
 Available functions: Abs, Acos, Asin, Atan, Ceiling, Cos, Exp, Floor, IEEERemainder, Log, Log10, Max, Min, Pow, Round, Sign, Sin, Sqrt, Tan, and Truncate. in and if are also supported.
@@ -65,7 +65,7 @@ Question: {{ $input }}
     /// Initializes a new instance of the <see cref="LanguageCalculatorPlugin"/> class.
     /// </summary>
     /// <param name="kernel">The kernel to be used for creating the semantic function.</param>
-    public LanguageCalculatorPlugin(IKernel kernel)
+    public LanguageCalculatorPlugin(Kernel kernel)
     {
         this._mathTranslator = kernel.CreateSemanticFunction(
             MathTranslatorPrompt,
@@ -93,7 +93,7 @@ Question: {{ $input }}
     public async Task<string> CalculateAsync(
         [Description("A valid mathematical expression that could be executed by a calculator capable of more advanced math functions like sin/cosine/floor.")]
         string input,
-        SKContext context)
+        KernelContext context)
     {
         string answer;
 

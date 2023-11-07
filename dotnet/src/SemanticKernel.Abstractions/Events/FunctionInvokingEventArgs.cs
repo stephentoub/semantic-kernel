@@ -7,7 +7,7 @@ namespace Microsoft.SemanticKernel.Events;
 /// <summary>
 /// Event arguments available to the Kernel.FunctionInvoking event.
 /// </summary>
-public class FunctionInvokingEventArgs : SKCancelEventArgs
+public class FunctionInvokingEventArgs : KernelCancelEventArgs
 {
     /// <summary>
     /// Indicates if the function execution should be skipped.
@@ -18,8 +18,9 @@ public class FunctionInvokingEventArgs : SKCancelEventArgs
     /// Initializes a new instance of the <see cref="FunctionInvokingEventArgs"/> class.
     /// </summary>
     /// <param name="functionView">Function view details</param>
+    /// <param name="kernel">The kernel.</param>
     /// <param name="context">Context related to the event</param>
-    public FunctionInvokingEventArgs(FunctionView functionView, SKContext context) : base(functionView, context)
+    public FunctionInvokingEventArgs(FunctionView functionView, Kernel kernel, KernelContext context) : base(functionView, kernel, context)
     {
     }
 

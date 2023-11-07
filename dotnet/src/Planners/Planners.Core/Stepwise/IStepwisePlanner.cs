@@ -18,6 +18,6 @@ public interface IStepwisePlanner
     /// </summary>
     /// <param name="goal">The goal to create a plan for.</param>
     /// <returns>The plan.</returns>
-    /// <exception cref="SKException">Thrown when the plan cannot be created.</exception>
+    /// <exception cref="KernelException">Thrown when the plan cannot be created.</exception>
     Plan CreatePlan(string goal);
 }

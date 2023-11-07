@@ -28,11 +28,11 @@ public static class Example10_DescribeAllPluginsAndFunctions
 
         // Import a native plugin
         var staticText = new StaticTextPlugin();
-        kernel.ImportFunctions(staticText, "StaticTextPlugin");
+        kernel.ImportPlugin(staticText, "StaticTextPlugin");
 
         // Import another native plugin
         var text = new TextPlugin();
-        kernel.ImportFunctions(text, "AnotherTextPlugin");
+        kernel.ImportPlugin(text, "AnotherTextPlugin");
 
         // Import a semantic plugin
         string folder = RepoFiles.SamplePluginsPath();

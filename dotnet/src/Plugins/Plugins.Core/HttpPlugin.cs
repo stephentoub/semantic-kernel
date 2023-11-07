@@ -14,7 +14,7 @@ namespace Microsoft.SemanticKernel.Plugins.Core;
 /// <example>
 /// Usage: kernel.ImportFunctions(new HttpPlugin(), "http");
 /// Examples:
-/// SKContext.Variables["url"] = "https://www.bing.com"
+/// KernelContext.Variables["url"] = "https://www.bing.com"
 /// {{http.getAsync $url}}
 /// {{http.postAsync $url}}
 /// {{http.putAsync $url}}

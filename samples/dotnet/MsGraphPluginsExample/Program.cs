@@ -108,7 +108,7 @@ public sealed class Program
 
         // Initialize the Semantic Kernel and and register connections with OpenAI/Azure OpenAI instances.
         KernelBuilder builder = new KernelBuilder()
-            .WithLogger(loggerFactory.CreateLogger<IKernel>());
+            .WithLogger(loggerFactory.CreateLogger<Kernel>());
 
         if (configuration.GetSection("AzureOpenAI:ServiceId").Value != null)
         {
@@ -137,7 +137,7 @@ public sealed class Program
             }
         }
 
-        IKernel sk = builder.Build();
+        Kernel sk = builder.Build();
 
         var onedrive = sk.ImportSkill(oneDriveSkill, "onedrive");
         var todo = sk.ImportSkill(todoSkill, "todo");
@@ -145,7 +145,7 @@ public sealed class Program
 
         string skillParentDirectory = RepoFiles.SamplePluginsPath();
 
-        IDictionary<string, ISKFunction> summarizeSkills =
+        IDictionary<string, IKernelFunction> summarizeSkills =
             sk.ImportSemanticSkillFromDirectory(skillParentDirectory, "SummarizeSkill");
 
         //
@@ -159,7 +159,7 @@ public sealed class Program
         }
 
         // Get file content
-        SKContext fileContentResult = await sk.RunAsync(pathToFile,
+        KernelContext fileContentResult = await sk.RunAsync(pathToFile,
             onedrive["GetFileContent"],
             summarizeSkills["Summarize"]);
         if (fileContentResult.ErrorOccurred)
@@ -170,11 +170,11 @@ public sealed class Program
         string fileSummary = fileContentResult.Result;
 
         // Get my email address
-        SKContext emailAddressResult = await sk.RunAsync(string.Empty, outlook["GetMyEmailAddress"]);
+        KernelContext emailAddressResult = await sk.RunAsync(string.Empty, outlook["GetMyEmailAddress"]);
         string myEmailAddress = emailAddressResult.Result;
 
         // Create a link to the file
-        SKContext fileLinkResult = await sk.RunAsync(pathToFile, onedrive["CreateLink"]);
+        KernelContext fileLinkResult = await sk.RunAsync(pathToFile, onedrive["CreateLink"]);
         string fileLink = fileLinkResult.Result;
 
         // Send me an email with the summary and a link to the file.

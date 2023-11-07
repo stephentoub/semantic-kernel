@@ -135,7 +135,7 @@ which are not grounded in the original.
             "SummarizePlugin",
             "GroundingPlugin");
 
-        kernel.ImportFunctions(new TextPlugin());
+        kernel.ImportPlugin(new TextPlugin());
 
         var planner = new SequentialPlanner(kernel);
         var plan = await planner.CreatePlanAsync(ask);

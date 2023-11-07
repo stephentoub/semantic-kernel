@@ -29,8 +29,8 @@ public static class KernelAIPluginExtensions
     [Obsolete("Methods and classes which includes Skill in the name have been renamed to use Plugin. Use Kernel.ImportPluginFunctionsAsync instead. This will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
 #pragma warning disable CS1591
-    public static async Task<IDictionary<string, ISKFunction>> ImportAIPluginAsync(
-        this IKernel kernel,
+    public static async Task<IDictionary<string, IKernelFunction>> ImportAIPluginAsync(
+        this Kernel kernel,
         string pluginName,
         string filePath,
         OpenApiFunctionExecutionParameters? executionParameters = null,
@@ -49,8 +49,8 @@ public static class KernelAIPluginExtensions
     /// <param name="executionParameters">Plugin execution parameters.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of invocable functions</returns>
-    public static async Task<IDictionary<string, ISKFunction>> ImportPluginFunctionsAsync(
-        this IKernel kernel,
+    public static async Task<IDictionary<string, IKernelFunction>> ImportPluginFunctionsAsync(
+        this Kernel kernel,
         string pluginName,
         string filePath,
         OpenApiFunctionExecutionParameters? executionParameters = null,
@@ -82,8 +82,8 @@ public static class KernelAIPluginExtensions
     [Obsolete("Methods and classes which includes Skill in the name have been renamed to use Plugin. Use Kernel.ImportPluginFunctionsAsync instead. This will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
 #pragma warning disable CS1591
-    public static async Task<IDictionary<string, ISKFunction>> ImportAIPluginAsync(
-        this IKernel kernel,
+    public static async Task<IDictionary<string, IKernelFunction>> ImportAIPluginAsync(
+        this Kernel kernel,
         string pluginName,
         Uri uri,
         OpenApiFunctionExecutionParameters? executionParameters = null,
@@ -102,8 +102,8 @@ public static class KernelAIPluginExtensions
     /// <param name="executionParameters">Plugin execution parameters.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of invocable functions</returns>
-    public static async Task<IDictionary<string, ISKFunction>> ImportPluginFunctionsAsync(
-        this IKernel kernel,
+    public static async Task<IDictionary<string, IKernelFunction>> ImportPluginFunctionsAsync(
+        this Kernel kernel,
         string pluginName,
         Uri uri,
         OpenApiFunctionExecutionParameters? executionParameters = null,
@@ -142,8 +142,8 @@ public static class KernelAIPluginExtensions
     /// <param name="executionParameters">Plugin execution parameters.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of invocable functions</returns>
-    public static async Task<IDictionary<string, ISKFunction>> ImportPluginFunctionsAsync(
-        this IKernel kernel,
+    public static async Task<IDictionary<string, IKernelFunction>> ImportPluginFunctionsAsync(
+        this Kernel kernel,
         string pluginName,
         Stream stream,
         OpenApiFunctionExecutionParameters? executionParameters = null,
@@ -169,8 +169,8 @@ public static class KernelAIPluginExtensions
 
     #region private
 
-    private static async Task<IDictionary<string, ISKFunction>> CompleteImportAsync(
-        IKernel kernel,
+    private static async Task<IDictionary<string, IKernelFunction>> CompleteImportAsync(
+        Kernel kernel,
         string pluginContents,
         string pluginName,
         HttpClient httpClient,
@@ -199,8 +199,8 @@ public static class KernelAIPluginExtensions
             cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task<IDictionary<string, ISKFunction>> LoadPluginAsync(
-        IKernel kernel,
+    private static async Task<IDictionary<string, IKernelFunction>> LoadPluginAsync(
+        Kernel kernel,
         string pluginName,
         OpenApiFunctionExecutionParameters? executionParameters,
         HttpClient httpClient,
@@ -221,7 +221,7 @@ public static class KernelAIPluginExtensions
                 executionParameters?.EnableDynamicPayload ?? false,
                 executionParameters?.EnablePayloadNamespacing ?? false);
 
-            var plugin = new Dictionary<string, ISKFunction>();
+            var plugin = new Dictionary<string, IKernelFunction>();
 
             ILogger logger = kernel.LoggerFactory.CreateLogger(typeof(KernelAIPluginExtensions));
             foreach (var operation in operations)
@@ -245,7 +245,7 @@ public static class KernelAIPluginExtensions
     }
 
     private static async Task<string> LoadDocumentFromUriAsync(
-        IKernel kernel,
+        Kernel kernel,
         Uri uri,
         OpenApiFunctionExecutionParameters? executionParameters,
         HttpClient httpClient,
@@ -261,7 +261,7 @@ public static class KernelAIPluginExtensions
     }
 
     private static async Task<string> LoadDocumentFromFilePathAsync(
-        IKernel kernel,
+        Kernel kernel,
         string filePath,
         OpenApiFunctionExecutionParameters? executionParameters,
         HttpClient httpClient,
@@ -283,7 +283,7 @@ public static class KernelAIPluginExtensions
     }
 
     private static async Task<string> LoadDocumentFromStreamAsync(
-        IKernel kernel,
+        Kernel kernel,
         Stream stream)
     {
         using StreamReader reader = new(stream);
@@ -332,9 +332,9 @@ public static class KernelAIPluginExtensions
     /// <param name="executionParameters">Function execution parameters.</param>
     /// <param name="documentUri">The URI of OpenApi document.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>An instance of <see cref="SKFunction"/> class.</returns>
-    private static ISKFunction RegisterRestApiFunction(
-        this IKernel kernel,
+    /// <returns>An instance of <see cref="KernelFunction"/> class.</returns>
+    private static IKernelFunction RegisterRestApiFunction(
+        this Kernel kernel,
         string pluginName,
         RestApiOperationRunner runner,
         RestApiOperation operation,
@@ -351,7 +351,7 @@ public static class KernelAIPluginExtensions
 
         var logger = kernel.LoggerFactory is not null ? kernel.LoggerFactory.CreateLogger(typeof(KernelAIPluginExtensions)) : NullLogger.Instance;
 
-        async Task<RestApiOperationResponse> ExecuteAsync(SKContext context)
+        async Task<RestApiOperationResponse> ExecuteAsync(KernelContext context)
         {
             try
             {
@@ -405,7 +405,7 @@ public static class KernelAIPluginExtensions
             })
             .ToList();
 
-        var function = SKFunction.Create(
+        var function = KernelFunction.Create(
             method: ExecuteAsync,
             parameters: parameters,
             description: operation.Description,
@@ -430,7 +430,7 @@ public static class KernelAIPluginExtensions
             Verify.ValidFunctionName(operationId);
             return operationId;
         }
-        catch (SKException)
+        catch (KernelException)
         {
         }
 

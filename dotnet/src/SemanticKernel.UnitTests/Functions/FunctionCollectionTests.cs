@@ -17,12 +17,12 @@ public class FunctionCollectionTests
         List<AIRequestSettings> modelSettings = new();
         modelSettings.Add(new AIRequestSettings());
 
-        var functionOne = new Mock<ISKFunction>();
+        var functionOne = new Mock<IKernelFunction>();
         functionOne.SetupGet(x => x.Name).Returns("fName");
         functionOne.SetupGet(x => x.PluginName).Returns("sName");
         functionOne.SetupGet(x => x.Description).Returns("ONE");
 
-        var functionTwo = new Mock<ISKFunction>();
+        var functionTwo = new Mock<IKernelFunction>();
         functionTwo.SetupGet(x => x.Name).Returns("fName");
         functionTwo.SetupGet(x => x.PluginName).Returns("sName");
         functionTwo.SetupGet(x => x.Description).Returns("TWO");

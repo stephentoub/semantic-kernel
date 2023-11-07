@@ -10,7 +10,7 @@ namespace Microsoft.SemanticKernel.Plugins.Core;
 /// <example>
 /// Usage: kernel.ImportFunctions(new MathPlugin(), "math");
 /// Examples:
-/// {{math.Add}}         => Returns the sum of FirstNumber and SecondNumber (provided in the SKContext)
+/// {{math.Add}}         => Returns the sum of FirstNumber and SecondNumber (provided in the KernelContext)
 /// </example>
 public sealed class MathPlugin
 {
@@ -27,7 +27,7 @@ public sealed class MathPlugin
         value + amount;
 
     /// <summary>
-    /// Returns the Sum of two SKContext numbers provided.
+    /// Returns the Sum of two KernelContext numbers provided.
     /// </summary>
     /// <param name="value">Initial value from which to subtract the specified amount</param>
     /// <param name="amount">The amount to subtract as a string.</param>

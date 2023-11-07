@@ -45,7 +45,7 @@ public class BasicPromptTemplateEngine : IPromptTemplateEngine
     }
 
     /// <inheritdoc/>
-    public async Task<string> RenderAsync(string templateText, SKContext context, CancellationToken cancellationToken = default)
+    public async Task<string> RenderAsync(string templateText, KernelContext context, CancellationToken cancellationToken = default)
     {
         this._logger.LogTrace("Rendering string template: {0}", templateText);
         var blocks = this.ExtractBlocks(templateText);
@@ -69,7 +69,7 @@ public class BasicPromptTemplateEngine : IPromptTemplateEngine
             {
                 if (!block.IsValid(out var error))
                 {
-                    throw new SKException(error);
+                    throw new KernelException(error);
                 }
             }
         }
@@ -84,7 +84,7 @@ public class BasicPromptTemplateEngine : IPromptTemplateEngine
     /// <param name="context">Access into the current kernel execution context.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>The prompt template ready to be used for an AI request.</returns>
-    internal async Task<string> RenderAsync(IList<Block> blocks, SKContext context, CancellationToken cancellationToken = default)
+    internal async Task<string> RenderAsync(IList<Block> blocks, KernelContext context, CancellationToken cancellationToken = default)
     {
         this._logger.LogTrace("Rendering list of {0} blocks", blocks.Count);
         var tasks = new List<Task<string>>(blocks.Count);
@@ -103,7 +103,7 @@ public class BasicPromptTemplateEngine : IPromptTemplateEngine
                 default:
                     const string Error = "Unexpected block type, the block doesn't have a rendering method";
                     this._logger.LogError(Error);
-                    throw new SKException(Error);
+                    throw new KernelException(Error);
             }
         }
 

@@ -14,7 +14,7 @@ public sealed class StepwisePlannerTests
     public void UsesPromptDelegateWhenProvided()
     {
         // Arrange
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
         kernel.Setup(x => x.LoggerFactory).Returns(NullLoggerFactory.Instance);
         var getPromptTemplateMock = new Mock<Func<string>>();
         var config = new StepwisePlannerConfig()

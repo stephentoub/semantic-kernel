@@ -33,8 +33,8 @@ public class GitHubPlugin
     /// </summary>
     private const int MaxFileSize = 2048;
 
-    private readonly ISKFunction _summarizeCodeFunction;
-    private readonly IKernel _kernel;
+    private readonly IKernelFunction _summarizeCodeFunction;
+    private readonly Kernel _kernel;
     private readonly ILogger _logger;
     private static readonly char[] s_trimChars = new char[] { ' ', '/' };
 
@@ -55,7 +55,7 @@ BEGIN SUMMARY:
     /// </summary>
     /// <param name="kernel">Kernel instance</param>
     /// <param name="logger">Optional logger</param>
-    public GitHubPlugin(IKernel kernel, ILoggerFactory? loggerFactory = null)
+    public GitHubPlugin(Kernel kernel, ILoggerFactory? loggerFactory = null)
     {
         this._kernel = kernel;
         this._logger = loggerFactory is not null ? loggerFactory.CreateLogger<GitHubPlugin>() : NullLogger.Instance;

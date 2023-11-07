@@ -9,9 +9,9 @@ using Microsoft.SemanticKernel.Services;
 namespace Microsoft.SemanticKernel.Functions;
 
 /// <summary>
-/// Added for backward compatibility only, this will be removed when ISKFunction.SetAIService and ISKFunction.SetAIConfiguration are removed.
+/// Added for backward compatibility only, this will be removed when IKernelFunction.SetAIService and IKernelFunction.SetAIConfiguration are removed.
 /// </summary>
-[Obsolete("Remove this when ISKFunction.SetAIService and ISKFunction.SetAIConfiguration are removed.")]
+[Obsolete("Remove this when IKernelFunction.SetAIService and IKernelFunction.SetAIConfiguration are removed.")]
 internal class DelegatingAIServiceSelector : IAIServiceSelector
 {
     internal Func<ITextCompletion>? ServiceFactory { get; set; }

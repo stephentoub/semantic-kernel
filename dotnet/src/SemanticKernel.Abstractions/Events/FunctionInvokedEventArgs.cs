@@ -8,7 +8,7 @@ namespace Microsoft.SemanticKernel.Events;
 /// <summary>
 /// Event arguments available to the Kernel.FunctionInvoked event.
 /// </summary>
-public class FunctionInvokedEventArgs : SKCancelEventArgs
+public sealed class FunctionInvokedEventArgs : KernelCancelEventArgs
 {
     private Dictionary<string, object>? _metadata;
 
@@ -27,7 +27,7 @@ public class FunctionInvokedEventArgs : SKCancelEventArgs
     /// </summary>
     /// <param name="functionView">Function view details</param>
     /// <param name="result">Function result</param>
-    public FunctionInvokedEventArgs(FunctionView functionView, FunctionResult result) : base(functionView, result.Context)
+    public FunctionInvokedEventArgs(FunctionView functionView, FunctionResult result) : base(functionView, result.Kernel, result.Context)
     {
         this._metadata = result._metadata;
     }

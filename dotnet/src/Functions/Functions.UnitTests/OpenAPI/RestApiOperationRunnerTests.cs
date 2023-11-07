@@ -504,7 +504,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
             enableDynamicPayload: true);
 
         // Act
-        var exception = await Assert.ThrowsAsync<SKException>(async () => await sut.RunAsync(operation, arguments));
+        var exception = await Assert.ThrowsAsync<KernelException>(async () => await sut.RunAsync(operation, arguments));
 
         Assert.Contains("No content type is provided", exception.Message, StringComparison.InvariantCulture);
     }
@@ -532,7 +532,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
             enableDynamicPayload: false);
 
         // Act
-        var exception = await Assert.ThrowsAsync<SKException>(async () => await sut.RunAsync(operation, arguments));
+        var exception = await Assert.ThrowsAsync<KernelException>(async () => await sut.RunAsync(operation, arguments));
 
         Assert.Contains("No content type is provided", exception.Message, StringComparison.InvariantCulture);
     }
@@ -891,7 +891,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
         var sut = new RestApiOperationRunner(this._httpClient, this._authenticationHandlerMock.Object);
 
         // Act and Assert
-        await Assert.ThrowsAsync<SKException>(() => sut.RunAsync(operation, arguments));
+        await Assert.ThrowsAsync<KernelException>(() => sut.RunAsync(operation, arguments));
     }
 
     [Theory]
@@ -1006,7 +1006,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
         var sut = new RestApiOperationRunner(this._httpClient, this._authenticationHandlerMock.Object);
 
         // Act & Assert
-        await Assert.ThrowsAsync<SKException>(() => sut.RunAsync(operation, arguments));
+        await Assert.ThrowsAsync<KernelException>(() => sut.RunAsync(operation, arguments));
     }
 
     /// <summary>

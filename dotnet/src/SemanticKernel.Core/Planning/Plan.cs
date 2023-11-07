@@ -19,10 +19,10 @@ namespace Microsoft.SemanticKernel.Planning;
 
 /// <summary>
 /// Standard Semantic Kernel callable plan.
-/// Plan is used to create trees of <see cref="ISKFunction"/>s.
+/// Plan is used to create trees of <see cref="IKernelFunction"/>s.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public sealed class Plan : ISKFunction
+public sealed class Plan : IKernelFunction
 {
     /// <summary>
     /// State of the plan
@@ -62,7 +62,7 @@ public sealed class Plan : ISKFunction
     [JsonPropertyName("next_step_index")]
     public int NextStepIndex { get; private set; }
 
-    #region ISKFunction implementation
+    #region IKernelFunction implementation
 
     /// <inheritdoc/>
     [JsonPropertyName("name")]
@@ -80,7 +80,7 @@ public sealed class Plan : ISKFunction
     [JsonPropertyName("model_settings")]
     public List<AIRequestSettings>? ModelSettings { get; private set; }
 
-    #endregion ISKFunction implementation
+    #endregion IKernelFunction implementation
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Plan"/> class with a goal description.
@@ -98,7 +98,7 @@ public sealed class Plan : ISKFunction
     /// </summary>
     /// <param name="goal">The goal of the plan used as description.</param>
     /// <param name="steps">The steps to add.</param>
-    public Plan(string goal, params ISKFunction[] steps) : this(goal)
+    public Plan(string goal, params IKernelFunction[] steps) : this(goal)
     {
         this.AddSteps(steps);
     }
@@ -117,7 +117,7 @@ public sealed class Plan : ISKFunction
     /// Initializes a new instance of the <see cref="Plan"/> class with a function.
     /// </summary>
     /// <param name="function">The function to execute.</param>
-    public Plan(ISKFunction function)
+    public Plan(IKernelFunction function)
     {
         this.SetFunction(function);
     }
@@ -205,7 +205,7 @@ public sealed class Plan : ISKFunction
     /// <remarks>
     /// When you add a new step to the current plan, it is executed after the previous step in the plan has completed. Each step can be a function call or another plan.
     /// </remarks>
-    public void AddSteps(params ISKFunction[] steps)
+    public void AddSteps(params IKernelFunction[] steps)
     {
         this._steps.AddRange(steps.Select(step => step is Plan plan ? plan : new Plan(step)));
     }
@@ -222,7 +222,7 @@ public sealed class Plan : ISKFunction
     /// The context variables contain the necessary information for executing the plan, such as the functions and logger.
     /// The method returns a task representing the asynchronous execution of the plan's next step.
     /// </remarks>
-    public Task<Plan> RunNextStepAsync(IKernel kernel, ContextVariables variables, CancellationToken cancellationToken = default)
+    public Task<Plan> RunNextStepAsync(Kernel kernel, ContextVariables variables, CancellationToken cancellationToken = default)
     {
         var context = kernel.CreateNewContext(variables);
 
@@ -235,8 +235,8 @@ public sealed class Plan : ISKFunction
     /// <param name="context">Context to use</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>The updated plan</returns>
-    /// <exception cref="SKException">If an error occurs while running the plan</exception>
-    public async Task<Plan> InvokeNextStepAsync(SKContext context, CancellationToken cancellationToken = default)
+    /// <exception cref="KernelException">If an error occurs while running the plan</exception>
+    public async Task<Plan> InvokeNextStepAsync(KernelContext context, CancellationToken cancellationToken = default)
     {
         if (this.HasNextStep)
         {
@@ -289,7 +289,7 @@ public sealed class Plan : ISKFunction
         return this;
     }
 
-    #region ISKFunction implementation
+    #region IKernelFunction implementation
 
     /// <inheritdoc/>
     public FunctionView Describe()
@@ -320,7 +320,7 @@ public sealed class Plan : ISKFunction
 
     /// <inheritdoc/>
     public async Task<FunctionResult> InvokeAsync(
-        SKContext context,
+        KernelContext context,
         AIRequestSettings? requestSettings = null,
         CancellationToken cancellationToken = default)
     {
@@ -359,7 +359,7 @@ public sealed class Plan : ISKFunction
         return result;
     }
 
-    #endregion ISKFunction implementation
+    #endregion IKernelFunction implementation
 
     /// <summary>
     /// Expand variables in the input string.
@@ -403,7 +403,7 @@ public sealed class Plan : ISKFunction
             }
             else if (requireFunctions)
             {
-                throw new SKException($"Function '{plan.PluginName}.{plan.Name}' not found in function collection");
+                throw new KernelException($"Function '{plan.PluginName}.{plan.Name}' not found in function collection");
             }
         }
         else
@@ -420,7 +420,7 @@ public sealed class Plan : ISKFunction
     /// <summary>
     /// Add any missing variables from a plan state variables to the context.
     /// </summary>
-    private static void AddVariablesToContext(ContextVariables vars, SKContext context)
+    private static void AddVariablesToContext(ContextVariables vars, KernelContext context)
     {
         // Loop through vars and add anything missing to context
         foreach (var item in vars)
@@ -437,7 +437,7 @@ public sealed class Plan : ISKFunction
     /// </summary>
     /// <param name="context">The context to update.</param>
     /// <returns>The updated context.</returns>
-    private SKContext UpdateContextWithOutputs(SKContext context)
+    private KernelContext UpdateContextWithOutputs(KernelContext context)
     {
         var resultString = this.State.TryGetValue(DefaultResultKey, out string? result) ? result : this.State.ToString();
         context.Variables.Update(resultString);
@@ -490,7 +490,7 @@ public sealed class Plan : ISKFunction
     {
         // Priority for Input
         // - Parameters (expand from variables if needed)
-        // - SKContext.Variables
+        // - KernelContext.Variables
         // - Plan.State
         // - Empty if sending to another plan
         // - Plan.Description
@@ -579,7 +579,7 @@ public sealed class Plan : ISKFunction
         return stepVariables;
     }
 
-    private void SetFunction(ISKFunction function)
+    private void SetFunction(IKernelFunction function)
     {
         this.Function = function;
         this.Name = function.Name;
@@ -594,7 +594,7 @@ public sealed class Plan : ISKFunction
 
     private static string GetRandomPlanName() => "plan" + Guid.NewGuid().ToString("N");
 
-    private ISKFunction? Function { get; set; }
+    private IKernelFunction? Function { get; set; }
 
     private readonly List<Plan> _steps = new();
 
@@ -626,26 +626,26 @@ public sealed class Plan : ISKFunction
     #region Obsolete
 
     /// <inheritdoc/>
-    [Obsolete("Use ISKFunction.ModelSettings instead. This will be removed in a future release.")]
+    [Obsolete("Use IKernelFunction.ModelSettings instead. This will be removed in a future release.")]
     public AIRequestSettings? RequestSettings { get; private set; }
 
     /// <inheritdoc/>
-    [Obsolete("Use ISKFunction.SetAIServiceFactory instead. This will be removed in a future release.")]
-    public ISKFunction SetAIService(Func<ITextCompletion> serviceFactory)
+    [Obsolete("Use IKernelFunction.SetAIServiceFactory instead. This will be removed in a future release.")]
+    public IKernelFunction SetAIService(Func<ITextCompletion> serviceFactory)
     {
         return this.Function is not null ? this.Function.SetAIService(serviceFactory) : this;
     }
 
     /// <inheritdoc/>
-    [Obsolete("Use ISKFunction.SetAIRequestSettingsFactory instead. This will be removed in a future release.")]
-    public ISKFunction SetAIConfiguration(AIRequestSettings? requestSettings)
+    [Obsolete("Use IKernelFunction.SetAIRequestSettingsFactory instead. This will be removed in a future release.")]
+    public IKernelFunction SetAIConfiguration(AIRequestSettings? requestSettings)
     {
         return this.Function is not null ? this.Function.SetAIConfiguration(requestSettings) : this;
     }
 
     /// <inheritdoc/>
     [JsonIgnore]
-    [Obsolete("Methods, properties and classes which include Skill in the name have been renamed. Use ISKFunction.PluginName instead. This will be removed in a future release.")]
+    [Obsolete("Methods, properties and classes which include Skill in the name have been renamed. Use IKernelFunction.PluginName instead. This will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public string SkillName => this.PluginName;
 
@@ -658,12 +658,12 @@ public sealed class Plan : ISKFunction
     /// <inheritdoc/>
     [Obsolete("This method is a nop and will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public ISKFunction SetDefaultSkillCollection(IReadOnlyFunctionCollection skills) => this;
+    public IKernelFunction SetDefaultSkillCollection(IReadOnlyFunctionCollection skills) => this;
 
     /// <inheritdoc/>
     [Obsolete("This method is a nop and will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public ISKFunction SetDefaultFunctionCollection(IReadOnlyFunctionCollection functions) => this;
+    public IKernelFunction SetDefaultFunctionCollection(IReadOnlyFunctionCollection functions) => this;
 
     #endregion
 }

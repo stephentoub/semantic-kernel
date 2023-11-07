@@ -27,7 +27,7 @@ internal sealed class ReActEngine
     /// <summary>
     /// Re-Act function for flow execution
     /// </summary>
-    private readonly ISKFunction _reActFunction;
+    private readonly IKernelFunction _reActFunction;
 
     /// <summary>
     /// The flow planner config
@@ -84,7 +84,7 @@ internal sealed class ReActEngine
     private static readonly Regex s_finalAnswerRegex =
         new(@"\[FINAL.+\](?<final_answer>.+)", RegexOptions.Singleline);
 
-    internal ReActEngine(IKernel systemKernel, ILogger logger, FlowOrchestratorConfig config)
+    internal ReActEngine(Kernel systemKernel, ILogger logger, FlowOrchestratorConfig config)
     {
         this._logger = logger;
 
@@ -129,7 +129,7 @@ internal sealed class ReActEngine
         this._reActFunction = this.ImportSemanticFunction(systemKernel, "ReActFunction", promptTemplate!, promptConfig);
     }
 
-    internal async Task<ReActStep?> GetNextStepAsync(SKContext context, string question, List<ReActStep> previousSteps)
+    internal async Task<ReActStep?> GetNextStepAsync(KernelContext context, string question, List<ReActStep> previousSteps)
     {
         context.Variables.Set("question", question);
         var scratchPad = this.CreateScratchPad(previousSteps);
@@ -175,7 +175,7 @@ internal sealed class ReActEngine
         return actionStep;
     }
 
-    internal async Task<string> InvokeActionAsync(ReActStep actionStep, string chatInput, ChatHistory chatHistory, IKernel kernel, SKContext context)
+    internal async Task<string> InvokeActionAsync(ReActStep actionStep, string chatInput, ChatHistory chatHistory, Kernel kernel, KernelContext context)
     {
         var variables = actionStep.ActionVariables ?? new Dictionary<string, string>();
 
@@ -222,7 +222,7 @@ internal sealed class ReActEngine
         }
     }
 
-    private SKContext CreateActionContext(Dictionary<string, string> actionVariables, IKernel kernel, SKContext context)
+    private KernelContext CreateActionContext(Dictionary<string, string> actionVariables, Kernel kernel, KernelContext context)
     {
         var actionContext = context.Clone();
         foreach (var kvp in actionVariables)
@@ -233,7 +233,7 @@ internal sealed class ReActEngine
         return actionContext;
     }
 
-    private ISKFunction ImportSemanticFunction(IKernel kernel, string functionName, string promptTemplate, PromptTemplateConfig config)
+    private IKernelFunction ImportSemanticFunction(Kernel kernel, string functionName, string promptTemplate, PromptTemplateConfig config)
     {
         var factory = new BasicPromptTemplateFactory(kernel.LoggerFactory);
         var template = factory.Create(promptTemplate, config);
@@ -370,7 +370,7 @@ internal sealed class ReActEngine
         return string.Join("\n", functions.Select(ToManualString));
     }
 
-    private IEnumerable<FunctionView> GetAvailableFunctions(SKContext context)
+    private IEnumerable<FunctionView> GetAvailableFunctions(KernelContext context)
     {
         var functionViews = context.Functions!.GetFunctionViews();
 

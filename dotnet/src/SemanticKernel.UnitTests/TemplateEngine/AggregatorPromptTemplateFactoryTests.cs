@@ -43,7 +43,7 @@ public sealed class AggregatorPromptTemplateFactoryTests
         var result2 = target.Create(templateString, new PromptTemplateConfig() { TemplateFormat = "my-format-2" });
 
         // Assert
-        Assert.Throws<SKException>(() => target.Create(templateString, new PromptTemplateConfig() { TemplateFormat = "unknown-format" }));
+        Assert.Throws<KernelException>(() => target.Create(templateString, new PromptTemplateConfig() { TemplateFormat = "unknown-format" }));
     }
 
     #region private
@@ -56,7 +56,7 @@ public sealed class AggregatorPromptTemplateFactoryTests
                 return new MyPromptTemplate1(templateString, promptTemplateConfig);
             }
 
-            throw new SKException($"Prompt template format {promptTemplateConfig.TemplateFormat} is not supported.");
+            throw new KernelException($"Prompt template format {promptTemplateConfig.TemplateFormat} is not supported.");
         }
     }
 
@@ -73,7 +73,7 @@ public sealed class AggregatorPromptTemplateFactoryTests
 
         public IReadOnlyList<ParameterView> Parameters => Array.Empty<ParameterView>();
 
-        public Task<string> RenderAsync(SKContext executionContext, CancellationToken cancellationToken = default)
+        public Task<string> RenderAsync(KernelContext executionContext, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(this._templateString);
         }
@@ -88,7 +88,7 @@ public sealed class AggregatorPromptTemplateFactoryTests
                 return new MyPromptTemplate2(templateString, promptTemplateConfig);
             }
 
-            throw new SKException($"Prompt template format {promptTemplateConfig.TemplateFormat} is not supported.");
+            throw new KernelException($"Prompt template format {promptTemplateConfig.TemplateFormat} is not supported.");
         }
     }
 
@@ -105,7 +105,7 @@ public sealed class AggregatorPromptTemplateFactoryTests
 
         public IReadOnlyList<ParameterView> Parameters => Array.Empty<ParameterView>();
 
-        public Task<string> RenderAsync(SKContext executionContext, CancellationToken cancellationToken = default)
+        public Task<string> RenderAsync(KernelContext executionContext, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(this._templateString);
         }

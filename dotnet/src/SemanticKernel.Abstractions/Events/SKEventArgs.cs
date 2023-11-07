@@ -9,20 +9,20 @@ namespace Microsoft.SemanticKernel.Events;
 /// <summary>
 /// Base arguments for events.
 /// </summary>
-public abstract class SKEventArgs : EventArgs
+public abstract class KernelEventArgs : EventArgs
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="SKEventArgs"/> class.
+    /// Initializes a new instance of the <see cref="KernelEventArgs"/> class.
     /// </summary>
     /// <param name="functionView">Function view details</param>
     /// <param name="context">Context related to the event</param>
-    internal SKEventArgs(FunctionView functionView, SKContext context)
+    internal KernelEventArgs(FunctionView functionView, KernelContext context)
     {
         Verify.NotNull(context);
         Verify.NotNull(functionView);
 
         this.FunctionView = functionView;
-        this.SKContext = context;
+        this.KernelContext = context;
     }
 
     /// <summary>
@@ -30,8 +30,11 @@ public abstract class SKEventArgs : EventArgs
     /// </summary>
     public FunctionView FunctionView { get; }
 
+    /// <summary>Kernel associated with the event.</summary>
+    public Kernel Kernel { get; }
+
     /// <summary>
     /// Context related to the event.
     /// </summary>
-    public SKContext SKContext { get; }
+    public KernelContext KernelContext { get; }
 }

@@ -29,7 +29,7 @@ public static class Example24_OpenApiPlugin_Jira
         string serverUrl = $"https://{TestConfiguration.Jira.Domain}.atlassian.net/rest/api/latest/";
         contextVariables.Set("server-url", serverUrl);
 
-        IDictionary<string, ISKFunction> jiraFunctions;
+        IDictionary<string, IKernelFunction> jiraFunctions;
         var tokenProvider = new BasicAuthenticationProvider(() =>
         {
             string s = $"{TestConfiguration.Jira.Email}:{TestConfiguration.Jira.ApiKey}";

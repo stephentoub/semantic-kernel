@@ -25,6 +25,6 @@ public interface IPromptTemplateEngine
     /// <returns>The prompt template ready to be used for an AI request</returns>
     Task<string> RenderAsync(
         string templateText,
-        SKContext context,
+        KernelContext context,
         CancellationToken cancellationToken = default);
 }

@@ -26,7 +26,7 @@ public class OrderedIAIServiceConfigurationProviderTests
 
         // Act
         // Assert
-        Assert.Throws<SKException>(() => configurationProvider.SelectAIService<ITextCompletion>(renderedPrompt, serviceProvider, modelSettings));
+        Assert.Throws<KernelException>(() => configurationProvider.SelectAIService<ITextCompletion>(renderedPrompt, serviceProvider, modelSettings));
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class OrderedIAIServiceConfigurationProviderTests
 
         // Act
         // Assert
-        Assert.Throws<SKException>(() => configurationProvider.SelectAIService<ITextCompletion>(renderedPrompt, serviceProvider, modelSettings));
+        Assert.Throws<KernelException>(() => configurationProvider.SelectAIService<ITextCompletion>(renderedPrompt, serviceProvider, modelSettings));
     }
 
     [Fact]

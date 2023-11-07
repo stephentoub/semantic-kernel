@@ -18,9 +18,9 @@ public class FunctionResultTests
     private readonly Mock<IAIServiceProvider> _serviceProvider = new();
     private readonly Mock<IAIServiceSelector> _serviceSelector = new();
 
-    private SKContext CreateContext()
+    private KernelContext CreateContext()
     {
-        return new SKContext(this._functionRunner.Object, this._serviceProvider.Object, this._serviceSelector.Object);
+        return new KernelContext(this._functionRunner.Object, this._serviceProvider.Object, this._serviceSelector.Object);
     }
 
     [Fact]
@@ -105,7 +105,7 @@ public class FunctionResultTests
         // Arrange
         string functionName = Guid.NewGuid().ToString();
         string pluginName = Guid.NewGuid().ToString();
-        SKContext context = this.CreateContext();
+        KernelContext context = this.CreateContext();
 
         // Act
         FunctionResult target = new(functionName, pluginName, context);
@@ -122,7 +122,7 @@ public class FunctionResultTests
         // Arrange
         string functionName = Guid.NewGuid().ToString();
         string pluginName = Guid.NewGuid().ToString();
-        SKContext context = this.CreateContext();
+        KernelContext context = this.CreateContext();
         string value = Guid.NewGuid().ToString();
 
         // Act

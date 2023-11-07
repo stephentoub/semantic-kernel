@@ -15,7 +15,7 @@ using Microsoft.SemanticKernel.TemplateEngine;
 using Microsoft.SemanticKernel.Text;
 
 #pragma warning disable IDE0130
-// ReSharper disable once CheckNamespace - Using the namespace of IKernel
+// ReSharper disable once CheckNamespace - Using the namespace of Kernel
 namespace Microsoft.SemanticKernel;
 #pragma warning restore IDE0130
 
@@ -32,8 +32,8 @@ public static class KernelSemanticFunctionExtensions
     /// <param name="promptTemplateConfig">Prompt template configuration.</param>
     /// <param name="promptTemplate">Prompt template.</param>
     /// <returns>A C# function wrapping AI logic, usually defined with natural language</returns>
-    public static ISKFunction RegisterSemanticFunction(
-        this IKernel kernel,
+    public static IKernelFunction RegisterSemanticFunction(
+        this Kernel kernel,
         string functionName,
         PromptTemplateConfig promptTemplateConfig,
         IPromptTemplate promptTemplate)
@@ -50,8 +50,8 @@ public static class KernelSemanticFunctionExtensions
     /// <param name="promptTemplateConfig">Prompt template configuration.</param>
     /// <param name="promptTemplate">Prompt template.</param>
     /// <returns>A C# function wrapping AI logic, usually defined with natural language</returns>
-    public static ISKFunction RegisterSemanticFunction(
-        this IKernel kernel,
+    public static IKernelFunction RegisterSemanticFunction(
+        this Kernel kernel,
         string pluginName,
         string functionName,
         PromptTemplateConfig promptTemplateConfig,
@@ -60,7 +60,7 @@ public static class KernelSemanticFunctionExtensions
         // Future-proofing the name not to contain special chars
         Verify.ValidFunctionName(functionName);
 
-        ISKFunction function = kernel.CreateSemanticFunction(pluginName, functionName, promptTemplateConfig, promptTemplate);
+        IKernelFunction function = kernel.CreateSemanticFunction(pluginName, functionName, promptTemplateConfig, promptTemplate);
         return kernel.RegisterCustomFunction(function);
     }
 
@@ -76,8 +76,8 @@ public static class KernelSemanticFunctionExtensions
     /// <param name="description">Optional description, useful for the planner</param>
     /// <param name="requestSettings">Optional LLM request settings</param>
     /// <returns>A function ready to use</returns>
-    public static ISKFunction CreateSemanticFunction(
-        this IKernel kernel,
+    public static IKernelFunction CreateSemanticFunction(
+        this Kernel kernel,
         string promptTemplate,
         string? functionName = null,
         string? pluginName = null,
@@ -114,8 +114,8 @@ public static class KernelSemanticFunctionExtensions
     /// the function is added to the global namespace, overwriting functions with the same name</param>
     /// <param name="promptTemplateFactory">Prompt template factory</param>
     /// <returns>A function ready to use</returns>
-    public static ISKFunction CreateSemanticFunction(
-        this IKernel kernel,
+    public static IKernelFunction CreateSemanticFunction(
+        this Kernel kernel,
         string promptTemplate,
         PromptTemplateConfig promptTemplateConfig,
         string? functionName = null,
@@ -146,7 +146,7 @@ public static class KernelSemanticFunctionExtensions
     /// <param name="requestSettings">Optional LLM request settings</param>
     /// <returns>Kernel execution result</returns>
     public static Task<KernelResult> InvokeSemanticFunctionAsync(
-        this IKernel kernel,
+        this Kernel kernel,
         string template,
         string? functionName = null,
         string? pluginName = null,
@@ -166,8 +166,8 @@ public static class KernelSemanticFunctionExtensions
     [Obsolete("Methods and classes which includes Skill in the name have been renamed to use Plugin. Use Kernel.ImportSemanticFunctionsFromDirectory instead. This will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
 #pragma warning disable CS1591
-    public static IDictionary<string, ISKFunction> ImportSemanticSkillFromDirectory(
-        this IKernel kernel, string parentDirectory, params string[] pluginDirectoryNames)
+    public static IDictionary<string, IKernelFunction> ImportSemanticSkillFromDirectory(
+        this Kernel kernel, string parentDirectory, params string[] pluginDirectoryNames)
     {
         return kernel.ImportSemanticFunctionsFromDirectory(parentDirectory, pluginDirectoryNames);
     }
@@ -180,8 +180,8 @@ public static class KernelSemanticFunctionExtensions
     /// <param name="parentDirectory"></param>
     /// <param name="pluginDirectoryNames"></param>
     /// <returns></returns>
-    public static IDictionary<string, ISKFunction> ImportSemanticFunctionsFromDirectory(
-        this IKernel kernel,
+    public static IDictionary<string, IKernelFunction> ImportSemanticFunctionsFromDirectory(
+        this Kernel kernel,
         string parentDirectory,
         params string[] pluginDirectoryNames)
     {
@@ -236,8 +236,8 @@ public static class KernelSemanticFunctionExtensions
     /// <param name="promptTemplateFactory">Prompt template factory</param>
     /// <param name="pluginDirectoryNames">Name of the directories containing the selected plugins, e.g. "StrategyPlugin"</param>
     /// <returns>A list of all the semantic functions found in the directory, indexed by plugin name.</returns>
-    public static IDictionary<string, ISKFunction> ImportSemanticFunctionsFromDirectory(
-        this IKernel kernel,
+    public static IDictionary<string, IKernelFunction> ImportSemanticFunctionsFromDirectory(
+        this Kernel kernel,
         string parentDirectory,
         IPromptTemplateFactory? promptTemplateFactory = null,
         params string[] pluginDirectoryNames
@@ -247,7 +247,7 @@ public static class KernelSemanticFunctionExtensions
         const string PromptFile = "skprompt.txt";
 
         var factory = promptTemplateFactory ?? CreateDefaultPromptTemplateFactory(kernel);
-        var functions = new Dictionary<string, ISKFunction>();
+        var functions = new Dictionary<string, IKernelFunction>();
 
         ILogger? logger = null;
         foreach (string pluginDirectoryName in pluginDirectoryNames)
@@ -271,7 +271,7 @@ public static class KernelSemanticFunctionExtensions
                     PromptTemplateConfig.FromJson(File.ReadAllText(configPath)) :
                     new PromptTemplateConfig();
 
-                logger ??= kernel.LoggerFactory.CreateLogger(typeof(IKernel));
+                logger ??= kernel.LoggerFactory.CreateLogger(typeof(Kernel));
                 if (logger.IsEnabled(LogLevel.Trace))
                 {
                     logger.LogTrace("Config {0}: {1}", functionName, Json.Serialize(promptTemplateConfig));
@@ -296,8 +296,8 @@ public static class KernelSemanticFunctionExtensions
     #region private
     private static string RandomFunctionName() => "func" + Guid.NewGuid().ToString("N");
 
-    private static ISKFunction CreateSemanticFunction(
-        this IKernel kernel,
+    private static IKernelFunction CreateSemanticFunction(
+        this Kernel kernel,
         string pluginName,
         string functionName,
         PromptTemplateConfig promptTemplateConfig,
@@ -326,7 +326,7 @@ public static class KernelSemanticFunctionExtensions
     /// </summary>
     /// <param name="kernel">Kernel instance</param>
     /// <returns>Instance of <see cref="IPromptTemplateEngine"/>.</returns>
-    private static IPromptTemplateFactory CreateDefaultPromptTemplateFactory(IKernel kernel)
+    private static IPromptTemplateFactory CreateDefaultPromptTemplateFactory(Kernel kernel)
     {
 #pragma warning disable CS0618 // Type or member is obsolete
         if (kernel.PromptTemplateEngine is not null)
@@ -356,7 +356,7 @@ public static class KernelSemanticFunctionExtensions
             }
         }
 
-        throw new SKException($"Unable to create default prompt template factory. Please provide an implementation of IPromptTemplateFactory or depend on {BasicTemplateFactoryAssemblyName}");
+        throw new KernelException($"Unable to create default prompt template factory. Please provide an implementation of IPromptTemplateFactory or depend on {BasicTemplateFactoryAssemblyName}");
     }
 
     /// <summary>

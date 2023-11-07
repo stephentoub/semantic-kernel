@@ -10,17 +10,13 @@ namespace Microsoft.SemanticKernel.Orchestration;
 /// </summary>
 public sealed class FunctionResult
 {
+    // TODO: We should be able to get rid of this and just use kernel context
     internal Dictionary<string, object>? _metadata;
 
     /// <summary>
     /// Name of executed function.
     /// </summary>
     public string FunctionName { get; internal set; }
-
-    /// <summary>
-    /// Name of the plugin containing the function.
-    /// </summary>
-    public string PluginName { get; internal set; }
 
     /// <summary>
     /// Metadata for storing additional information about function execution result.
@@ -34,37 +30,31 @@ public sealed class FunctionResult
     /// <summary>
     /// Function result object.
     /// </summary>
-    internal object? Value { get; private set; } = null;
+    internal object? Value { get; }
 
     /// <summary>
-    /// Instance of <see cref="SKContext"/> to pass in function pipeline.
+    /// Gets the kernel used in the invocation of the function.
     /// </summary>
-    internal SKContext Context { get; private set; }
+    public Kernel Kernel { get; }
+
+    /// <summary>
+    /// Gets the additional context used in the invocation of the function.
+    /// </summary>
+    public KernelContext KernelContext { get; }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FunctionResult"/> class.
     /// </summary>
     /// <param name="functionName">Name of executed function.</param>
-    /// <param name="pluginName">Name of the plugin containing the function.</param>
-    /// <param name="context">Instance of <see cref="SKContext"/> to pass in function pipeline.</param>
-    public FunctionResult(string functionName, string pluginName, SKContext context)
+    /// <param name="kernel">The kernel.</param>
+    /// <param name="context">Instance of <see cref="KernelContext"/> to pass in function pipeline.</param>
+    /// <param name="result">The resulting value of the function.</param>
+    public FunctionResult(string functionName, Kernel kernel, KernelContext context, object? result = null)
     {
         this.FunctionName = functionName;
-        this.PluginName = pluginName;
-        this.Context = context;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="FunctionResult"/> class.
-    /// </summary>
-    /// <param name="functionName">Name of executed function.</param>
-    /// <param name="pluginName">Name of the plugin containing the function.</param>
-    /// <param name="context">Instance of <see cref="SKContext"/> to pass in function pipeline.</param>
-    /// <param name="value">Function result object.</param>
-    public FunctionResult(string functionName, string pluginName, SKContext context, object? value)
-        : this(functionName, pluginName, context)
-    {
-        this.Value = value;
+        this.Kernel = kernel;
+        this.KernelContext = context;
+        this.Value = result;
     }
 
     /// <summary>

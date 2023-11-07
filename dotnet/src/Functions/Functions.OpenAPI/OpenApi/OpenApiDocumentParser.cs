@@ -95,7 +95,7 @@ internal sealed class OpenApiDocumentParser : IOpenApiDocumentParser
         if (jsonObject == null)
         {
             // The document is malformed.
-            throw new SKException("Parsing of OpenAPI document failed.");
+            throw new KernelException("Parsing of OpenAPI document failed.");
         }
 
         if (!jsonObject.TryGetPropertyValue(OpenApiVersionPropertyName, out var propertyNode))
@@ -212,12 +212,12 @@ internal sealed class OpenApiDocumentParser : IOpenApiDocumentParser
         {
             if (parameter.In == null)
             {
-                throw new SKException($"Parameter location of {parameter.Name} parameter of {operationId} operation is undefined.");
+                throw new KernelException($"Parameter location of {parameter.Name} parameter of {operationId} operation is undefined.");
             }
 
             if (parameter.Style == null)
             {
-                throw new SKException($"Parameter style of {parameter.Name} parameter of {operationId} operation is undefined.");
+                throw new KernelException($"Parameter style of {parameter.Name} parameter of {operationId} operation is undefined.");
             }
 
             var restParameter = new RestApiOperationParameter(
@@ -264,7 +264,7 @@ internal sealed class OpenApiDocumentParser : IOpenApiDocumentParser
         var mediaType = s_supportedMediaTypes.FirstOrDefault(smt => requestBody.Content.ContainsKey(smt));
         if (mediaType == null)
         {
-            throw new SKException($"Neither of the media types of {operationId} is supported.");
+            throw new KernelException($"Neither of the media types of {operationId} is supported.");
         }
 
         var mediaTypeMetadata = requestBody.Content[mediaType];
@@ -292,7 +292,7 @@ internal sealed class OpenApiDocumentParser : IOpenApiDocumentParser
 
         if (level > PayloadPropertiesHierarchyMaxDepth)
         {
-            throw new SKException($"Max level {PayloadPropertiesHierarchyMaxDepth} of traversing payload properties of {operationId} operation is exceeded.");
+            throw new KernelException($"Max level {PayloadPropertiesHierarchyMaxDepth} of traversing payload properties of {operationId} operation is exceeded.");
         }
 
         var result = new List<RestApiOperationPayloadProperty>();
@@ -376,7 +376,7 @@ internal sealed class OpenApiDocumentParser : IOpenApiDocumentParser
                 return passwordValue.Value.ToString(CultureInfo.InvariantCulture);
 
             default:
-                throw new SKException($"The value type - {value.PrimitiveType} is not supported.");
+                throw new KernelException($"The value type - {value.PrimitiveType} is not supported.");
         }
     }
 
@@ -398,7 +398,7 @@ internal sealed class OpenApiDocumentParser : IOpenApiDocumentParser
 
             if (!ignoreNonCompliantErrors)
             {
-                throw new SKException(message);
+                throw new KernelException(message);
             }
         }
     }

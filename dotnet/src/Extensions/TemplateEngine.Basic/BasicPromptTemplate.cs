@@ -47,9 +47,9 @@ public sealed class BasicPromptTemplate : IPromptTemplate
     public IReadOnlyList<ParameterView> Parameters => this._parameters.Value;
 
     /// <inheritdoc/>
-    public async Task<string> RenderAsync(SKContext executionContext, CancellationToken cancellationToken = default)
+    public Task<string> RenderAsync(Kernel kernel, IReadOnlyDictionary<string, object?> arguments, KernelContext context, CancellationToken cancellationToken = default)
     {
-        return await this.RenderAsync(this._blocks.Value, executionContext, cancellationToken).ConfigureAwait(false);
+        return this.RenderAsync(this._blocks.Value, executionContext, cancellationToken);
     }
 
     #region private
@@ -100,7 +100,7 @@ public sealed class BasicPromptTemplate : IPromptTemplate
             {
                 if (!block.IsValid(out var error))
                 {
-                    throw new SKException(error);
+                    throw new KernelException(error);
                 }
             }
         }
@@ -115,7 +115,7 @@ public sealed class BasicPromptTemplate : IPromptTemplate
     /// <param name="context">Access into the current kernel execution context.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>The prompt template ready to be used for an AI request.</returns>
-    internal async Task<string> RenderAsync(IList<Block> blocks, SKContext context, CancellationToken cancellationToken = default)
+    internal async Task<string> RenderAsync(IList<Block> blocks, IReadOnlyDictionary<string, object?> arguments, KernelContext context, CancellationToken cancellationToken = default)
     {
         this._logger.LogTrace("Rendering list of {0} blocks", blocks.Count);
         var tasks = new List<Task<string>>(blocks.Count);
@@ -124,7 +124,7 @@ public sealed class BasicPromptTemplate : IPromptTemplate
             switch (block)
             {
                 case ITextRendering staticBlock:
-                    tasks.Add(Task.FromResult(staticBlock.Render(context.Variables)));
+                    tasks.Add(Task.FromResult(staticBlock.Render(arguments)));
                     break;
 
                 case ICodeRendering dynamicBlock:
@@ -134,7 +134,7 @@ public sealed class BasicPromptTemplate : IPromptTemplate
                 default:
                     const string Error = "Unexpected block type, the block doesn't have a rendering method";
                     this._logger.LogError(Error);
-                    throw new SKException(Error);
+                    throw new KernelException(Error);
             }
         }
 

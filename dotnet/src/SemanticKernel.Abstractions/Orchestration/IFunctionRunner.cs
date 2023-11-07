@@ -18,7 +18,7 @@ public interface IFunctionRunner
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>Result of the function composition</returns>
     Task<FunctionResult> RunAsync(
-        ISKFunction skFunction,
+        IKernelFunction skFunction,
         ContextVariables? variables = null,
         CancellationToken cancellationToken = default);
 

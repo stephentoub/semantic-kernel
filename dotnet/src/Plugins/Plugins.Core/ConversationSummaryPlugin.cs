@@ -25,15 +25,15 @@ public class ConversationSummaryPlugin
     /// </summary>
     private const int MaxTokens = 1024;
 
-    private readonly ISKFunction _summarizeConversationFunction;
-    private readonly ISKFunction _conversationActionItemsFunction;
-    private readonly ISKFunction _conversationTopicsFunction;
+    private readonly IKernelFunction _summarizeConversationFunction;
+    private readonly IKernelFunction _conversationActionItemsFunction;
+    private readonly IKernelFunction _conversationTopicsFunction;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ConversationSummaryPlugin"/> class.
     /// </summary>
     /// <param name="kernel">Kernel instance</param>
-    public ConversationSummaryPlugin(IKernel kernel)
+    public ConversationSummaryPlugin(Kernel kernel)
     {
         this._summarizeConversationFunction = kernel.CreateSemanticFunction(
             SemanticFunctionConstants.SummarizeConversationDefinition,
@@ -82,11 +82,11 @@ public class ConversationSummaryPlugin
     /// Given a long conversation transcript, summarize the conversation.
     /// </summary>
     /// <param name="input">A long conversation transcript.</param>
-    /// <param name="context">The SKContext for function execution.</param>
+    /// <param name="context">The KernelContext for function execution.</param>
     [SKFunction, Description("Given a long conversation transcript, summarize the conversation.")]
-    public Task<SKContext> SummarizeConversationAsync(
+    public Task<KernelContext> SummarizeConversationAsync(
         [Description("A long conversation transcript.")] string input,
-        SKContext context)
+        KernelContext context)
     {
         List<string> lines = TextChunker.SplitPlainTextLines(input, MaxTokens);
         List<string> paragraphs = TextChunker.SplitPlainTextParagraphs(lines, MaxTokens);
@@ -99,11 +99,11 @@ public class ConversationSummaryPlugin
     /// Given a long conversation transcript, identify action items.
     /// </summary>
     /// <param name="input">A long conversation transcript.</param>
-    /// <param name="context">The SKContext for function execution.</param>
+    /// <param name="context">The KernelContext for function execution.</param>
     [SKFunction, Description("Given a long conversation transcript, identify action items.")]
-    public Task<SKContext> GetConversationActionItemsAsync(
+    public Task<KernelContext> GetConversationActionItemsAsync(
         [Description("A long conversation transcript.")] string input,
-        SKContext context)
+        KernelContext context)
     {
         List<string> lines = TextChunker.SplitPlainTextLines(input, MaxTokens);
         List<string> paragraphs = TextChunker.SplitPlainTextParagraphs(lines, MaxTokens);
@@ -116,11 +116,11 @@ public class ConversationSummaryPlugin
     /// Given a long conversation transcript, identify topics.
     /// </summary>
     /// <param name="input">A long conversation transcript.</param>
-    /// <param name="context">The SKContext for function execution.</param>
+    /// <param name="context">The KernelContext for function execution.</param>
     [SKFunction, Description("Given a long conversation transcript, identify topics worth remembering.")]
-    public Task<SKContext> GetConversationTopicsAsync(
+    public Task<KernelContext> GetConversationTopicsAsync(
         [Description("A long conversation transcript.")] string input,
-        SKContext context)
+        KernelContext context)
     {
         List<string> lines = TextChunker.SplitPlainTextLines(input, MaxTokens);
         List<string> paragraphs = TextChunker.SplitPlainTextParagraphs(lines, MaxTokens);

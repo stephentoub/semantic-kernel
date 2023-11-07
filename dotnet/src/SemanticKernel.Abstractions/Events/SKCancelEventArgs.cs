@@ -9,11 +9,11 @@ namespace Microsoft.SemanticKernel.Events;
 /// <summary>
 /// Base arguments for cancellable events.
 /// </summary>
-public abstract class SKCancelEventArgs : SKEventArgs
+public abstract class KernelCancelEventArgs : KernelEventArgs
 {
     private readonly CancellationTokenSource _cancelTokenSource = new();
 
-    internal SKCancelEventArgs(FunctionView functionView, SKContext context) : base(functionView, context)
+    internal KernelCancelEventArgs(FunctionView functionView, Kernel kernel, KernelContext context) : base(functionView, kernel, context)
     {
     }
 

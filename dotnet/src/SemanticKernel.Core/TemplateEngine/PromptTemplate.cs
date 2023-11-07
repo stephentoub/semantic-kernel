@@ -52,7 +52,7 @@ public sealed class PromptTemplate : IPromptTemplate
     /// <param name="executionContext">Kernel execution context helpers</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>Prompt rendered to string</returns>
-    public async Task<string> RenderAsync(SKContext executionContext, CancellationToken cancellationToken)
+    public async Task<string> RenderAsync(KernelContext executionContext, CancellationToken cancellationToken)
     {
         return await this._templateEngine.RenderAsync(this._template, executionContext, cancellationToken).ConfigureAwait(false);
     }

@@ -48,11 +48,11 @@ public sealed class StepwisePlannerTests : IDisposable
     {
         // Arrange
         bool useEmbeddings = false;
-        IKernel kernel = this.InitializeKernel(useEmbeddings, useChatModel);
+        Kernel kernel = this.InitializeKernel(useEmbeddings, useChatModel);
         var bingConnector = new BingConnector(this._bingApiKey);
         var webSearchEnginePlugin = new WebSearchEnginePlugin(bingConnector);
-        kernel.ImportFunctions(webSearchEnginePlugin, "WebSearch");
-        kernel.ImportFunctions(new TimePlugin(), "time");
+        kernel.ImportPlugin(webSearchEnginePlugin, "WebSearch");
+        kernel.ImportPlugin(new TimePlugin(), "time");
 
         var planner = new Microsoft.SemanticKernel.Planners.StepwisePlanner(kernel, new StepwisePlannerConfig() { MaxIterations = 10 });
 
@@ -74,11 +74,11 @@ public sealed class StepwisePlannerTests : IDisposable
     {
         // Arrange
         bool useEmbeddings = false;
-        IKernel kernel = this.InitializeKernel(useEmbeddings, useChatModel);
+        Kernel kernel = this.InitializeKernel(useEmbeddings, useChatModel);
         var bingConnector = new BingConnector(this._bingApiKey);
         var webSearchEnginePlugin = new WebSearchEnginePlugin(bingConnector);
-        kernel.ImportFunctions(webSearchEnginePlugin, "WebSearch");
-        kernel.ImportFunctions(new TimePlugin(), "time");
+        kernel.ImportPlugin(webSearchEnginePlugin, "WebSearch");
+        kernel.ImportPlugin(new TimePlugin(), "time");
 
         var planner = new Microsoft.SemanticKernel.Planners.StepwisePlanner(kernel, new StepwisePlannerConfig() { MaxIterations = 10 });
 
@@ -99,15 +99,15 @@ public sealed class StepwisePlannerTests : IDisposable
     public async Task ExecutePlanFailsWithTooManyFunctionsAsync()
     {
         // Arrange
-        IKernel kernel = this.InitializeKernel();
+        Kernel kernel = this.InitializeKernel();
         var bingConnector = new BingConnector(this._bingApiKey);
         var webSearchEnginePlugin = new WebSearchEnginePlugin(bingConnector);
-        kernel.ImportFunctions(webSearchEnginePlugin, "WebSearch");
-        kernel.ImportFunctions(new TextPlugin(), "text");
-        kernel.ImportFunctions(new ConversationSummaryPlugin(kernel), "ConversationSummary");
-        kernel.ImportFunctions(new MathPlugin(), "Math");
-        kernel.ImportFunctions(new FileIOPlugin(), "FileIO");
-        kernel.ImportFunctions(new HttpPlugin(), "Http");
+        kernel.ImportPlugin(webSearchEnginePlugin, "WebSearch");
+        kernel.ImportPlugin(new TextPlugin(), "text");
+        kernel.ImportPlugin(new ConversationSummaryPlugin(kernel), "ConversationSummary");
+        kernel.ImportPlugin(new MathPlugin(), "Math");
+        kernel.ImportPlugin(new FileIOPlugin(), "FileIO");
+        kernel.ImportPlugin(new HttpPlugin(), "Http");
 
         var planner = new Microsoft.SemanticKernel.Planners.StepwisePlanner(kernel, new() { MaxTokens = 1000 });
 
@@ -115,7 +115,7 @@ public sealed class StepwisePlannerTests : IDisposable
         var plan = planner.CreatePlan("I need to buy a new brush for my cat. Can you show me options?");
 
         // Assert
-        var ex = await Assert.ThrowsAsync<SKException>(async () => await kernel.RunAsync(plan));
+        var ex = await Assert.ThrowsAsync<KernelException>(async () => await kernel.RunAsync(plan));
         Assert.Equal("ChatHistory is too long to get a completion. Try reducing the available functions.", ex.Message);
     }
 
@@ -123,7 +123,7 @@ public sealed class StepwisePlannerTests : IDisposable
     public async Task ExecutePlanSucceedsWithAlmostTooManyFunctionsAsync()
     {
         // Arrange
-        IKernel kernel = this.InitializeKernel();
+        Kernel kernel = this.InitializeKernel();
 
         _ = await kernel.ImportPluginFunctionsAsync("Klarna", new Uri("https://www.klarna.com/.well-known/ai-plugin.json"), new OpenApiFunctionExecutionParameters(enableDynamicOperationPayload: true));
 
@@ -139,7 +139,7 @@ public sealed class StepwisePlannerTests : IDisposable
         Assert.DoesNotContain("Result not found, review 'stepsTaken' to see what happened", result, StringComparison.OrdinalIgnoreCase);
     }
 
-    private IKernel InitializeKernel(bool useEmbeddings = false, bool useChatModel = false)
+    private Kernel InitializeKernel(bool useEmbeddings = false, bool useChatModel = false)
     {
         AzureOpenAIConfiguration? azureOpenAIConfiguration = this._configuration.GetSection("AzureOpenAI").Get<AzureOpenAIConfiguration>();
         Assert.NotNull(azureOpenAIConfiguration);

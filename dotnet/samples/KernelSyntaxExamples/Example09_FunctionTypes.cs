@@ -23,7 +23,7 @@ public static class Example09_FunctionTypes
         var variables = new ContextVariables();
 
         // Load native plugin into the kernel function collection, sharing its functions with prompt templates
-        var testFunctions = kernel.ImportFunctions(new LocalExamplePlugin(), "test");
+        var testFunctions = kernel.ImportPlugin(new LocalExamplePlugin(), "test");
 
         string folder = RepoFiles.SamplePluginsPath();
         kernel.ImportSemanticFunctionsFromDirectory(folder, "SummarizePlugin");
@@ -116,20 +116,20 @@ public class LocalExamplePlugin
     }
 
     [SKFunction]
-    public void Type04(SKContext context)
+    public void Type04(KernelContext context)
     {
         Console.WriteLine("Running function type 4");
     }
 
     [SKFunction]
-    public string Type05(SKContext context)
+    public string Type05(KernelContext context)
     {
         Console.WriteLine("Running function type 5");
         return "";
     }
 
     [SKFunction]
-    public async Task<string> Type06Async(SKContext context)
+    public async Task<string> Type06Async(KernelContext context)
     {
         var summarizer = context.Functions.GetFunction("SummarizePlugin", "Summarize");
         var summary = await context.Runner.RunAsync(summarizer, new ContextVariables("blah blah blah"));
@@ -139,7 +139,7 @@ public class LocalExamplePlugin
     }
 
     [SKFunction]
-    public async Task<SKContext> Type07Async(SKContext context)
+    public async Task<KernelContext> Type07Async(KernelContext context)
     {
         await Task.Delay(0);
         Console.WriteLine("Running function type 7");
@@ -168,20 +168,20 @@ public class LocalExamplePlugin
     }
 
     [SKFunction]
-    public void Type11(string x, SKContext context)
+    public void Type11(string x, KernelContext context)
     {
         Console.WriteLine("Running function type 11");
     }
 
     [SKFunction]
-    public string Type12(string x, SKContext context)
+    public string Type12(string x, KernelContext context)
     {
         Console.WriteLine("Running function type 12");
         return "";
     }
 
     [SKFunction]
-    public async Task<string> Type13Async(string x, SKContext context)
+    public async Task<string> Type13Async(string x, KernelContext context)
     {
         await Task.Delay(0);
         Console.WriteLine("Running function type 13");
@@ -189,7 +189,7 @@ public class LocalExamplePlugin
     }
 
     [SKFunction]
-    public async Task<SKContext> Type14Async(string x, SKContext context)
+    public async Task<KernelContext> Type14Async(string x, KernelContext context)
     {
         await Task.Delay(0);
         Console.WriteLine("Running function type 14");
@@ -204,14 +204,14 @@ public class LocalExamplePlugin
     }
 
     [SKFunction]
-    public async Task Type16Async(SKContext context)
+    public async Task Type16Async(KernelContext context)
     {
         await Task.Delay(0);
         Console.WriteLine("Running function type 16");
     }
 
     [SKFunction]
-    public async Task Type17Async(string x, SKContext context)
+    public async Task Type17Async(string x, KernelContext context)
     {
         await Task.Delay(0);
         Console.WriteLine("Running function type 17");

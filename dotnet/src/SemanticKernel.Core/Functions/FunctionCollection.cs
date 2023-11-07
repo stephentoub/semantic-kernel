@@ -59,44 +59,44 @@ public class FunctionCollection : IFunctionCollection
     /// </summary>
     /// <param name="functionInstance">The function instance to add.</param>
     /// <returns>The updated function collection.</returns>
-    public IFunctionCollection AddFunction(ISKFunction functionInstance)
+    public IFunctionCollection AddFunction(IKernelFunction functionInstance)
     {
         Verify.NotNull(functionInstance);
 
-        ConcurrentDictionary<string, ISKFunction> functions = this._functionCollection.GetOrAdd(functionInstance.PluginName, static _ => new(StringComparer.OrdinalIgnoreCase));
+        ConcurrentDictionary<string, IKernelFunction> functions = this._functionCollection.GetOrAdd(functionInstance.PluginName, static _ => new(StringComparer.OrdinalIgnoreCase));
         functions[functionInstance.Name] = functionInstance;
 
         return this;
     }
 
     /// <inheritdoc/>
-    public ISKFunction GetFunction(string functionName) =>
+    public IKernelFunction GetFunction(string functionName) =>
         this.GetFunction(GlobalFunctionsPluginName, functionName);
 
     /// <inheritdoc/>
-    public ISKFunction GetFunction(string pluginName, string functionName)
+    public IKernelFunction GetFunction(string pluginName, string functionName)
     {
         pluginName = !string.IsNullOrWhiteSpace(pluginName) ? pluginName : GlobalFunctionsPluginName;
 
-        if (!this.TryGetFunction(pluginName, functionName, out ISKFunction? functionInstance))
+        if (!this.TryGetFunction(pluginName, functionName, out IKernelFunction? functionInstance))
         {
-            throw new SKException($"Function not available {pluginName}.{functionName}");
+            throw new KernelException($"Function not available {pluginName}.{functionName}");
         }
 
         return functionInstance;
     }
 
     /// <inheritdoc/>
-    public bool TryGetFunction(string functionName, [NotNullWhen(true)] out ISKFunction? availableFunction) =>
+    public bool TryGetFunction(string functionName, [NotNullWhen(true)] out IKernelFunction? availableFunction) =>
         this.TryGetFunction(GlobalFunctionsPluginName, functionName, out availableFunction);
 
     /// <inheritdoc/>
-    public bool TryGetFunction(string pluginName, string functionName, [NotNullWhen(true)] out ISKFunction? availableFunction)
+    public bool TryGetFunction(string pluginName, string functionName, [NotNullWhen(true)] out IKernelFunction? availableFunction)
     {
         Verify.NotNull(pluginName);
         Verify.NotNull(functionName);
 
-        if (this._functionCollection.TryGetValue(pluginName, out ConcurrentDictionary<string, ISKFunction>? functions))
+        if (this._functionCollection.TryGetValue(pluginName, out ConcurrentDictionary<string, IKernelFunction>? functions))
         {
             return functions.TryGetValue(functionName, out availableFunction);
         }
@@ -112,7 +112,7 @@ public class FunctionCollection : IFunctionCollection
 
         foreach (var functions in this._functionCollection.Values)
         {
-            foreach (ISKFunction f in functions.Values)
+            foreach (IKernelFunction f in functions.Values)
             {
                 result.Add(f.Describe());
             }
@@ -149,7 +149,7 @@ public class FunctionCollection : IFunctionCollection
 
     #region private ================================================================================
 
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, ISKFunction>> _functionCollection;
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, IKernelFunction>> _functionCollection;
 
     #endregion
 }

@@ -29,7 +29,7 @@ public static class Example06_TemplateLanguage
             return;
         }
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
             .WithLoggerFactory(ConsoleLogger.LoggerFactory)
             .WithOpenAIChatCompletionService(
                 modelId: openAIModelId,
@@ -38,7 +38,7 @@ public static class Example06_TemplateLanguage
 
         // Load native plugin into the kernel function collection, sharing its functions with prompt templates
         // Functions loaded here are available as "time.*"
-        kernel.ImportFunctions(new TimePlugin(), "time");
+        kernel.ImportPlugin(new TimePlugin(), "time");
 
         // Semantic Function invoking time.Date and time.Time native functions
         const string FunctionDefinition = @"

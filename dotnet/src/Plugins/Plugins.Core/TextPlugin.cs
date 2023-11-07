@@ -12,13 +12,13 @@ namespace Microsoft.SemanticKernel.Plugins.Core;
 /// Usage: kernel.ImportFunctions(new TextPlugin(), "text");
 ///
 /// Examples:
-/// SKContext.Variables["input"] = "  hello world  "
+/// KernelContext.Variables["input"] = "  hello world  "
 /// {{text.trim $input}} => "hello world"
 /// {{text.trimStart $input} => "hello world  "
 /// {{text.trimEnd $input} => "  hello world"
-/// SKContext.Variables["input"] = "hello world"
+/// KernelContext.Variables["input"] = "hello world"
 /// {{text.uppercase $input}} => "HELLO WORLD"
-/// SKContext.Variables["input"] = "HELLO WORLD"
+/// KernelContext.Variables["input"] = "HELLO WORLD"
 /// {{text.lowercase $input}} => "hello world"
 /// </example>
 public sealed class TextPlugin
@@ -27,7 +27,7 @@ public sealed class TextPlugin
     /// Trim whitespace from the start and end of a string.
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "  hello world  "
+    /// KernelContext.Variables["input"] = "  hello world  "
     /// {{text.trim $input}} => "hello world"
     /// </example>
     /// <param name="input"> The string to trim. </param>
@@ -39,7 +39,7 @@ public sealed class TextPlugin
     /// Trim whitespace from the start of a string.
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "  hello world  "
+    /// KernelContext.Variables["input"] = "  hello world  "
     /// {{text.trimStart $input} => "hello world  "
     /// </example>
     /// <param name="input"> The string to trim. </param>
@@ -51,7 +51,7 @@ public sealed class TextPlugin
     /// Trim whitespace from the end of a string.
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "  hello world  "
+    /// KernelContext.Variables["input"] = "  hello world  "
     /// {{text.trimEnd $input} => "  hello world"
     /// </example>
     /// <param name="input"> The string to trim. </param>
@@ -63,7 +63,7 @@ public sealed class TextPlugin
     /// Convert a string to uppercase.
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "hello world"
+    /// KernelContext.Variables["input"] = "hello world"
     /// {{text.uppercase $input}} => "HELLO WORLD"
     /// </example>
     /// <param name="input"> The string to convert. </param>
@@ -76,7 +76,7 @@ public sealed class TextPlugin
     /// Convert a string to lowercase.
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "HELLO WORLD"
+    /// KernelContext.Variables["input"] = "HELLO WORLD"
     /// {{text.lowercase $input}} => "hello world"
     /// </example>
     /// <param name="input"> The string to convert. </param>
@@ -89,7 +89,7 @@ public sealed class TextPlugin
     /// Get the length of a string. Returns 0 if null or empty
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "HELLO WORLD"
+    /// KernelContext.Variables["input"] = "HELLO WORLD"
     /// {{text.length $input}} => "11"
     /// </example>
     /// <param name="input"> The string to get length. </param>
@@ -102,7 +102,7 @@ public sealed class TextPlugin
     /// </summary>
     /// <example>
     /// text = "HELLO "
-    /// SKContext.Variables["input2"] = "WORLD"
+    /// KernelContext.Variables["input2"] = "WORLD"
     /// Result: "HELLO WORLD"
     /// </example>
     /// <param name="input">First input to concatenate with</param>

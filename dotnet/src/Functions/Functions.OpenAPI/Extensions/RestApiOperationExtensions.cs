@@ -90,7 +90,7 @@ internal static class RestApiOperationExtensions
         {
             if (operation.Payload is null)
             {
-                throw new SKException($"Payload parameters cannot be retrieved from the '{operation.Id}' operation payload metadata because it is missing.");
+                throw new KernelException($"Payload parameters cannot be retrieved from the '{operation.Id}' operation payload metadata because it is missing.");
             }
 
             // The 'text/plain' content type payload metadata does not contain parameter names.

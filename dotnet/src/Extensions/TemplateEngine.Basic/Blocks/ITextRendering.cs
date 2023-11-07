@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System.Collections.Generic;
 using Microsoft.SemanticKernel.Orchestration;
 
 namespace Microsoft.SemanticKernel.TemplateEngine.Basic.Blocks;
@@ -14,5 +15,5 @@ public interface ITextRendering
     /// </summary>
     /// <param name="variables">Optional variables used to render the block</param>
     /// <returns>Rendered content</returns>
-    public string Render(ContextVariables? variables);
+    public string Render(IReadOnlyDictionary<string, object?>? variables);
 }

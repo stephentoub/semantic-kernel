@@ -40,7 +40,7 @@ internal static class Example12_SequentialPlanner
         {
             await planner.CreatePlanAsync("Write a poem about John Doe, then translate it into Italian.");
         }
-        catch (SKException e)
+        catch (KernelException e)
         {
             Console.WriteLine(e.Message);
             // Create plan error: Not possible to create plan for goal with available functions.
@@ -108,7 +108,7 @@ internal static class Example12_SequentialPlanner
     {
         Console.WriteLine("======== Sequential Planner - Create and Execute Email Plan ========");
         var kernel = InitializeKernelAndPlanner(out var planner, 512);
-        kernel.ImportFunctions(new EmailPlugin(), "email");
+        kernel.ImportPlugin(new EmailPlugin(), "email");
 
         // Load additional plugins to enable planner to do non-trivial asks.
         string folder = RepoFiles.SamplePluginsPath();
@@ -246,9 +246,9 @@ internal static class Example12_SequentialPlanner
            "MiscPlugin",
            "QAPlugin");
 
-        kernel.ImportFunctions(new EmailPlugin(), "email");
-        kernel.ImportFunctions(new StaticTextPlugin(), "statictext");
-        kernel.ImportFunctions(new TextPlugin(), "coretext");
+        kernel.ImportPlugin(new EmailPlugin(), "email");
+        kernel.ImportPlugin(new StaticTextPlugin(), "statictext");
+        kernel.ImportPlugin(new TextPlugin(), "coretext");
 
         var goal = "Create a book with 3 chapters about a group of kids in a club called 'The Thinking Caps.'";
 
@@ -261,7 +261,7 @@ internal static class Example12_SequentialPlanner
         Console.WriteLine(plan.ToPlanWithGoalString());
     }
 
-    private static IKernel InitializeKernelAndPlanner(out SequentialPlanner planner, int maxTokens = 1024)
+    private static Kernel InitializeKernelAndPlanner(out SequentialPlanner planner, int maxTokens = 1024)
     {
         var kernel = new KernelBuilder()
             .WithLoggerFactory(ConsoleLogger.LoggerFactory)
@@ -276,7 +276,7 @@ internal static class Example12_SequentialPlanner
         return kernel;
     }
 
-    private static IKernel InitializeKernel()
+    private static Kernel InitializeKernel()
     {
         // IMPORTANT: Register an embedding generation service and a memory store. The Planner will
         // use these to generate and store embeddings for the function descriptions.
@@ -310,7 +310,7 @@ internal static class Example12_SequentialPlanner
     }
 
     private static async Task<Plan> ExecutePlanAsync(
-        IKernel kernel,
+        Kernel kernel,
         Plan plan,
         string input = "",
         int maxSteps = 10)
@@ -345,7 +345,7 @@ internal static class Example12_SequentialPlanner
                 Console.WriteLine(plan.State.ToString());
             }
         }
-        catch (SKException e)
+        catch (KernelException e)
         {
             Console.WriteLine("Step - Execution failed:");
             Console.WriteLine(e.Message);

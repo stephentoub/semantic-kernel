@@ -28,7 +28,7 @@ public sealed class SequentialPlanner : ISequentialPlanner
     /// <param name="kernel">The semantic kernel instance.</param>
     /// <param name="config">The planner configuration.</param>
     public SequentialPlanner(
-        IKernel kernel,
+        Kernel kernel,
         SequentialPlannerConfig? config = null)
     {
         Verify.NotNull(kernel);
@@ -63,7 +63,7 @@ public sealed class SequentialPlanner : ISequentialPlanner
     {
         if (string.IsNullOrEmpty(goal))
         {
-            throw new SKException("The goal specified is empty");
+            throw new KernelException("The goal specified is empty");
         }
 
         string relevantFunctionsManual = await this._kernel.Functions.GetFunctionsManualAsync(this.Config, goal, null, cancellationToken).ConfigureAwait(false);
@@ -79,7 +79,7 @@ public sealed class SequentialPlanner : ISequentialPlanner
 
         if (string.IsNullOrWhiteSpace(planResultString))
         {
-            throw new SKException(
+            throw new KernelException(
                 "Unable to create plan. No response from Function Flow function. " +
                 $"\nGoal:{goal}\nFunctions:\n{relevantFunctionsManual}");
         }
@@ -91,14 +91,14 @@ public sealed class SequentialPlanner : ISequentialPlanner
         {
             plan = planResultString!.ToPlanFromXml(goal, getFunctionCallback, this.Config.AllowMissingFunctions);
         }
-        catch (SKException e)
+        catch (KernelException e)
         {
-            throw new SKException($"Unable to create plan for goal with available functions.\nGoal:{goal}\nFunctions:\n{relevantFunctionsManual}", e);
+            throw new KernelException($"Unable to create plan for goal with available functions.\nGoal:{goal}\nFunctions:\n{relevantFunctionsManual}", e);
         }
 
         if (plan.Steps.Count == 0)
         {
-            throw new SKException($"Not possible to create plan for goal with available functions.\nGoal:{goal}\nFunctions:\n{relevantFunctionsManual}");
+            throw new KernelException($"Not possible to create plan for goal with available functions.\nGoal:{goal}\nFunctions:\n{relevantFunctionsManual}");
         }
 
         return plan;
@@ -106,12 +106,12 @@ public sealed class SequentialPlanner : ISequentialPlanner
 
     private SequentialPlannerConfig Config { get; }
 
-    private readonly IKernel _kernel;
+    private readonly Kernel _kernel;
 
     /// <summary>
     /// the function flow semantic function, which takes a goal and creates an xml plan that can be executed
     /// </summary>
-    private readonly ISKFunction _functionFlowFunction;
+    private readonly IKernelFunction _functionFlowFunction;
 
     /// <summary>
     /// The name to use when creating semantic functions that are restricted from plan creation

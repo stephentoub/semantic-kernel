@@ -102,15 +102,15 @@ public static class Example51_StepwisePlanner
         await RunWithQuestionAsync(kernel, currentExecutionResult, question, ChatMaxTokens);
     }
 
-    private static async Task RunWithQuestionAsync(IKernel kernel, ExecutionResult currentExecutionResult, string question, int? MaxTokens = null)
+    private static async Task RunWithQuestionAsync(Kernel kernel, ExecutionResult currentExecutionResult, string question, int? MaxTokens = null)
     {
         currentExecutionResult.question = question;
         var bingConnector = new BingConnector(TestConfiguration.Bing.ApiKey);
         var webSearchEnginePlugin = new WebSearchEnginePlugin(bingConnector);
 
-        kernel.ImportFunctions(webSearchEnginePlugin, "WebSearch");
-        kernel.ImportFunctions(new LanguageCalculatorPlugin(kernel), "semanticCalculator");
-        kernel.ImportFunctions(new TimePlugin(), "time");
+        kernel.ImportPlugin(webSearchEnginePlugin, "WebSearch");
+        kernel.ImportPlugin(new LanguageCalculatorPlugin(kernel), "semanticCalculator");
+        kernel.ImportPlugin(new TimePlugin(), "time");
 
         // StepwisePlanner is instructed to depend on available functions.
         // We expose this function to increase the flexibility in it's ability to answer
@@ -196,7 +196,7 @@ public static class Example51_StepwisePlanner
         Console.WriteLine("*****************************************************");
     }
 
-    private static IKernel GetKernel(ref ExecutionResult result, bool useChat = false, string? model = null)
+    private static Kernel GetKernel(ref ExecutionResult result, bool useChat = false, string? model = null)
     {
         var builder = new KernelBuilder();
         var maxTokens = 0;

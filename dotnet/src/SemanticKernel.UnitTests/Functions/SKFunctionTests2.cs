@@ -20,7 +20,7 @@ public sealed class SKFunctionTests2
 {
     private readonly Mock<ILoggerFactory> _logger;
     private readonly Mock<IReadOnlyFunctionCollection> _functions;
-    private readonly Mock<IKernel> _kernel;
+    private readonly Mock<Kernel> _kernel;
 
     private static string s_expected = string.Empty;
     private static string s_actual = string.Empty;
@@ -29,7 +29,7 @@ public sealed class SKFunctionTests2
     {
         this._logger = new Mock<ILoggerFactory>();
         this._functions = new Mock<IReadOnlyFunctionCollection>();
-        this._kernel = new Mock<IKernel>();
+        this._kernel = new Mock<Kernel>();
 
         s_expected = Guid.NewGuid().ToString("D");
     }
@@ -46,7 +46,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         await function.InvokeAsync(context);
@@ -68,7 +68,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -92,7 +92,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -117,7 +117,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -132,7 +132,7 @@ public sealed class SKFunctionTests2
     public async Task ItSupportsStaticContextVoidAsync()
     {
         // Arrange
-        static void Test(SKContext context)
+        static void Test(KernelContext context)
         {
             s_actual = s_expected;
             context.Variables["canary"] = s_expected;
@@ -142,7 +142,7 @@ public sealed class SKFunctionTests2
         context.Variables["someVar"] = "qz";
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         await function.InvokeAsync(context);
@@ -156,7 +156,7 @@ public sealed class SKFunctionTests2
     public async Task ItSupportsStaticContextStringAsync()
     {
         // Arrange
-        static string Test(SKContext context)
+        static string Test(KernelContext context)
         {
             s_actual = context.Variables["someVar"];
             return "abc";
@@ -166,7 +166,7 @@ public sealed class SKFunctionTests2
         context.Variables["someVar"] = s_expected;
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -183,7 +183,7 @@ public sealed class SKFunctionTests2
         // Arrange
         int invocationCount = 0;
 
-        string? Test(SKContext context)
+        string? Test(KernelContext context)
         {
             invocationCount++;
             s_actual = context.Variables["someVar"];
@@ -194,8 +194,13 @@ public sealed class SKFunctionTests2
         context.Variables["someVar"] = s_expected;
 
         // Act
-        Func<SKContext, string?> method = Test;
-        var function = SKFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+<<<<<<< HEAD
+        Func<KernelContext, string?> method = Test;
+        var function = KernelFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+=======
+        Func<KernelContext, string?> method = Test;
+        var function = SKFunction.FromNativeMethod(Method(method), method.Target, loggerFactory: this._logger.Object);
+>>>>>>> fbe34860 (wip)
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -213,7 +218,7 @@ public sealed class SKFunctionTests2
         // Arrange
         int invocationCount = 0;
 
-        Task<string> Test(SKContext context)
+        Task<string> Test(KernelContext context)
         {
             invocationCount++;
             s_actual = s_expected;
@@ -224,8 +229,13 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        Func<SKContext, Task<string>> method = Test;
-        var function = SKFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+<<<<<<< HEAD
+        Func<KernelContext, Task<string>> method = Test;
+        var function = KernelFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+=======
+        Func<KernelContext, Task<string>> method = Test;
+        var function = SKFunction.FromNativeMethod(Method(method), method.Target, loggerFactory: this._logger.Object);
+>>>>>>> fbe34860 (wip)
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -244,7 +254,7 @@ public sealed class SKFunctionTests2
         // Arrange
         int invocationCount = 0;
 
-        async Task<SKContext> TestAsync(SKContext context)
+        async Task<KernelContext> TestAsync(KernelContext context)
         {
             await Task.Delay(0);
             invocationCount++;
@@ -257,8 +267,13 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        Func<SKContext, Task<SKContext>> method = TestAsync;
-        var function = SKFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+<<<<<<< HEAD
+        Func<KernelContext, Task<KernelContext>> method = TestAsync;
+        var function = KernelFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+=======
+        Func<KernelContext, Task<KernelContext>> method = TestAsync;
+        var function = SKFunction.FromNativeMethod(Method(method), method.Target, loggerFactory: this._logger.Object);
+>>>>>>> fbe34860 (wip)
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -287,7 +302,7 @@ public sealed class SKFunctionTests2
 
         // Act
         Action<string> method = Test;
-        var function = SKFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         await function.InvokeAsync(context);
@@ -314,7 +329,7 @@ public sealed class SKFunctionTests2
 
         // Act
         Func<string, string> method = Test;
-        var function = SKFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -343,7 +358,7 @@ public sealed class SKFunctionTests2
 
         // Act
         Func<string, Task<string>> method = Test;
-        var function = SKFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -361,7 +376,7 @@ public sealed class SKFunctionTests2
         // Arrange
         int invocationCount = 0;
 
-        void Test(string input, SKContext context)
+        void Test(string input, KernelContext context)
         {
             invocationCount++;
             s_actual = s_expected;
@@ -372,8 +387,13 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        Action<string, SKContext> method = Test;
-        var function = SKFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+<<<<<<< HEAD
+        Action<string, KernelContext> method = Test;
+        var function = KernelFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+=======
+        Action<string, KernelContext> method = Test;
+        var function = SKFunction.FromNativeMethod(Method(method), method.Target, loggerFactory: this._logger.Object);
+>>>>>>> fbe34860 (wip)
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -392,7 +412,7 @@ public sealed class SKFunctionTests2
         // Arrange
         int invocationCount = 0;
 
-        void Test(SKContext context, string input)
+        void Test(KernelContext context, string input)
         {
             invocationCount++;
             s_actual = s_expected;
@@ -403,8 +423,13 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        Action<SKContext, string> method = Test;
-        var function = SKFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+<<<<<<< HEAD
+        Action<KernelContext, string> method = Test;
+        var function = KernelFunction.Create(Method(method), method.Target, loggerFactory: this._logger.Object);
+=======
+        Action<KernelContext, string> method = Test;
+        var function = SKFunction.FromNativeMethod(Method(method), method.Target, loggerFactory: this._logger.Object);
+>>>>>>> fbe34860 (wip)
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -421,7 +446,7 @@ public sealed class SKFunctionTests2
     public async Task ItSupportsStaticStringContextStringAsync()
     {
         // Arrange
-        static string Test(string input, SKContext context)
+        static string Test(string input, KernelContext context)
         {
             s_actual = s_expected;
             context.Variables["canary"] = s_expected;
@@ -433,7 +458,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -449,7 +474,7 @@ public sealed class SKFunctionTests2
     public async Task ItSupportsStaticStringContextTaskStringAsync()
     {
         // Arrange
-        static Task<string> Test(string input, SKContext context)
+        static Task<string> Test(string input, KernelContext context)
         {
             s_actual = s_expected;
             context.Variables["canary"] = s_expected;
@@ -460,7 +485,7 @@ public sealed class SKFunctionTests2
 
         var context = this.MockContext("");
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -476,7 +501,7 @@ public sealed class SKFunctionTests2
     public async Task ItSupportsStaticStringContextTaskContextAsync()
     {
         // Arrange
-        static Task<SKContext> Test(string input, SKContext context)
+        static Task<KernelContext> Test(string input, KernelContext context)
         {
             s_actual = s_expected;
             context.Variables["canary"] = s_expected;
@@ -496,7 +521,7 @@ public sealed class SKFunctionTests2
         oldContext.Variables["legacy"] = "something";
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(oldContext);
@@ -527,19 +552,19 @@ public sealed class SKFunctionTests2
     public async Task ItSupportsStaticContextValueTaskContextAsync()
     {
         // Arrange
-        static ValueTask<SKContext> Test(string input, SKContext context)
+        static ValueTask<KernelContext> Test(string input, KernelContext context)
         {
             // This value should overwrite "x y z". Contexts are merged.
             var newCx = context.Clone();
             newCx.Variables.Update(input + "abc");
 
-            return new ValueTask<SKContext>(newCx);
+            return new ValueTask<KernelContext>(newCx);
         }
 
         var oldContext = this.MockContext("test");
 
         // Act
-        var function = SKFunction.Create(Method(Test), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(Test), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(oldContext);
@@ -561,7 +586,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         await function.InvokeAsync(context);
@@ -583,7 +608,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         await function.InvokeAsync(context);
@@ -596,7 +621,7 @@ public sealed class SKFunctionTests2
     public async Task ItSupportsStaticContextTaskAsync()
     {
         // Arrange
-        static Task TestAsync(SKContext context)
+        static Task TestAsync(KernelContext context)
         {
             s_actual = s_expected;
             context.Variables["canary"] = s_expected;
@@ -607,7 +632,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -623,7 +648,7 @@ public sealed class SKFunctionTests2
     public async Task ItSupportsStaticStringContextTaskAsync()
     {
         // Arrange
-        static Task TestAsync(string input, SKContext context)
+        static Task TestAsync(string input, KernelContext context)
         {
             s_actual = s_expected;
             context.Variables["canary"] = s_expected;
@@ -634,7 +659,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("input:");
 
         // Act
-        var function = SKFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         var result = await function.InvokeAsync(context);
@@ -659,7 +684,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
 
         // Act
-        var function = SKFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
+        var function = KernelFunction.Create(Method(TestAsync), loggerFactory: this._logger.Object);
         Assert.NotNull(function);
 
         await function.InvokeAsync(context);
@@ -676,7 +701,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("input value");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -693,7 +718,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("input value");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -711,7 +736,7 @@ public sealed class SKFunctionTests2
         context.Variables.Set("orother", "8");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -729,7 +754,7 @@ public sealed class SKFunctionTests2
         context.Variables.Set("other", "other value");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -747,7 +772,7 @@ public sealed class SKFunctionTests2
         context.Variables.Set("other", "other value");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -764,7 +789,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("input value");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -788,7 +813,7 @@ public sealed class SKFunctionTests2
         context.Variables.Set("f", "Monday");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -806,7 +831,7 @@ public sealed class SKFunctionTests2
         context.Variables.Set("mct", "42");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         FunctionResult result = await function.InvokeAsync(context);
@@ -837,9 +862,9 @@ public sealed class SKFunctionTests2
         // Arrange
         var context = this.MockContext("1");
 
-        static async Task AssertResult(Delegate d, SKContext context, string expected)
+        static async Task AssertResult(Delegate d, KernelContext context, string expected)
         {
-            var result = await SKFunction.Create(d, functionName: "Test")!.InvokeAsync(context);
+            var result = await KernelFunction.Create(d, functionName: "Test")!.InvokeAsync(context);
             context = result.Context;
 
             Assert.Equal(expected, context.Variables.Input);
@@ -873,7 +898,11 @@ public sealed class SKFunctionTests2
     {
         // Arrange
         var context = this.MockContext("");
-        ISKFunction func = SKFunction.Create((double input) => input * 2, functionName: "Test");
+<<<<<<< HEAD
+        ISKFunction func = KernelFunction.Create((double input) => input * 2, functionName: "Test");
+=======
+        IKernelFunction func = SKFunction.FromNativeFunction((double input) => input * 2, functionName: "Test");
+>>>>>>> fbe34860 (wip)
         FunctionResult result;
 
         // Act/Assert
@@ -907,7 +936,7 @@ public sealed class SKFunctionTests2
         context.Variables.Set("g", "7e08cc00-1d71-4558-81ed-69929499dxyz");
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
         Assert.NotNull(function);
 
         var ex = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => function.InvokeAsync(context));
@@ -923,7 +952,7 @@ public sealed class SKFunctionTests2
         static string Test(Guid id, string name, [SKName("old")] int age) => $"{id} {name} {age}";
 
         // Act
-        var function = SKFunction.Create(Test);
+        var function = KernelFunction.Create(Test);
 
         // Assert
         Assert.Contains("Test", function.Name, StringComparison.Ordinal);
@@ -940,7 +969,7 @@ public sealed class SKFunctionTests2
         static string Test(Guid id, string name, [SKName("old")] int age) => $"{id} {name} {age}";
 
         // Act
-        var function = SKFunction.Create(Method(Test));
+        var function = KernelFunction.Create(Method(Test));
 
         // Assert
         Assert.Contains("Test", function.Name, StringComparison.Ordinal);
@@ -959,10 +988,10 @@ public sealed class SKFunctionTests2
         static string TestString(string str) => str;
         static bool TestBool(bool flag) => flag;
 
-        var function1 = SKFunction.Create(Method(TestInt));
-        var function2 = SKFunction.Create(Method(TestDouble));
-        var function3 = SKFunction.Create(Method(TestString));
-        var function4 = SKFunction.Create(Method(TestBool));
+        var function1 = KernelFunction.Create(Method(TestInt));
+        var function2 = KernelFunction.Create(Method(TestDouble));
+        var function3 = KernelFunction.Create(Method(TestString));
+        var function4 = KernelFunction.Create(Method(TestBool));
 
         // Act
         FunctionResult result1 = await function1.InvokeAsync(this.MockContext("42"));
@@ -986,7 +1015,7 @@ public sealed class SKFunctionTests2
         var context = this.MockContext("");
         context.Variables.Set("instance", "42");
 
-        var function = SKFunction.Create(Method(TestCustomType));
+        var function = KernelFunction.Create(Method(TestCustomType));
 
         // Act
         FunctionResult result = await function.InvokeAsync(context);
@@ -1015,7 +1044,7 @@ public sealed class SKFunctionTests2
             yield return 3;
         }
 
-        var function = SKFunction.Create(Method(TestAsyncEnumerableTypeAsync));
+        var function = KernelFunction.Create(Method(TestAsyncEnumerableTypeAsync));
 
         // Act
         FunctionResult result = await function.InvokeAsync(this.MockContext(string.Empty));
@@ -1042,13 +1071,13 @@ public sealed class SKFunctionTests2
         return method.Method;
     }
 
-    private SKContext MockContext(string input)
+    private KernelContext MockContext(string input)
     {
         var functionRunner = new Mock<IFunctionRunner>();
         var serviceProvider = new Mock<IAIServiceProvider>();
         var serviceSelector = new Mock<IAIServiceSelector>();
 
-        return new SKContext(
+        return new KernelContext(
             functionRunner.Object,
             serviceProvider.Object,
             serviceSelector.Object,

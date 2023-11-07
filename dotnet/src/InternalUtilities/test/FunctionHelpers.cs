@@ -20,9 +20,9 @@ internal static class FunctionHelpers
     {
         var kernel = new KernelBuilder().Build();
 
-        IDictionary<string, ISKFunction> functions = kernel.ImportFunctions(pluginInstance);
+        IDictionary<string, IKernelFunction> functions = kernel.ImportPlugin(pluginInstance);
 
-        SKContext context = kernel.CreateNewContext();
+        KernelContext context = kernel.CreateNewContext();
         foreach ((string Name, object Value) pair in variables)
         {
             context.Variables.Set(pair.Name, pair.Value.ToString());

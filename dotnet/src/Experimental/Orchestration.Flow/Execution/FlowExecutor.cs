@@ -58,7 +58,7 @@ internal class FlowExecutor : IFlowExecutor
     /// <summary>
     /// System kernel for flow execution
     /// </summary>
-    private readonly IKernel _systemKernel;
+    private readonly Kernel _systemKernel;
 
     /// <summary>
     /// Re-Act engine for flow execution
@@ -91,12 +91,12 @@ internal class FlowExecutor : IFlowExecutor
     /// <summary>
     /// Check repeat step function
     /// </summary>
-    private readonly ISKFunction _checkRepeatStepFunction;
+    private readonly IKernelFunction _checkRepeatStepFunction;
 
     /// <summary>
     /// Check start step function
     /// </summary>
-    private readonly ISKFunction _checkStartStepFunction;
+    private readonly IKernelFunction _checkStartStepFunction;
 
     internal FlowExecutor(KernelBuilder kernelBuilder, IFlowStatusProvider statusProvider, Dictionary<object, string?> globalPluginCollection, FlowOrchestratorConfig? config = null)
     {
@@ -121,14 +121,14 @@ internal class FlowExecutor : IFlowExecutor
         this._reActEngine = new ReActEngine(this._systemKernel, this._logger, this._config);
     }
 
-    public async Task<ContextVariables> ExecuteAsync(Flow flow, string sessionId, string input, ContextVariables contextVariables)
+    public async Task<IDictionary<string, object?>> ExecuteAsync(Flow flow, string sessionId, string input, IReadOnlyDictionary<string, object?> contextVariables)
     {
         Verify.NotNull(flow, nameof(flow));
 
         this._logger?.LogInformation("Executing flow {FlowName} with sessionId={SessionId}.", flow.Name, sessionId);
         var sortedSteps = flow.SortSteps();
 
-        var rootContext = contextVariables.Clone();
+        var rootContext = contextVariables.ToDictionary(p => p.Key, p => p.Value);
 
         // populate persisted state variables
         ExecutionState executionState = await this._flowStatusProvider.GetExecutionStateAsync(sessionId).ConfigureAwait(false);
@@ -141,7 +141,7 @@ internal class FlowExecutor : IFlowExecutor
 
             foreach (var kv in executionState.Variables)
             {
-                rootContext.Set(kv.Key, kv.Value);
+                rootContext[kv.Key] = kv.Value;
             }
 
             this.ValidateStep(step, rootContext);
@@ -202,7 +202,7 @@ internal class FlowExecutor : IFlowExecutor
                     "Executing step {StepIndex} for iteration={Iteration}, goal={StepGoal}, input={Input}.", stepIndex,
                     stepState.ExecutionCount, step.Goal, input);
 
-                IKernel stepKernel = this._kernelBuilder.Build();
+                Kernel stepKernel = this._kernelBuilder.Build();
                 var stepContext = stepKernel.CreateNewContext();
                 foreach (var key in step.Requires)
                 {
@@ -227,7 +227,7 @@ internal class FlowExecutor : IFlowExecutor
                     var stepPlugins = step.LoadPlugins(stepKernel, this._globalPluginCollection);
                     foreach (var plugin in stepPlugins)
                     {
-                        stepKernel.ImportFunctions(plugin, plugin.GetType().Name);
+                        stepKernel.ImportPlugin(plugin, plugin.GetType().Name);
                     }
 
                     stepResult = await this.ExecuteStepAsync(step, sessionId, stepId, input, stepKernel, stepContext).ConfigureAwait(false);
@@ -404,31 +404,31 @@ internal class FlowExecutor : IFlowExecutor
         await this._flowStatusProvider.SaveExecutionStateAsync(sessionId, state).ConfigureAwait(false);
     }
 
-    private void ValidateStep(FlowStep step, ContextVariables context)
+    private void ValidateStep(FlowStep step, IReadOnlyDictionary<string, object?> context)
     {
         if (step.Requires.Any(p => !context.ContainsKey(p)))
         {
-            throw new SKException($"Step {step.Goal} requires variables {string.Join(",", step.Requires.Where(p => !context.ContainsKey(p)))} that are not provided. ");
+            throw new KernelException($"Step {step.Goal} requires variables {string.Join(",", step.Requires.Where(p => !context.ContainsKey(p)))} that are not provided. ");
         }
     }
 
-    private async Task<RepeatOrStartStepResult?> CheckStartStepAsync(ContextVariables context, FlowStep step, string sessionId, string stepId, string input)
+    private async Task<RepeatOrStartStepResult?> CheckStartStepAsync(IReadOnlyDictionary<string, object?> context, FlowStep step, string sessionId, string stepId, string input)
     {
-        context = context.Clone();
-        context.Set("goal", step.Goal);
-        context.Set("message", step.StartingMessage);
-        return await this.CheckRepeatOrStartStepAsync(context, this._checkStartStepFunction, sessionId, $"{stepId}_CheckStartStep", input).ConfigureAwait(false);
+        var args = context.ToDictionary(p => p.Key, p => p.Value);
+        args["goal"] = step.Goal;
+        args["message"] = step.StartingMessage;
+        return await this.CheckRepeatOrStartStepAsync(args, this._checkStartStepFunction, sessionId, $"{stepId}_CheckStartStep", input).ConfigureAwait(false);
     }
 
-    private async Task<RepeatOrStartStepResult?> CheckRepeatStepAsync(ContextVariables context, FlowStep step, string sessionId, string nextStepId, string input)
+    private async Task<RepeatOrStartStepResult?> CheckRepeatStepAsync(IReadOnlyDictionary<string, object?> context, FlowStep step, string sessionId, string nextStepId, string input)
     {
-        context = context.Clone();
-        context.Set("goal", step.Goal);
-        context.Set("transitionMessage", step.TransitionMessage);
-        return await this.CheckRepeatOrStartStepAsync(context, this._checkRepeatStepFunction, sessionId, $"{nextStepId}_CheckRepeatStep", input).ConfigureAwait(false);
+        var args = context.ToDictionary(p => p.Key, p => p.Value);
+        args["goal"] = step.Goal;
+        args["transitionMessage"] = step.TransitionMessage;
+        return await this.CheckRepeatOrStartStepAsync(args, this._checkRepeatStepFunction, sessionId, $"{nextStepId}_CheckRepeatStep", input).ConfigureAwait(false);
     }
 
-    private async Task<RepeatOrStartStepResult?> CheckRepeatOrStartStepAsync(ContextVariables context, ISKFunction function, string sessionId, string checkRepeatOrStartStepId, string input)
+    private async Task<RepeatOrStartStepResult?> CheckRepeatOrStartStepAsync(Dictionary<string, object?> context, IKernelFunction function, string sessionId, string checkRepeatOrStartStepId, string input)
     {
         var chatHistory = await this._flowStatusProvider.GetChatHistoryAsync(sessionId, checkRepeatOrStartStepId).ConfigureAwait(false);
         if (chatHistory != null)
@@ -441,10 +441,10 @@ internal class FlowExecutor : IFlowExecutor
         }
 
         var scratchPad = this.CreateRepeatOrStartStepScratchPad(chatHistory);
-        context.Set("agentScratchPad", scratchPad);
+        context["agentScratchPad"] = scratchPad;
         this._logger?.LogInformation("Scratchpad: {ScratchPad}", scratchPad);
 
-        var llmResponse = await this._systemKernel.RunAsync(context, function).ConfigureAwait(false);
+        var llmResponse = await this._systemKernel.RunAsync(function, context).ConfigureAwait(false);
 
         string llmResponseText = llmResponse.GetValue<string>()?.Trim() ?? string.Empty;
         this._logger?.LogInformation("Response from {Function} : {ActionText}", "CheckRepeatOrStartStep", llmResponseText);
@@ -508,7 +508,7 @@ internal class FlowExecutor : IFlowExecutor
         return string.Join("\n", scratchPadLines).Trim();
     }
 
-    private async Task<ContextVariables> ExecuteStepAsync(FlowStep step, string sessionId, string stepId, string input, IKernel kernel, SKContext context)
+    private async Task<IReadOnlyDictionary<string, object?>> ExecuteStepAsync(FlowStep step, string sessionId, string stepId, string input, Kernel kernel, IReadOnlyDictionary<string, object?> context)
     {
         var stepsTaken = await this._flowStatusProvider.GetReActStepsAsync(sessionId, stepId).ConfigureAwait(false);
         var lastStep = stepsTaken.LastOrDefault();
@@ -521,9 +521,9 @@ internal class FlowExecutor : IFlowExecutor
         var question = step.Goal;
         foreach (var variable in step.Requires)
         {
-            if (!variable.StartsWith("_", StringComparison.InvariantCulture) && context.Variables[variable].Length <= this._config.MaxVariableLength)
+            if (!variable.StartsWith("_", StringComparison.InvariantCulture) && (context[variable]?.ToString()?.Length ?? 0) <= this._config.MaxVariableLength)
             {
-                question += $"\n - {variable}: {JsonSerializer.Serialize(context.Variables[variable])}";
+                question += $"\n - {variable}: {JsonSerializer.Serialize(context[variable])}";
             }
         }
 
@@ -679,10 +679,10 @@ internal class FlowExecutor : IFlowExecutor
             await Task.Delay(this._config.MinIterationTimeMs).ConfigureAwait(false);
         }
 
-        throw new SKException($"Failed to complete step {stepId} for session {sessionId}.");
+        throw new KernelException($"Failed to complete step {stepId} for session {sessionId}.");
     }
 
-    private ISKFunction ImportSemanticFunction(IKernel kernel, string functionName, string promptTemplate, PromptTemplateConfig config)
+    private IKernelFunction ImportSemanticFunction(Kernel kernel, string functionName, string promptTemplate, PromptTemplateConfig config)
     {
         var factory = new BasicPromptTemplateFactory(kernel.LoggerFactory);
         var template = factory.Create(promptTemplate, config);

@@ -20,7 +20,7 @@ namespace Microsoft.SemanticKernel;
 /// <summary>
 /// Standard Semantic Kernel callable function with instrumentation.
 /// </summary>
-internal sealed class InstrumentedSKFunction : ISKFunction
+internal sealed class InstrumentedSKFunction : IKernelFunction
 {
     /// <inheritdoc/>
     public string Name => this._function.Name;
@@ -34,10 +34,10 @@ internal sealed class InstrumentedSKFunction : ISKFunction
     /// <summary>
     /// Initialize a new instance of the <see cref="InstrumentedSKFunction"/> class.
     /// </summary>
-    /// <param name="function">Instance of <see cref="ISKFunction"/> to decorate.</param>
+    /// <param name="function">Instance of <see cref="IKernelFunction"/> to decorate.</param>
     /// <param name="loggerFactory">The <see cref="ILoggerFactory"/> to use for logging. If null, no logging will be performed.</param>
     public InstrumentedSKFunction(
-        ISKFunction function,
+        IKernelFunction function,
         ILoggerFactory? loggerFactory = null)
     {
         this._function = function;
@@ -67,7 +67,7 @@ internal sealed class InstrumentedSKFunction : ISKFunction
 
     /// <inheritdoc/>
     public async Task<FunctionResult> InvokeAsync(
-        SKContext context,
+        KernelContext context,
         AIRequestSettings? requestSettings = null,
         CancellationToken cancellationToken = default)
     {
@@ -77,18 +77,18 @@ internal sealed class InstrumentedSKFunction : ISKFunction
 
     #region private ================================================================================
 
-    private readonly ISKFunction _function;
+    private readonly IKernelFunction _function;
     private readonly ILogger _logger;
 
     /// <summary>
     /// Instance of <see cref="ActivitySource"/> for function-related activities.
     /// </summary>
-    private static readonly ActivitySource s_activitySource = new(typeof(SKFunction).FullName);
+    private static readonly ActivitySource s_activitySource = new(typeof(KernelFunction).FullName);
 
     /// <summary>
     /// Instance of <see cref="Meter"/> for function-related metrics.
     /// </summary>
-    private static readonly Meter s_meter = new(typeof(SKFunction).FullName);
+    private static readonly Meter s_meter = new(typeof(KernelFunction).FullName);
 
     /// <summary>
     /// Instance of <see cref="Histogram{T}"/> to measure and track the time of function execution.
@@ -164,21 +164,21 @@ internal sealed class InstrumentedSKFunction : ISKFunction
     #region Obsolete =======================================================================
 
     /// <inheritdoc/>
-    [Obsolete("Use ISKFunction.RequestSettingsFactory instead. This will be removed in a future release.")]
+    [Obsolete("Use IKernelFunction.RequestSettingsFactory instead. This will be removed in a future release.")]
     public AIRequestSettings? RequestSettings => this._function.RequestSettings;
 
     /// <inheritdoc/>
-    [Obsolete("Use ISKFunction.SetAIRequestSettingsFactory instead. This will be removed in a future release.")]
-    public ISKFunction SetAIConfiguration(AIRequestSettings? requestSettings) =>
+    [Obsolete("Use IKernelFunction.SetAIRequestSettingsFactory instead. This will be removed in a future release.")]
+    public IKernelFunction SetAIConfiguration(AIRequestSettings? requestSettings) =>
         this._function.SetAIConfiguration(requestSettings);
 
     /// <inheritdoc/>
-    [Obsolete("Use ISKFunction.SetAIServiceFactory instead. This will be removed in a future release.")]
-    public ISKFunction SetAIService(Func<ITextCompletion> serviceFactory) =>
+    [Obsolete("Use IKernelFunction.SetAIServiceFactory instead. This will be removed in a future release.")]
+    public IKernelFunction SetAIService(Func<ITextCompletion> serviceFactory) =>
         this._function.SetAIService(serviceFactory);
 
     /// <inheritdoc/>
-    [Obsolete("Methods, properties and classes which include Skill in the name have been renamed. Use ISKFunction.PluginName instead. This will be removed in a future release.")]
+    [Obsolete("Methods, properties and classes which include Skill in the name have been renamed. Use IKernelFunction.PluginName instead. This will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public string SkillName => this._function.PluginName;
 
@@ -190,12 +190,12 @@ internal sealed class InstrumentedSKFunction : ISKFunction
     /// <inheritdoc/>
     [Obsolete("This method is a nop and will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public ISKFunction SetDefaultSkillCollection(IReadOnlyFunctionCollection skills) => this;
+    public IKernelFunction SetDefaultSkillCollection(IReadOnlyFunctionCollection skills) => this;
 
     /// <inheritdoc/>
     [Obsolete("This method is a nop and will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public ISKFunction SetDefaultFunctionCollection(IReadOnlyFunctionCollection functions) => this;
+    public IKernelFunction SetDefaultFunctionCollection(IReadOnlyFunctionCollection functions) => this;
 
     #endregion
 }

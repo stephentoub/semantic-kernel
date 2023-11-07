@@ -111,7 +111,7 @@ internal sealed class GrpcOperationRunner
 
         if (string.IsNullOrEmpty(address))
         {
-            throw new SKException($"No address provided for the '{operation.Name}' gRPC operation.");
+            throw new KernelException($"No address provided for the '{operation.Name}' gRPC operation.");
         }
 
         return address!;
@@ -155,14 +155,14 @@ internal sealed class GrpcOperationRunner
         //Getting 'payload' argument to by used as gRPC request message
         if (!arguments.TryGetValue(GrpcOperation.PayloadArgumentName, out var payload))
         {
-            throw new SKException($"No '{GrpcOperation.PayloadArgumentName}' argument representing gRPC request message is found for the '{operation.Name}' gRPC operation.");
+            throw new KernelException($"No '{GrpcOperation.PayloadArgumentName}' argument representing gRPC request message is found for the '{operation.Name}' gRPC operation.");
         }
 
         //Deserializing JSON payload to gRPC request message
         var instance = JsonSerializer.Deserialize(payload, type, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         if (instance == null)
         {
-            throw new SKException($"Impossible to create gRPC request message for the '{operation.Name}' gRPC operation.");
+            throw new KernelException($"Impossible to create gRPC request message for the '{operation.Name}' gRPC operation.");
         }
 
         return instance;
@@ -226,7 +226,7 @@ internal sealed class GrpcOperationRunner
         var type = typeBuilder.CreateTypeInfo();
         if (type == null)
         {
-            throw new SKException($"Impossible to create type for '{dataContractMetadata.Name}' data contract.");
+            throw new KernelException($"Impossible to create type for '{dataContractMetadata.Name}' data contract.");
         }
 
         return type;

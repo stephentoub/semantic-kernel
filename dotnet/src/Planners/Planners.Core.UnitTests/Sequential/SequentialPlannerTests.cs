@@ -22,11 +22,11 @@ public sealed class SequentialPlannerTests
     {
         // Arrange
         var kernel = CreateMockKernel();
-        kernel.Setup(x => x.RunAsync(It.IsAny<ContextVariables>(), It.IsAny<CancellationToken>(), It.IsAny<ISKFunction>()))
-            .Returns<ContextVariables, CancellationToken, ISKFunction[]>(async (vars, cancellationToken, functions) =>
+        kernel.Setup(x => x.RunAsync(It.IsAny<ContextVariables>(), It.IsAny<CancellationToken>(), It.IsAny<IKernelFunction>()))
+            .Returns<ContextVariables, CancellationToken, IKernelFunction[]>(async (vars, cancellationToken, functions) =>
             {
                 var functionResult = await functions[0].InvokeAsync(kernel.Object, vars, cancellationToken: cancellationToken);
-                return KernelResult.FromFunctionResults(functionResult.GetValue<string>(), new List<FunctionResult> { functionResult });
+                return new KernelResult(functionResult.GetValue<string>(), new List<FunctionResult> { functionResult });
             });
 
         var input = new List<(string name, string pluginName, string description, bool isSemantic)>()
@@ -46,8 +46,8 @@ public sealed class SequentialPlannerTests
             functionsView.Add(functionView);
 
             mockFunction.Setup(x =>
-                    x.InvokeAsync(It.IsAny<SKContext>(), It.IsAny<AIRequestSettings>(), It.IsAny<CancellationToken>()))
-                .Returns<SKContext, object, CancellationToken>((context, settings, cancellationToken) =>
+                    x.InvokeAsync(It.IsAny<KernelContext>(), It.IsAny<AIRequestSettings>(), It.IsAny<CancellationToken>()))
+                .Returns<KernelContext, object, CancellationToken>((context, settings, cancellationToken) =>
                 {
                     context.Variables.Update("MOCK FUNCTION CALLED");
                     return Task.FromResult(new FunctionResult(name, pluginName, context));
@@ -55,7 +55,7 @@ public sealed class SequentialPlannerTests
 
             functions.Setup(x => x.GetFunction(It.Is<string>(s => s == pluginName), It.Is<string>(s => s == name)))
                 .Returns(mockFunction.Object);
-            ISKFunction? outFunc = mockFunction.Object;
+            IKernelFunction? outFunc = mockFunction.Object;
             functions.Setup(x => x.TryGetFunction(It.Is<string>(s => s == pluginName), It.Is<string>(s => s == name), out outFunc)).Returns(true);
         }
 
@@ -67,13 +67,13 @@ public sealed class SequentialPlannerTests
         var expectedFunctions = input.Select(x => x.name).ToList();
         var expectedPlugins = input.Select(x => x.pluginName).ToList();
 
-        var context = new SKContext(
+        var context = new KernelContext(
             functionRunner.Object,
             serviceProvider.Object,
             serviceSelector.Object,
             new ContextVariables());
 
-        var returnContext = new SKContext(
+        var returnContext = new KernelContext(
             functionRunner.Object,
             serviceProvider.Object,
             serviceSelector.Object,
@@ -90,12 +90,12 @@ public sealed class SequentialPlannerTests
 
         returnContext.Variables.Update(planString);
 
-        var mockFunctionFlowFunction = new Mock<ISKFunction>();
+        var mockFunctionFlowFunction = new Mock<IKernelFunction>();
         mockFunctionFlowFunction.Setup(x => x.InvokeAsync(
-            It.IsAny<SKContext>(),
+            It.IsAny<KernelContext>(),
             null,
             default
-        )).Callback<SKContext, object, CancellationToken>(
+        )).Callback<KernelContext, object, CancellationToken>(
             (c, s, ct) => c.Variables.Update("Hello world!")
         ).Returns(() => Task.FromResult(new FunctionResult("FunctionName", "PluginName", returnContext, planString)));
 
@@ -104,7 +104,7 @@ public sealed class SequentialPlannerTests
         kernel.Setup(x => x.CreateNewContext(It.IsAny<ContextVariables>(), It.IsAny<IReadOnlyFunctionCollection>(), It.IsAny<ILoggerFactory>(), It.IsAny<CultureInfo>()))
             .Returns(context);
 
-        kernel.Setup(x => x.RegisterCustomFunction(It.IsAny<ISKFunction>()))
+        kernel.Setup(x => x.RegisterCustomFunction(It.IsAny<IKernelFunction>()))
             .Returns(mockFunctionFlowFunction.Object);
 
         var planner = new SequentialPlanner(kernel.Object);
@@ -145,7 +145,7 @@ public sealed class SequentialPlannerTests
         var planner = new SequentialPlanner(kernel.Object);
 
         // Act
-        await Assert.ThrowsAsync<SKException>(async () => await planner.CreatePlanAsync(""));
+        await Assert.ThrowsAsync<KernelException>(async () => await planner.CreatePlanAsync(""));
     }
 
     [Fact]
@@ -155,44 +155,44 @@ public sealed class SequentialPlannerTests
         var functionRunner = new Mock<IFunctionRunner>();
         var serviceProvider = new Mock<IAIServiceProvider>();
         var serviceSelector = new Mock<IAIServiceSelector>();
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
         var functions = new Mock<IFunctionCollection>();
 
         functions.Setup(x => x.GetFunctionViews()).Returns(new List<FunctionView>());
 
         var planString = "<plan>notvalid<</plan>";
-        var returnContext = new SKContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, new ContextVariables(planString));
+        var returnContext = new KernelContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, new ContextVariables(planString));
 
-        var context = new SKContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, new ContextVariables());
+        var context = new KernelContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, new ContextVariables());
 
-        var mockFunctionFlowFunction = new Mock<ISKFunction>();
+        var mockFunctionFlowFunction = new Mock<IKernelFunction>();
         mockFunctionFlowFunction.Setup(x => x.InvokeAsync(
-            It.IsAny<SKContext>(),
+            It.IsAny<KernelContext>(),
             null,
             default
-        )).Callback<SKContext, object, CancellationToken>(
+        )).Callback<KernelContext, object, CancellationToken>(
             (c, s, ct) => c.Variables.Update("Hello world!")
         ).Returns(() => Task.FromResult(new FunctionResult("FunctionName", "PluginName", returnContext, planString)));
 
         // Mock Plugins
         kernel.Setup(x => x.Functions).Returns(functions.Object);
-        kernel.Setup(x => x.RunAsync(It.IsAny<ContextVariables>(), It.IsAny<CancellationToken>(), It.IsAny<ISKFunction>()))
-            .Returns<ContextVariables, CancellationToken, ISKFunction[]>(async (vars, cancellationToken, functions) =>
+        kernel.Setup(x => x.RunAsync(It.IsAny<ContextVariables>(), It.IsAny<CancellationToken>(), It.IsAny<IKernelFunction>()))
+            .Returns<ContextVariables, CancellationToken, IKernelFunction[]>(async (vars, cancellationToken, functions) =>
             {
                 var functionResult = await functions[0].InvokeAsync(kernel.Object, vars, cancellationToken: cancellationToken);
-                return KernelResult.FromFunctionResults(functionResult.GetValue<string>(), new List<FunctionResult> { functionResult });
+                return new KernelResult(functionResult.GetValue<string>(), new List<FunctionResult> { functionResult });
             });
 
         kernel.Setup(x => x.CreateNewContext(It.IsAny<ContextVariables>(), It.IsAny<IReadOnlyFunctionCollection>(), It.IsAny<ILoggerFactory>(), It.IsAny<CultureInfo>()))
             .Returns(context);
 
-        kernel.Setup(x => x.RegisterCustomFunction(It.IsAny<ISKFunction>()))
+        kernel.Setup(x => x.RegisterCustomFunction(It.IsAny<IKernelFunction>()))
             .Returns(mockFunctionFlowFunction.Object);
 
         var planner = new SequentialPlanner(kernel.Object);
 
         // Act
-        await Assert.ThrowsAsync<SKException>(async () => await planner.CreatePlanAsync("goal"));
+        await Assert.ThrowsAsync<KernelException>(async () => await planner.CreatePlanAsync("goal"));
     }
 
     [Fact]
@@ -213,20 +213,20 @@ public sealed class SequentialPlannerTests
         getPromptTemplateMock.Verify(x => x(), Times.Once());
     }
 
-    // Method to create Mock<ISKFunction> objects
-    private static Mock<ISKFunction> CreateMockFunction(FunctionView functionView)
+    // Method to create Mock<IKernelFunction> objects
+    private static Mock<IKernelFunction> CreateMockFunction(FunctionView functionView)
     {
-        var mockFunction = new Mock<ISKFunction>();
+        var mockFunction = new Mock<IKernelFunction>();
         mockFunction.Setup(x => x.Describe()).Returns(functionView);
         mockFunction.Setup(x => x.Name).Returns(functionView.Name);
         mockFunction.Setup(x => x.PluginName).Returns(functionView.PluginName);
         return mockFunction;
     }
 
-    // Method to create Mock<IKernel> objects
-    private static Mock<IKernel> CreateMockKernel()
+    // Method to create Mock<Kernel> objects
+    private static Mock<Kernel> CreateMockKernel()
     {
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
         kernel.Setup(x => x.LoggerFactory).Returns(NullLoggerFactory.Instance);
 
         return kernel;

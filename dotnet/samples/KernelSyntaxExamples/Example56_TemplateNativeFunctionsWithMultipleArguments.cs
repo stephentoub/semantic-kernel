@@ -31,7 +31,7 @@ public static class Example56_TemplateNativeFunctionsWithMultipleArguments
             return;
         }
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
             .WithLoggerFactory(ConsoleLogger.LoggerFactory)
             .WithAzureOpenAIChatCompletionService(
                 deploymentName: deploymentName,
@@ -47,7 +47,7 @@ public static class Example56_TemplateNativeFunctionsWithMultipleArguments
 
         // Load native plugin into the kernel function collection, sharing its functions with prompt templates
         // Functions loaded here are available as "text.*"
-        kernel.ImportFunctions(new TextPlugin(), "text");
+        kernel.ImportPlugin(new TextPlugin(), "text");
 
         // Semantic Function invoking text.Concat native function with named arguments input and input2 where input is a string and input2 is set to a variable from context called word2.
         const string FunctionDefinition = @"

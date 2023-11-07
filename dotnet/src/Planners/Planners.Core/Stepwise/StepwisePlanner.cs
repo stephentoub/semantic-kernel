@@ -39,7 +39,7 @@ public class StepwisePlanner : IStepwisePlanner
     /// <param name="kernel">The semantic kernel instance.</param>
     /// <param name="config">Optional configuration object</param>
     public StepwisePlanner(
-        IKernel kernel,
+        Kernel kernel,
         StepwisePlannerConfig? config = null)
     {
         Verify.NotNull(kernel);
@@ -64,7 +64,7 @@ public class StepwisePlanner : IStepwisePlanner
         this._promptTemplateFactory = new BasicPromptTemplateFactory(this._kernel.LoggerFactory);
 
         // Import native functions
-        this._nativeFunctions = this._kernel.ImportFunctions(this, RestrictedPluginName);
+        this._nativeFunctions = this._kernel.ImportPlugin(this, RestrictedPluginName);
 
         // Create context and logger
         this._logger = this._kernel.LoggerFactory.CreateLogger(this.GetType());
@@ -75,7 +75,7 @@ public class StepwisePlanner : IStepwisePlanner
     {
         if (string.IsNullOrEmpty(goal))
         {
-            throw new SKException("The goal specified is empty");
+            throw new KernelException("The goal specified is empty");
         }
 
         Plan plan = new(this._nativeFunctions["ExecutePlan"]);
@@ -96,12 +96,12 @@ public class StepwisePlanner : IStepwisePlanner
     /// <param name="context">The context to use</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>The context with the result</returns>
-    /// <exception cref="SKException">No AIService available for getting completions.</exception>
+    /// <exception cref="KernelException">No AIService available for getting completions.</exception>
     [SKFunction, SKName("ExecutePlan"), Description("Execute a plan")]
-    public async Task<SKContext> ExecutePlanAsync(
+    public async Task<KernelContext> ExecutePlanAsync(
         [Description("The question to answer")]
         string question,
-        SKContext context,
+        KernelContext context,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(question))
@@ -114,12 +114,12 @@ public class StepwisePlanner : IStepwisePlanner
 
         if (aiService is null)
         {
-            throw new SKException("No AIService available for getting completions.");
+            throw new KernelException("No AIService available for getting completions.");
         }
 
         if (chatHistory is null)
         {
-            throw new SKException("ChatHistory is null.");
+            throw new KernelException("ChatHistory is null.");
         }
 
         var startingMessageCount = chatHistory.Count;
@@ -134,7 +134,7 @@ public class StepwisePlanner : IStepwisePlanner
             return this.ParseResult(actionText);
         }
 
-        SKContext? TryGetFinalAnswer(SystemStep step, int iterations, SKContext context)
+        KernelContext? TryGetFinalAnswer(SystemStep step, int iterations, KernelContext context)
         {
             // If a final answer is found, update the context to be returned
             if (!string.IsNullOrEmpty(step.FinalAnswer))
@@ -311,7 +311,7 @@ public class StepwisePlanner : IStepwisePlanner
 
     #region setup helpers
 
-    private async Task<ChatHistory> InitializeChatHistoryAsync(ChatHistory chatHistory, IAIService aiService, string question, SKContext context, CancellationToken cancellationToken)
+    private async Task<ChatHistory> InitializeChatHistoryAsync(ChatHistory chatHistory, IAIService aiService, string question, KernelContext context, CancellationToken cancellationToken)
     {
         string userManual = await this.GetUserManualAsync(question, context, cancellationToken).ConfigureAwait(false);
         string userQuestion = await this.GetUserQuestionAsync(context, cancellationToken).ConfigureAwait(false);
@@ -328,7 +328,7 @@ public class StepwisePlanner : IStepwisePlanner
         return chatHistory;
     }
 
-    private ChatHistory CreateChatHistory(IKernel kernel, out IAIService aiService)
+    private ChatHistory CreateChatHistory(Kernel kernel, out IAIService aiService)
     {
         ChatHistory chatHistory;
         if (TryGetChatCompletion(this._kernel, out var chatCompletion))
@@ -346,7 +346,7 @@ public class StepwisePlanner : IStepwisePlanner
         return chatHistory;
     }
 
-    private async Task<string> GetUserManualAsync(string question, SKContext context, CancellationToken cancellationToken)
+    private async Task<string> GetUserManualAsync(string question, KernelContext context, CancellationToken cancellationToken)
     {
         var descriptions = await this._kernel.Functions.GetFunctionsManualAsync(this.Config, question, this._logger, cancellationToken).ConfigureAwait(false);
         context.Variables.Set("functionDescriptions", descriptions);
@@ -354,10 +354,10 @@ public class StepwisePlanner : IStepwisePlanner
         return await promptTemplate.RenderAsync(context, cancellationToken).ConfigureAwait(false);
     }
 
-    private Task<string> GetUserQuestionAsync(SKContext context, CancellationToken cancellationToken)
+    private Task<string> GetUserQuestionAsync(KernelContext context, CancellationToken cancellationToken)
         => this._promptTemplateFactory.Create(this._questionTemplate, new PromptTemplateConfig()).RenderAsync(context, cancellationToken);
 
-    private Task<string> GetSystemMessageAsync(SKContext context, CancellationToken cancellationToken)
+    private Task<string> GetSystemMessageAsync(KernelContext context, CancellationToken cancellationToken)
         => this._promptTemplateFactory.Create(this._promptTemplate, new PromptTemplateConfig()).RenderAsync(context, cancellationToken);
 
     #endregion setup helpers
@@ -382,7 +382,7 @@ public class StepwisePlanner : IStepwisePlanner
 
         if (tokenCount >= this.Config.MaxPromptTokens)
         {
-            throw new SKException("ChatHistory is too long to get a completion. Try reducing the available functions.");
+            throw new KernelException("ChatHistory is too long to get a completion. Try reducing the available functions.");
         }
 
         var reducedChatHistory = new ChatHistory();
@@ -420,13 +420,13 @@ public class StepwisePlanner : IStepwisePlanner
 
             if (results.Count == 0)
             {
-                throw new SKException("No completions returned.");
+                throw new KernelException("No completions returned.");
             }
 
             return await results[0].GetCompletionAsync(token).ConfigureAwait(false);
         }
 
-        throw new SKException("No AIService available for getting completions.");
+        throw new KernelException("No AIService available for getting completions.");
     }
 
     /// <summary>
@@ -575,7 +575,7 @@ public class StepwisePlanner : IStepwisePlanner
         return !string.IsNullOrEmpty(promptConfigString) ? PromptTemplateConfig.FromJson(promptConfigString) : new PromptTemplateConfig();
     }
 
-    private static bool TryGetChatCompletion(IKernel kernel, [NotNullWhen(true)] out IChatCompletion? chatCompletion)
+    private static bool TryGetChatCompletion(Kernel kernel, [NotNullWhen(true)] out IChatCompletion? chatCompletion)
     {
         try
         {
@@ -584,7 +584,7 @@ public class StepwisePlanner : IStepwisePlanner
             chatCompletion = kernel.GetService<IChatCompletion>();
             return true;
         }
-        catch (SKException)
+        catch (KernelException)
         {
             chatCompletion = null;
         }
@@ -592,7 +592,7 @@ public class StepwisePlanner : IStepwisePlanner
         return false;
     }
 
-    private static void AddExecutionStatsToContext(List<SystemStep> stepsTaken, SKContext context, int iterations)
+    private static void AddExecutionStatsToContext(List<SystemStep> stepsTaken, KernelContext context, int iterations)
     {
         context.Variables.Set("stepCount", stepsTaken.Count.ToString(CultureInfo.InvariantCulture));
         context.Variables.Set("stepsTaken", JsonSerializer.Serialize(stepsTaken));
@@ -623,13 +623,13 @@ public class StepwisePlanner : IStepwisePlanner
     private StepwisePlannerConfig Config { get; }
 
     // Context used to access the list of functions in the kernel
-    private readonly IKernel _kernel;
+    private readonly Kernel _kernel;
     private readonly ILogger? _logger;
 
     /// <summary>
     /// Planner native functions
     /// </summary>
-    private readonly IDictionary<string, ISKFunction> _nativeFunctions = new Dictionary<string, ISKFunction>();
+    private readonly IDictionary<string, IKernelFunction> _nativeFunctions = new Dictionary<string, IKernelFunction>();
 
     /// <summary>
     /// The prompt template to use for the system step

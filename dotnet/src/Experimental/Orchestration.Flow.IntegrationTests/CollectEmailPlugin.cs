@@ -34,7 +34,7 @@ Do not expose the regex unless asked.
 
     private readonly AIRequestSettings _chatRequestSettings;
 
-    public CollectEmailPlugin(IKernel kernel)
+    public CollectEmailPlugin(Kernel kernel)
     {
         this._chat = kernel.GetService<IChatCompletion>();
         this._chatRequestSettings = new OpenAIRequestSettings
@@ -51,7 +51,7 @@ Do not expose the regex unless asked.
     public async Task<string> CollectEmailAsync(
         [SKName("email_address")] [Description("The email address provided by the user, pass no matter what the value is")]
         string email,
-        SKContext context)
+        KernelContext context)
     {
         var chat = this._chat.CreateNewChat(SystemPrompt);
         chat.AddUserMessage(Goal);

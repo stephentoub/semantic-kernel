@@ -34,7 +34,7 @@ internal sealed class ChatStreamingResult : IChatStreamingResult, ITextStreaming
 
         if (chatMessage is null)
         {
-            throw new SKException("Unable to get chat message from stream");
+            throw new KernelException("Unable to get chat message from stream");
         }
 
         return new SKChatMessage(chatMessage);

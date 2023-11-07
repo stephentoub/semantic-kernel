@@ -10,17 +10,17 @@ namespace Microsoft.SemanticKernel.Experimental.Orchestration;
 #pragma warning restore IDE0130 // Namespace does not match folder structure
 
 /// <summary>
-/// Extension methods for <see cref="SKContext"/>
+/// Extension methods for <see cref="KernelContext"/>
 /// </summary>
 // ReSharper disable once InconsistentNaming
-public static class SKContextExtensions
+public static class KernelContextExtensions
 {
     /// <summary>
     /// Get <see cref="ChatHistory"/> from context.
     /// </summary>
     /// <param name="context">context</param>
     /// <returns>The chat history</returns>
-    public static ChatHistory? GetChatHistory(this SKContext context)
+    public static ChatHistory? GetChatHistory(this KernelContext context)
     {
         if (context.Variables.TryGetValue(Constants.ActionVariableNames.ChatHistory, out string? chatHistoryText) && !string.IsNullOrEmpty(chatHistoryText))
         {
@@ -35,7 +35,7 @@ public static class SKContextExtensions
     /// </summary>
     /// <param name="context">context</param>
     /// <returns>The latest chat input.</returns>
-    public static string GetChatInput(this SKContext context)
+    public static string GetChatInput(this KernelContext context)
     {
         if (context.Variables.TryGetValue(Constants.ActionVariableNames.ChatInput, out string? chatInput))
         {
@@ -49,7 +49,7 @@ public static class SKContextExtensions
     /// Signal the orchestrator to prompt user for input with current function response.
     /// </summary>
     /// <param name="context">context</param>
-    public static void PromptInput(this SKContext context)
+    public static void PromptInput(this KernelContext context)
     {
         // Cant prompt the user for input and exit the execution at the same time
         if (!context.Variables.ContainsKey(Constants.ChatPluginVariables.ExitLoopName))
@@ -63,7 +63,7 @@ public static class SKContextExtensions
     /// </summary>
     /// <param name="context">context</param>
     /// <param name="response">context</param>
-    public static void ExitLoop(this SKContext context, string? response = null)
+    public static void ExitLoop(this KernelContext context, string? response = null)
     {
         // Cant prompt the user for input and exit the execution at the same time
         if (!context.Variables.ContainsKey(Constants.ChatPluginVariables.PromptInputName))
@@ -76,7 +76,7 @@ public static class SKContextExtensions
     /// Signal the orchestrator to go to the next iteration of the loop in the AtLeastOnce or ZeroOrMore step.
     /// </summary>
     /// <param name="context">context</param>
-    public static void ContinueLoop(this SKContext context)
+    public static void ContinueLoop(this KernelContext context)
     {
         context.Variables.Set(Constants.ChatPluginVariables.ContinueLoopName, Constants.ChatPluginVariables.DefaultValue);
     }
@@ -85,7 +85,7 @@ public static class SKContextExtensions
     /// Signal the orchestrator to terminate the flow.
     /// </summary>
     /// <param name="context">context</param>
-    public static void TerminateFlow(this SKContext context)
+    public static void TerminateFlow(this KernelContext context)
     {
         context.Variables.Set(Constants.ChatPluginVariables.StopFlowName, Constants.ChatPluginVariables.DefaultValue);
     }

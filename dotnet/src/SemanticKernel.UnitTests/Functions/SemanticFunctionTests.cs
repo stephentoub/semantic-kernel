@@ -157,7 +157,7 @@ public class SemanticFunctionTests
         var func = kernel.CreateSemanticFunction("template", templateConfig, "functionName", "pluginName");
 
         // Act
-        var exception = await Assert.ThrowsAsync<SKException>(() => kernel.RunAsync(func));
+        var exception = await Assert.ThrowsAsync<KernelException>(() => kernel.RunAsync(func));
 
         // Assert
         Assert.Equal("Service of type Microsoft.SemanticKernel.AI.TextCompletion.ITextCompletion and name service3 not registered.", exception.Message);
@@ -178,7 +178,7 @@ public class SemanticFunctionTests
         {
             invoked++;
         };
-        List<ISKFunction> functions = new();
+        List<IKernelFunction> functions = new();
         for (int i = 0; i < pipelineCount; i++)
         {
             functions.Add(semanticFunction);
@@ -317,7 +317,7 @@ public class SemanticFunctionTests
             invoked++;
         };
 
-        List<ISKFunction> functions = new();
+        List<IKernelFunction> functions = new();
         for (int i = 0; i < pipelineCount; i++)
         {
             functions.Add(semanticFunction);
@@ -393,8 +393,8 @@ public class SemanticFunctionTests
         var (mockTextResult, mockTextCompletion) = this.SetupMocks("Result3");
         var kernel = new KernelBuilder().WithAIService<ITextCompletion>(null, mockTextCompletion.Object).Build();
 
-        var function1 = SKFunction.Create(Method(Function1), pluginName: PluginName);
-        var function2 = SKFunction.Create(Method(Function2), pluginName: PluginName);
+        var function1 = KernelFunction.Create(Method(Function1), pluginName: PluginName);
+        var function2 = KernelFunction.Create(Method(Function2), pluginName: PluginName);
 
         var function3 = kernel.CreateSemanticFunction(Prompt, functionName: "Function3", pluginName: PluginName);
 

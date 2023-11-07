@@ -25,7 +25,11 @@ public sealed class SKFunctionTests3
             .Where(m => m.Name is not "GetType" and not "Equals" and not "GetHashCode" and not "ToString")
             .ToArray();
 
-        ISKFunction[] functions = (from method in methods select SKFunction.Create(method, pluginInstance, "plugin")).ToArray();
+<<<<<<< HEAD
+        ISKFunction[] functions = (from method in methods select KernelFunction.Create(method, pluginInstance, "plugin")).ToArray();
+=======
+        IKernelFunction[] functions = (from method in methods select SKFunction.FromNativeMethod(method, pluginInstance, "plugin")).ToArray();
+>>>>>>> fbe34860 (wip)
 
         // Act
         Assert.Equal(methods.Length, functions.Length);
@@ -42,7 +46,7 @@ public sealed class SKFunctionTests3
             .Where(m => m.Name is not "GetType" and not "Equals" and not "GetHashCode" and not "ToString")
             .ToArray();
 
-        ISKFunction[] functions = new KernelBuilder().Build().ImportFunctions(pluginInstance).Select(s => s.Value).ToArray();
+        IKernelFunction[] functions = new KernelBuilder().Build().ImportPlugin(pluginInstance).Select(s => s.Value).ToArray();
 
         // Act
         Assert.Equal(methods.Length, functions.Length);
@@ -65,9 +69,9 @@ public sealed class SKFunctionTests3
         {
             try
             {
-                SKFunction.Create(method, instance, "plugin");
+                KernelFunction.Create(method, instance, "plugin");
             }
-            catch (SKException)
+            catch (KernelException)
             {
                 count++;
             }
@@ -85,7 +89,7 @@ public sealed class SKFunctionTests3
         context.Variables["done"] = "NO";
 
         // Note: the function doesn't have any SK attributes
-        async Task<SKContext> ExecuteAsync(SKContext contextIn)
+        async Task<KernelContext> ExecuteAsync(KernelContext contextIn)
         {
             Assert.Equal("NO", contextIn.Variables["done"]);
             contextIn.Variables["canary"] = "YES";
@@ -95,8 +99,13 @@ public sealed class SKFunctionTests3
         }
 
         // Act
-        ISKFunction function = SKFunction.Create(
+<<<<<<< HEAD
+        ISKFunction function = KernelFunction.Create(
             method: ExecuteAsync,
+=======
+        IKernelFunction function = SKFunction.FromNativeFunction(
+            nativeFunction: ExecuteAsync,
+>>>>>>> fbe34860 (wip)
             parameters: null,
             description: "description",
             pluginName: "pluginName",
@@ -121,7 +130,7 @@ public sealed class SKFunctionTests3
         //       This scenario is used for gRPC functions.
         string variableOutsideTheFunction = "foo";
 
-        async Task<SKContext> ExecuteAsync(SKContext contextIn)
+        async Task<KernelContext> ExecuteAsync(KernelContext contextIn)
         {
             string referenceToExternalVariable = variableOutsideTheFunction;
             contextIn.Variables["canary"] = "YES";
@@ -131,8 +140,13 @@ public sealed class SKFunctionTests3
         }
 
         // Act. Note: this will throw an exception if SKFunction doesn't handle the function type.
-        ISKFunction function = SKFunction.Create(
+<<<<<<< HEAD
+        ISKFunction function = KernelFunction.Create(
             method: ExecuteAsync,
+=======
+        IKernelFunction function = SKFunction.FromNativeFunction(
+            nativeFunction: ExecuteAsync,
+>>>>>>> fbe34860 (wip)
             description: "description",
             pluginName: "pluginName",
             functionName: "functionName");
@@ -156,7 +170,7 @@ public sealed class SKFunctionTests3
         }
 
         [SKFunction]
-        public void Invalid3(SKContext context1, SKContext context2)
+        public void Invalid3(KernelContext context1, KernelContext context2)
         {
         }
 
@@ -202,36 +216,36 @@ public sealed class SKFunctionTests3
         }
 
         [SKFunction]
-        public void Type04(SKContext context)
+        public void Type04(KernelContext context)
         {
         }
 
         [SKFunction]
-        public void Type04Nullable(SKContext? context)
+        public void Type04Nullable(KernelContext? context)
         {
         }
 
         [SKFunction]
-        public string Type05(SKContext context)
+        public string Type05(KernelContext context)
         {
             return "";
         }
 
         [SKFunction]
-        public string? Type05Nullable(SKContext? context)
+        public string? Type05Nullable(KernelContext? context)
         {
             return null;
         }
 
         [SKFunction]
-        public async Task<string> Type06Async(SKContext context)
+        public async Task<string> Type06Async(KernelContext context)
         {
             await Task.Delay(0);
             return "";
         }
 
         [SKFunction]
-        public async Task<SKContext> Type07Async(SKContext context)
+        public async Task<KernelContext> Type07Async(KernelContext context)
         {
             await Task.Delay(0);
             return context;
@@ -274,30 +288,30 @@ public sealed class SKFunctionTests3
         }
 
         [SKFunction]
-        public void Type11(string input, SKContext context)
+        public void Type11(string input, KernelContext context)
         {
         }
 
         [SKFunction]
-        public void Type11Nullable(string? input = null, SKContext? context = null)
+        public void Type11Nullable(string? input = null, KernelContext? context = null)
         {
         }
 
         [SKFunction]
-        public string Type12(string input, SKContext context)
+        public string Type12(string input, KernelContext context)
         {
             return "";
         }
 
         [SKFunction]
-        public async Task<string> Type13Async(string input, SKContext context)
+        public async Task<string> Type13Async(string input, KernelContext context)
         {
             await Task.Delay(0);
             return "";
         }
 
         [SKFunction]
-        public async Task<SKContext> Type14Async(string input, SKContext context)
+        public async Task<KernelContext> Type14Async(string input, KernelContext context)
         {
             await Task.Delay(0);
             return context;
@@ -310,13 +324,13 @@ public sealed class SKFunctionTests3
         }
 
         [SKFunction]
-        public async Task Type16Async(SKContext context)
+        public async Task Type16Async(KernelContext context)
         {
             await Task.Delay(0);
         }
 
         [SKFunction]
-        public async Task Type17Async(string input, SKContext context)
+        public async Task Type17Async(string input, KernelContext context)
         {
             await Task.Delay(0);
         }
@@ -341,7 +355,7 @@ public sealed class SKFunctionTests3
         }
 
         [SKFunction]
-        public async ValueTask<SKContext> ReturnsValueTaskContextAsync(SKContext context)
+        public async ValueTask<KernelContext> ReturnsValueTaskContextAsync(KernelContext context)
         {
             await Task.Delay(0);
             return context;

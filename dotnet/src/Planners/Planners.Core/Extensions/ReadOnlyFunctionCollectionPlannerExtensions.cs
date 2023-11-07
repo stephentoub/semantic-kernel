@@ -26,7 +26,7 @@ public static class ReadOnlyFunctionCollectionPlannerExtensions
     /// </summary>
     /// <param name="functions">The function provider.</param>
     /// <returns>A function callback that can be used to retrieve a function from the function provider.</returns>
-    public static Func<string, string, ISKFunction?> GetFunctionCallback(this IReadOnlyFunctionCollection functions)
+    public static Func<string, string, IKernelFunction?> GetFunctionCallback(this IReadOnlyFunctionCollection functions)
     {
         return (pluginName, functionName) =>
         {
@@ -83,7 +83,7 @@ public static class ReadOnlyFunctionCollectionPlannerExtensions
         ILogger? logger,
         CancellationToken cancellationToken)
     {
-        // Use configured function provider if available, otherwise use the default SKContext function provider.
+        // Use configured function provider if available, otherwise use the default KernelContext function provider.
         return config.GetAvailableFunctionsAsync is null ?
             await functions.GetAvailableFunctionsAsync(config, semanticQuery, logger, cancellationToken).ConfigureAwait(false) :
             await config.GetAvailableFunctionsAsync(config, semanticQuery, cancellationToken).ConfigureAwait(false);

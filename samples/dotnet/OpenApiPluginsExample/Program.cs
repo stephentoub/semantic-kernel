@@ -52,7 +52,7 @@ internal sealed class Program
             ?? throw new InvalidOperationException($"Missing configuration for {AIServiceOptions.PropertyName}.");
 
         KernelBuilder builder = new KernelBuilder()
-            .WithLogger(loggerFactory.CreateLogger<IKernel>());
+            .WithLogger(loggerFactory.CreateLogger<Kernel>());
 
         switch (aiOptions.Type)
         {
@@ -141,7 +141,7 @@ internal sealed class Program
         plan.State.Set("owner", gitHubOptions.Owner);
 
         // Run the plan
-        SKContext planContext = await plan.InvokeAsync(logger: logger);
+        KernelContext planContext = await plan.InvokeAsync(logger: logger);
         if (planContext.ErrorOccurred)
         {
             logger.LogError(planContext.LastException!, "Unexpected failure executing plan");

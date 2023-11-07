@@ -18,7 +18,7 @@ namespace Microsoft.SemanticKernel.Plugins.Memory;
 /// <example>
 /// Usage: kernel.ImportFunctions(new TextMemoryPlugin(), "memory");
 /// Examples:
-/// SKContext.Variables["input"] = "what is the capital of France?"
+/// KernelContext.Variables["input"] = "what is the capital of France?"
 /// {{memory.recall $input }} => "Paris"
 /// </example>
 public sealed class TextMemoryPlugin
@@ -65,7 +65,7 @@ public sealed class TextMemoryPlugin
     /// <param name="loggerFactory">The <see cref="ILoggerFactory"/> to use for logging. If null, no logging will be performed.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
     /// <example>
-    /// SKContext.Variables[TextMemoryPlugin.KeyParam] = "countryInfo1"
+    /// KernelContext.Variables[TextMemoryPlugin.KeyParam] = "countryInfo1"
     /// {{memory.retrieve }}
     /// </example>
     [SKFunction, Description("Key-based lookup for a specific memory")]
@@ -89,7 +89,7 @@ public sealed class TextMemoryPlugin
     /// Semantic search and return up to N memories related to the input text
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "what is the capital of France?"
+    /// KernelContext.Variables["input"] = "what is the capital of France?"
     /// {{memory.recall $input }} => "Paris"
     /// </example>
     /// <param name="input">The input text to find related memories for.</param>
@@ -135,8 +135,8 @@ public sealed class TextMemoryPlugin
     /// Save information to semantic memory
     /// </summary>
     /// <example>
-    /// SKContext.Variables["input"] = "the capital of France is Paris"
-    /// SKContext.Variables[TextMemoryPlugin.KeyParam] = "countryInfo1"
+    /// KernelContext.Variables["input"] = "the capital of France is Paris"
+    /// KernelContext.Variables[TextMemoryPlugin.KeyParam] = "countryInfo1"
     /// {{memory.save $input }}
     /// </example>
     /// <param name="input">The information to save</param>
@@ -164,7 +164,7 @@ public sealed class TextMemoryPlugin
     /// Remove specific memory
     /// </summary>
     /// <example>
-    /// SKContext.Variables[TextMemoryPlugin.KeyParam] = "countryInfo1"
+    /// KernelContext.Variables[TextMemoryPlugin.KeyParam] = "countryInfo1"
     /// {{memory.remove }}
     /// </example>
     /// <param name="collection">Memories collection associated with the information to save</param>

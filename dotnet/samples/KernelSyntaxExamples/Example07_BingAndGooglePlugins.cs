@@ -31,7 +31,7 @@ public static class Example07_BingAndGooglePlugins
             return;
         }
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
             .WithLoggerFactory(ConsoleLogger.LoggerFactory)
             .WithOpenAIChatCompletionService(
                 modelId: openAIModelId,
@@ -48,7 +48,7 @@ public static class Example07_BingAndGooglePlugins
         {
             var bingConnector = new BingConnector(bingApiKey);
             var bing = new WebSearchEnginePlugin(bingConnector);
-            kernel.ImportFunctions(bing, "bing");
+            kernel.ImportPlugin(bing, "bing");
             await Example1Async(kernel, "bing");
             await Example2Async(kernel);
         }
@@ -67,12 +67,12 @@ public static class Example07_BingAndGooglePlugins
                 apiKey: googleApiKey,
                 searchEngineId: googleSearchEngineId);
             var google = new WebSearchEnginePlugin(googleConnector);
-            kernel.ImportFunctions(new WebSearchEnginePlugin(googleConnector), "google");
+            kernel.ImportPlugin(new WebSearchEnginePlugin(googleConnector), "google");
             await Example1Async(kernel, "google");
         }
     }
 
-    private static async Task Example1Async(IKernel kernel, string searchPluginName)
+    private static async Task Example1Async(Kernel kernel, string searchPluginName)
     {
         Console.WriteLine("======== Bing and Google Search Plugins ========");
 
@@ -98,7 +98,7 @@ public static class Example07_BingAndGooglePlugins
        */
     }
 
-    private static async Task Example2Async(IKernel kernel)
+    private static async Task Example2Async(Kernel kernel)
     {
         Console.WriteLine("======== Use Search Plugin to answer user questions ========");
 

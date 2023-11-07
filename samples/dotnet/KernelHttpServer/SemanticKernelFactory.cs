@@ -14,7 +14,7 @@ namespace KernelHttpServer;
 
 internal static class SemanticKernelFactory
 {
-    internal static IKernel? CreateForRequest(
+    internal static Kernel? CreateForRequest(
         HttpRequestData req,
         ILogger logger,
         IEnumerable<string>? skillsToLoad = null,
@@ -85,9 +85,9 @@ internal static class SemanticKernelFactory
         return builder;
     }
 
-    private static IKernel _CompleteKernelSetup(HttpRequestData req, KernelBuilder builder, ILogger logger, IEnumerable<string>? skillsToLoad = null)
+    private static Kernel _CompleteKernelSetup(HttpRequestData req, KernelBuilder builder, ILogger logger, IEnumerable<string>? skillsToLoad = null)
     {
-        IKernel kernel = builder.Build();
+        Kernel kernel = builder.Build();
 
         kernel.RegisterSemanticSkills(RepoFiles.SampleSkillsPath(), logger, skillsToLoad);
         kernel.RegisterNativeSkills(skillsToLoad);

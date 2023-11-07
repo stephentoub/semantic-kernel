@@ -26,10 +26,10 @@ public static class SKFunctionTextExtensions
     /// <param name="settings">Optional request settings.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> to monitor for cancellation requests. The default is <see cref="CancellationToken.None"/>.</param>
     /// <returns>Aggregated results.</returns>
-    public static async Task<SKContext> AggregatePartitionedResultsAsync(
-        this ISKFunction func,
+    public static async Task<KernelContext> AggregatePartitionedResultsAsync(
+        this IKernelFunction func,
         List<string> partitionedInput,
-        SKContext context,
+        KernelContext context,
         string resultsSeparator = "\n",
         AIRequestSettings? settings = null,
         CancellationToken cancellationToken = default)

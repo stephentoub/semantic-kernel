@@ -15,7 +15,7 @@ public sealed class SendEmailPlugin
     public string SendEmail(
         [SKName("email_address")] string emailAddress,
         [SKName("answer")] string answer,
-        SKContext context)
+        KernelContext context)
     {
         var contract = new Email()
         {

@@ -19,11 +19,11 @@ public class KernelResultTests
     private readonly Mock<IFunctionRunner> _functionRunner = new();
     private readonly Mock<IAIServiceProvider> _serviceProvider = new();
     private readonly Mock<IAIServiceSelector> _serviceSelector = new();
-    private readonly SKContext _context;
+    private readonly KernelContext _context;
 
     public KernelResultTests()
     {
-        this._context = new SKContext(this._functionRunner.Object, this._serviceProvider.Object, this._serviceSelector.Object);
+        this._context = new KernelContext(this._functionRunner.Object, this._serviceProvider.Object, this._serviceSelector.Object);
     }
 
     [Fact]
@@ -37,7 +37,7 @@ public class KernelResultTests
         };
 
         // Act
-        var kernelResult = KernelResult.FromFunctionResults("value2", functionResults);
+        var kernelResult = new KernelResult("value2", functionResults);
         var actualFunctionResults = kernelResult.FunctionResults.ToList();
 
         // Assert
@@ -54,7 +54,7 @@ public class KernelResultTests
     public void ToStringWorksCorrectly()
     {
         // Arrange
-        var kernelResult = KernelResult.FromFunctionResults("value", Array.Empty<FunctionResult>());
+        var kernelResult = new KernelResult("value", Array.Empty<FunctionResult>());
 
         // Act and Assert
         Assert.Equal("value", kernelResult.ToString());

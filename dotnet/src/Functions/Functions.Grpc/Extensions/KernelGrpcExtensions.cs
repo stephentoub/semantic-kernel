@@ -17,7 +17,7 @@ using Microsoft.SemanticKernel.Orchestration;
 namespace Microsoft.SemanticKernel.Functions.Grpc.Extensions;
 
 /// <summary>
-/// <see cref="IKernel"/> extensions methods for gRPC functionality.
+/// <see cref="Kernel"/> extensions methods for gRPC functionality.
 /// </summary>
 public static class KernelGrpcExtensions
 {
@@ -29,8 +29,8 @@ public static class KernelGrpcExtensions
     /// <param name="pluginDirectoryName">Name of the directory containing the selected plugin.</param>
     /// <param name="httpClient">HttpClient to use for sending requests.</param>
     /// <returns>A list of all the semantic functions representing the plugin.</returns>
-    public static IDictionary<string, ISKFunction> ImportGrpcFunctionsFromDirectory(
-        this IKernel kernel,
+    public static IDictionary<string, IKernelFunction> ImportGrpcFunctionsFromDirectory(
+        this Kernel kernel,
         string parentDirectory,
         string pluginDirectoryName,
         HttpClient? httpClient = null)
@@ -63,8 +63,8 @@ public static class KernelGrpcExtensions
     /// <param name="filePath">File path to .proto document.</param>
     /// <param name="httpClient">HttpClient to use for sending requests.</param>
     /// <returns>A list of all the semantic functions representing the plugin.</returns>
-    public static IDictionary<string, ISKFunction> ImportGrpcFunctionsFromFile(
-        this IKernel kernel,
+    public static IDictionary<string, IKernelFunction> ImportGrpcFunctionsFromFile(
+        this Kernel kernel,
         string pluginName,
         string filePath,
         HttpClient? httpClient = null)
@@ -89,8 +89,8 @@ public static class KernelGrpcExtensions
     /// <param name="pluginName">Plugin name.</param>
     /// <param name="httpClient">HttpClient to use for sending requests.</param>
     /// <returns>A list of all the semantic functions representing the plugin.</returns>
-    public static IDictionary<string, ISKFunction> RegisterGrpcFunctions(
-        this IKernel kernel,
+    public static IDictionary<string, IKernelFunction> RegisterGrpcFunctions(
+        this Kernel kernel,
         Stream documentStream,
         string pluginName,
         HttpClient? httpClient = null)
@@ -103,7 +103,7 @@ public static class KernelGrpcExtensions
 
         var operations = parser.Parse(documentStream, pluginName);
 
-        var plugin = new Dictionary<string, ISKFunction>();
+        var plugin = new Dictionary<string, IKernelFunction>();
 
         var client = HttpClientProvider.GetHttpClient(kernel.HttpHandlerFactory, httpClient, kernel.LoggerFactory);
 
@@ -138,16 +138,16 @@ public static class KernelGrpcExtensions
     /// <param name="runner">gRPC operation runner.</param>
     /// <param name="pluginName">Plugin name.</param>
     /// <param name="operation">The gRPC operation.</param>
-    /// <returns>An instance of <see cref="SKFunction"/> class.</returns>
-    private static ISKFunction RegisterGrpcFunction(
-        this IKernel kernel,
+    /// <returns>An instance of <see cref="KernelFunction"/> class.</returns>
+    private static IKernelFunction RegisterGrpcFunction(
+        this Kernel kernel,
         GrpcOperationRunner runner,
         string pluginName,
         GrpcOperation operation)
     {
         var operationParameters = operation.GetParameters();
 
-        async Task<SKContext> ExecuteAsync(SKContext context)
+        async Task<KernelContext> ExecuteAsync(KernelContext context)
         {
             try
             {
@@ -184,7 +184,7 @@ public static class KernelGrpcExtensions
             return context;
         }
 
-        var function = SKFunction.Create(
+        var function = KernelFunction.Create(
             method: ExecuteAsync,
             parameters: operationParameters.ToList(),
             description: operation.Name,
@@ -202,8 +202,8 @@ public static class KernelGrpcExtensions
     [Obsolete("Methods and classes which includes Skill in the name have been renamed to use Plugin. Use Kernel.ImportGrpcFunctionsFromDirectory instead. This will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
 #pragma warning disable CS1591
-    public static IDictionary<string, ISKFunction> ImportGrpcSkillFromDirectory(
-        this IKernel kernel,
+    public static IDictionary<string, IKernelFunction> ImportGrpcSkillFromDirectory(
+        this Kernel kernel,
         string parentDirectory,
         string skillDirectoryName,
         HttpClient? httpClient = null)
@@ -215,8 +215,8 @@ public static class KernelGrpcExtensions
     [Obsolete("Methods and classes which includes Skill in the name have been renamed to use Plugin. Use Kernel.ImportGrpcFunctionsFromFile instead. This will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
 #pragma warning disable CS1591
-    public static IDictionary<string, ISKFunction> ImportGrpcSkillFromFile(
-        this IKernel kernel,
+    public static IDictionary<string, IKernelFunction> ImportGrpcSkillFromFile(
+        this Kernel kernel,
         string skillName,
         string filePath,
         HttpClient? httpClient = null)
@@ -228,8 +228,8 @@ public static class KernelGrpcExtensions
     [Obsolete("Methods and classes which includes Skill in the name have been renamed to use Plugin. Use Kernel.RegisterGrpcFunctions instead. This will be removed in a future release.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
 #pragma warning disable CS1591
-    public static IDictionary<string, ISKFunction> RegisterGrpcSkill(
-        this IKernel kernel,
+    public static IDictionary<string, IKernelFunction> RegisterGrpcSkill(
+        this Kernel kernel,
         Stream documentStream,
         string skillName,
         HttpClient? httpClient = null)

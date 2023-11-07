@@ -25,21 +25,21 @@ internal static class Example31_CustomPlanner
     public static async Task RunAsync()
     {
         Console.WriteLine("======== Custom Planner - Create and Execute Markup Plan ========");
-        IKernel kernel = InitializeKernel();
+        Kernel kernel = InitializeKernel();
         ISemanticTextMemory memory = InitializeMemory();
 
         // ContextQuery is part of the QAPlugin
-        IDictionary<string, ISKFunction> qaPlugin = LoadQAPlugin(kernel);
-        SKContext context = CreateContextQueryContext(kernel);
+        IDictionary<string, IKernelFunction> qaPlugin = LoadQAPlugin(kernel);
+        KernelContext context = CreateContextQueryContext(kernel);
 
         // Create a memory store using the VolatileMemoryStore and the embedding generator registered in the kernel
-        kernel.ImportFunctions(new TextMemoryPlugin(memory));
+        kernel.ImportPlugin(new TextMemoryPlugin(memory));
 
         // Setup defined memories for recall
         await RememberFactsAsync(kernel, memory);
 
         // MarkupPlugin named "markup"
-        var markup = kernel.ImportFunctions(new MarkupPlugin(), "markup");
+        var markup = kernel.ImportPlugin(new MarkupPlugin(), "markup");
 
         // contextQuery "Who is my president? Who was president 3 years ago? What should I eat for dinner" | markup
         // Create a plan to execute the ContextQuery and then run the markup plugin on the output
@@ -74,7 +74,7 @@ internal static class Example31_CustomPlanner
     For dinner, you might enjoy some sushi with your partner, since you both like it and you only ate it once this month
     */
 
-    private static SKContext CreateContextQueryContext(IKernel kernel)
+    private static KernelContext CreateContextQueryContext(Kernel kernel)
     {
         var context = kernel.CreateNewContext();
         context.Variables.Set("firstname", "Jamal");
@@ -88,9 +88,9 @@ internal static class Example31_CustomPlanner
         return context;
     }
 
-    private static async Task RememberFactsAsync(IKernel kernel, ISemanticTextMemory memory)
+    private static async Task RememberFactsAsync(Kernel kernel, ISemanticTextMemory memory)
     {
-        kernel.ImportFunctions(new TextMemoryPlugin(memory));
+        kernel.ImportPlugin(new TextMemoryPlugin(memory));
 
         List<string> memoriesToSave = new()
         {
@@ -115,19 +115,19 @@ internal static class Example31_CustomPlanner
     // ContextQuery is part of the QAPlugin
     // DependsOn: TimePlugin named "time"
     // DependsOn: BingPlugin named "bing"
-    private static IDictionary<string, ISKFunction> LoadQAPlugin(IKernel kernel)
+    private static IDictionary<string, IKernelFunction> LoadQAPlugin(Kernel kernel)
     {
         string folder = RepoFiles.SamplePluginsPath();
-        kernel.ImportFunctions(new TimePlugin(), "time");
+        kernel.ImportPlugin(new TimePlugin(), "time");
 #pragma warning disable CA2000 // Dispose objects before losing scope
         var bing = new WebSearchEnginePlugin(new BingConnector(TestConfiguration.Bing.ApiKey));
 #pragma warning restore CA2000 // Dispose objects before losing scope
-        kernel.ImportFunctions(bing, "bing");
+        kernel.ImportPlugin(bing, "bing");
 
         return kernel.ImportSemanticFunctionsFromDirectory(folder, "QAPlugin");
     }
 
-    private static IKernel InitializeKernel()
+    private static Kernel InitializeKernel()
     {
         return new KernelBuilder()
             .WithLoggerFactory(ConsoleLogger.LoggerFactory)
@@ -159,7 +159,7 @@ internal static class Example31_CustomPlanner
 public class MarkupPlugin
 {
     [SKFunction, Description("Run Markup")]
-    public async Task<string> RunMarkupAsync(string docString, SKContext context)
+    public async Task<string> RunMarkupAsync(string docString, KernelContext context)
     {
         var plan = docString.FromMarkup("Run a piece of xml markup", context);
 
@@ -179,7 +179,7 @@ public static class XmlMarkupPlanParser
         { "lookup", new KeyValuePair<string, string>("bing", "SearchAsync") },
     };
 
-    public static Plan FromMarkup(this string markup, string goal, SKContext context)
+    public static Plan FromMarkup(this string markup, string goal, KernelContext context)
     {
         Console.WriteLine("Markup:");
         Console.WriteLine(markup);
@@ -190,7 +190,7 @@ public static class XmlMarkupPlanParser
         return nodes.Count == 0 ? new Plan(goal) : NodeListToPlan(nodes, context, goal);
     }
 
-    private static Plan NodeListToPlan(XmlNodeList nodes, SKContext context, string description)
+    private static Plan NodeListToPlan(XmlNodeList nodes, KernelContext context, string description)
     {
         Plan plan = new(description);
         for (var i = 0; i < nodes.Count; ++i)

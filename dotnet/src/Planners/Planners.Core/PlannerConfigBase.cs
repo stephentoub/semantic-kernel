@@ -51,7 +51,7 @@ public abstract class PlannerConfigBase
     /// Callback to get a function by name (optional).
     /// Use if you want to override the default function lookup behavior.
     /// </summary>
-    public Func<string, string, ISKFunction?>? GetFunctionCallback { get; set; }
+    public Func<string, string, IKernelFunction?>? GetFunctionCallback { get; set; }
 
     /// <summary>
     /// The maximum total number of tokens to allow in a completion request,

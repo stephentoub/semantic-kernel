@@ -6,13 +6,15 @@ using Microsoft.SemanticKernel.AI;
 using Microsoft.SemanticKernel.Diagnostics;
 using Microsoft.SemanticKernel.Services;
 
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Microsoft.SemanticKernel.Functions;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 /// <summary>
 /// Implementation of <see cref="IAIServiceSelector"/> that selects the AI service based on the order of the model settings.
 /// Uses the service id to select the preferred service provider and then returns the service and associated model settings.
 /// </summary>
-internal class OrderedIAIServiceSelector : IAIServiceSelector
+internal sealed class OrderedIAIServiceSelector : IAIServiceSelector
 {
     /// <inheritdoc/>
     public (T?, AIRequestSettings?) SelectAIService<T>(string renderedPrompt, IAIServiceProvider serviceProvider, IReadOnlyList<AIRequestSettings>? modelSettings) where T : IAIService
@@ -56,6 +58,6 @@ internal class OrderedIAIServiceSelector : IAIServiceSelector
         }
 
         var names = string.Join("|", modelSettings.Select(model => model.ServiceId).ToArray());
-        throw new SKException($"Service of type {typeof(T)} and name {names ?? "<NONE>"} not registered.");
+        throw new KernelException($"Service of type {typeof(T)} and name {names ?? "<NONE>"} not registered.");
     }
 }

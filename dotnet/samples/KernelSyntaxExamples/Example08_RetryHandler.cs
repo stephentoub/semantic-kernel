@@ -105,12 +105,12 @@ public static class Example08_RetryHandler
                         outcome.Result.StatusCode));
     }
 
-    private static async Task ImportAndExecutePluginAsync(IKernel kernel)
+    private static async Task ImportAndExecutePluginAsync(Kernel kernel)
     {
         // Load semantic plugin defined with prompt templates
         string folder = RepoFiles.SamplePluginsPath();
 
-        kernel.ImportFunctions(new TimePlugin(), "time");
+        kernel.ImportPlugin(new TimePlugin(), "time");
 
         var qaPlugin = kernel.ImportSemanticFunctionsFromDirectory(
             folder,

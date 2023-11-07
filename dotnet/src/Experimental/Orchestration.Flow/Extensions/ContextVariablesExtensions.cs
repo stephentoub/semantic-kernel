@@ -10,7 +10,7 @@ namespace Microsoft.SemanticKernel.Experimental.Orchestration;
 #pragma warning restore IDE0130 // Namespace does not match folder structure
 
 /// <summary>
-/// Extension methods for <see cref="SKContext"/>
+/// Extension methods for <see cref="KernelContext"/>
 /// </summary>
 // ReSharper disable once InconsistentNaming
 public static class ContextVariablesExtensions

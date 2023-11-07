@@ -34,7 +34,7 @@ public class ReadOnlyFunctionCollectionExtensionsTests
     public async Task CanCallGetAvailableFunctionsWithNoFunctionsAsync(Type t)
     {
         // Arrange
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
 
         var variables = new ContextVariables();
         var functions = new FunctionCollection();
@@ -62,7 +62,7 @@ public class ReadOnlyFunctionCollectionExtensionsTests
         var serviceSelector = new Mock<IAIServiceSelector>();
 
         // Arrange GetAvailableFunctionsAsync parameters
-        var context = new SKContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, variables);
+        var context = new KernelContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, variables);
         var config = InitializeConfig(t);
         var semanticQuery = "test";
 
@@ -105,12 +105,12 @@ public class ReadOnlyFunctionCollectionExtensionsTests
     public async Task CanCallGetAvailableFunctionsWithFunctionsAsync(Type t)
     {
         // Arrange
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
         var variables = new ContextVariables();
         var cancellationToken = default(CancellationToken);
 
         // Arrange FunctionView
-        var functionMock = new Mock<ISKFunction>();
+        var functionMock = new Mock<IKernelFunction>();
         var functionView = new FunctionView("functionName", "pluginName", "description");
         var nativeFunctionView = new FunctionView("nativeFunctionName", "pluginName", "description");
         var functionsView = new List<FunctionView>() { functionView, nativeFunctionView };
@@ -134,7 +134,7 @@ public class ReadOnlyFunctionCollectionExtensionsTests
                 x.SearchAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<double>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .Returns(asyncEnumerable);
 
-        functions.Setup(x => x.TryGetFunction(It.IsAny<string>(), It.IsAny<string>(), out It.Ref<ISKFunction?>.IsAny)).Returns(true);
+        functions.Setup(x => x.TryGetFunction(It.IsAny<string>(), It.IsAny<string>(), out It.Ref<IKernelFunction?>.IsAny)).Returns(true);
         functions.Setup(x => x.GetFunction(It.IsAny<string>(), It.IsAny<string>())).Returns(functionMock.Object);
         functions.Setup(x => x.GetFunctionViews()).Returns(functionsView);
 
@@ -143,7 +143,7 @@ public class ReadOnlyFunctionCollectionExtensionsTests
         var serviceSelector = new Mock<IAIServiceSelector>();
 
         // Arrange GetAvailableFunctionsAsync parameters
-        var context = new SKContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, variables, functions.Object);
+        var context = new KernelContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, variables, functions.Object);
         var config = InitializeConfig(t);
         var semanticQuery = "test";
 
@@ -176,13 +176,13 @@ public class ReadOnlyFunctionCollectionExtensionsTests
     public async Task CanCallGetAvailableFunctionsWithFunctionsWithRelevancyAsync(Type t)
     {
         // Arrange
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
 
         var variables = new ContextVariables();
         var cancellationToken = default(CancellationToken);
 
         // Arrange FunctionView
-        var functionMock = new Mock<ISKFunction>();
+        var functionMock = new Mock<IKernelFunction>();
         var functionView = new FunctionView("functionName", "pluginName", "description");
         var nativeFunctionView = new FunctionView("nativeFunctionName", "pluginName", "description");
         var functionsView = new List<FunctionView>() { functionView, nativeFunctionView };
@@ -206,7 +206,7 @@ public class ReadOnlyFunctionCollectionExtensionsTests
                 x.SearchAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<double>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .Returns(asyncEnumerable);
 
-        functions.Setup(x => x.TryGetFunction(It.IsAny<string>(), It.IsAny<string>(), out It.Ref<ISKFunction?>.IsAny)).Returns(true);
+        functions.Setup(x => x.TryGetFunction(It.IsAny<string>(), It.IsAny<string>(), out It.Ref<IKernelFunction?>.IsAny)).Returns(true);
         functions.Setup(x => x.GetFunction(It.IsAny<string>(), It.IsAny<string>())).Returns(functionMock.Object);
         functions.Setup(x => x.GetFunctionViews()).Returns(functionsView);
 
@@ -215,7 +215,7 @@ public class ReadOnlyFunctionCollectionExtensionsTests
         var serviceSelector = new Mock<IAIServiceSelector>();
 
         // Arrange GetAvailableFunctionsAsync parameters
-        var context = new SKContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, variables, functions.Object);
+        var context = new KernelContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, variables, functions.Object);
         var config = InitializeConfig(t);
         config.SemanticMemoryConfig = new() { RelevancyThreshold = 0.78, Memory = memory.Object };
         var semanticQuery = "test";
@@ -248,7 +248,7 @@ public class ReadOnlyFunctionCollectionExtensionsTests
     public async Task CanCallGetAvailableFunctionsAsyncWithDefaultRelevancyAsync(Type t)
     {
         // Arrange
-        var kernel = new Mock<IKernel>();
+        var kernel = new Mock<Kernel>();
         var functionRunner = new Mock<IFunctionRunner>();
         var serviceProvider = new Mock<IAIServiceProvider>();
         var serviceSelector = new Mock<IAIServiceSelector>();
@@ -276,7 +276,7 @@ public class ReadOnlyFunctionCollectionExtensionsTests
             .Returns(asyncEnumerable);
 
         // Arrange GetAvailableFunctionsAsync parameters
-        var context = new SKContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, variables);
+        var context = new KernelContext(functionRunner.Object, serviceProvider.Object, serviceSelector.Object, variables);
         var config = InitializeConfig(t);
         config.SemanticMemoryConfig = new() { RelevancyThreshold = 0.78, Memory = memory.Object };
         var semanticQuery = "test";

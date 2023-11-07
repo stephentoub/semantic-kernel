@@ -47,7 +47,7 @@ public static class Example57_FunctionEventHandlers
     {
         Console.WriteLine("\n======== Get Rendered Prompt and Usage Data ========\n");
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
             .WithLoggerFactory(ConsoleLogger.LoggerFactory)
             .WithOpenAIChatCompletionService(
                 modelId: s_openAIModelId!,
@@ -95,7 +95,7 @@ public static class Example57_FunctionEventHandlers
     {
         Console.WriteLine("\n======== Changing/Filtering Function Result ========\n");
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
            .WithOpenAIChatCompletionService(
                modelId: s_openAIModelId!,
@@ -112,12 +112,12 @@ public static class Example57_FunctionEventHandlers
 
         void MyChangeDataHandler(object? sender, FunctionInvokedEventArgs e)
         {
-            var originalOutput = e.SKContext.Result;
+            var originalOutput = e.KernelContext.Result;
 
             //Use Regex to redact all vowels and numbers
             var newOutput = Regex.Replace(originalOutput, "[aeiouAEIOU0-9]", "*");
 
-            e.SKContext.Variables.Update(newOutput);
+            e.KernelContext.Variables.Update(newOutput);
         }
 
         kernel.FunctionInvoked += MyChangeDataHandler;
@@ -131,7 +131,7 @@ public static class Example57_FunctionEventHandlers
     {
         Console.WriteLine("\n======== Cancelling Pipeline Execution - Invoking event ========\n");
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
            .WithOpenAIChatCompletionService(
                modelId: s_openAIModelId!,
@@ -168,7 +168,7 @@ public static class Example57_FunctionEventHandlers
     {
         Console.WriteLine("\n======== Cancelling Pipeline Execution - Invoked event ========\n");
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
            .WithOpenAIChatCompletionService(
                modelId: s_openAIModelId!,
@@ -203,7 +203,7 @@ public static class Example57_FunctionEventHandlers
     {
         Console.WriteLine("\n======== Skipping a Function in the Pipeline ========\n");
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
            .WithOpenAIChatCompletionService(
                modelId: s_openAIModelId!,
@@ -246,7 +246,7 @@ public static class Example57_FunctionEventHandlers
     {
         Console.WriteLine("\n======== Repeating a Function in the Pipeline ========");
 
-        IKernel kernel = new KernelBuilder()
+        Kernel kernel = new KernelBuilder()
            .WithLoggerFactory(ConsoleLogger.LoggerFactory)
            .WithOpenAIChatCompletionService(
                modelId: s_openAIModelId!,
@@ -263,7 +263,7 @@ public static class Example57_FunctionEventHandlers
         kernel.FunctionInvoked += (object? sender, FunctionInvokedEventArgs e) =>
         {
             Console.WriteLine($"\nFunction {e.FunctionView.Name} executed:");
-            Console.WriteLine($"Result: {e.SKContext.Result}");
+            Console.WriteLine($"Result: {e.KernelContext.Result}");
 
             if (repeatTimes < 3)
             {
@@ -271,7 +271,7 @@ public static class Example57_FunctionEventHandlers
                 e.Repeat();
 
                 // Redefine the input variable to repeat the function
-                e.SKContext.Variables.Update(repeatSubjects.Dequeue());
+                e.KernelContext.Variables.Update(repeatSubjects.Dequeue());
 
                 repeatTimes++;
                 Console.WriteLine("Repeat requested!");

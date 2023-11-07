@@ -11,19 +11,19 @@ namespace Microsoft.SemanticKernel.Orchestration;
 /// </summary>
 internal class FunctionRunner : IFunctionRunner
 {
-    private readonly IKernel _kernel;
+    private readonly Kernel _kernel;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FunctionRunner"/> class.
     /// </summary>
     /// <param name="kernel">The kernel instance.</param>
-    public FunctionRunner(IKernel kernel)
+    public FunctionRunner(Kernel kernel)
     {
         this._kernel = kernel;
     }
 
     /// <inheritdoc/>
-    public async Task<FunctionResult> RunAsync(ISKFunction skFunction, ContextVariables? variables = null, CancellationToken cancellationToken = default)
+    public async Task<FunctionResult> RunAsync(IKernelFunction skFunction, ContextVariables? variables = null, CancellationToken cancellationToken = default)
     {
         return (await this._kernel.RunAsync(skFunction, variables, cancellationToken).ConfigureAwait(false))
             .FunctionResults.First();

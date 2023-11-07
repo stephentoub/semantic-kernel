@@ -41,11 +41,11 @@ public sealed class ActionPlanner : IActionPlanner
     private static readonly Regex s_planRegex = new("^[^{}]*(((?'Open'{)[^{}]*)+((?'Close-Open'})[^{}]*)+)*(?(Open)(?!))", RegexOptions.Singleline | RegexOptions.Compiled);
 
     // Planner semantic function
-    private readonly ISKFunction _plannerFunction;
+    private readonly IKernelFunction _plannerFunction;
 
     // Context used to access the list of functions in the kernel
-    private readonly SKContext _context;
-    private readonly IKernel _kernel;
+    private readonly KernelContext _context;
+    private readonly Kernel _kernel;
     private readonly ILogger _logger;
 
     // TODO: allow to inject plugin store
@@ -55,7 +55,7 @@ public sealed class ActionPlanner : IActionPlanner
     /// <param name="kernel">The semantic kernel instance.</param>
     /// <param name="config">The planner configuration.</param>
     public ActionPlanner(
-        IKernel kernel,
+        Kernel kernel,
         ActionPlannerConfig? config = null)
     {
         Verify.NotNull(kernel);
@@ -79,7 +79,7 @@ public sealed class ActionPlanner : IActionPlanner
                 }
             });
 
-        kernel.ImportFunctions(this, pluginName: PluginName);
+        kernel.ImportPlugin(this, pluginName: PluginName);
 
         // Create context and logger
         this._context = kernel.CreateNewContext();
@@ -91,7 +91,7 @@ public sealed class ActionPlanner : IActionPlanner
     {
         if (string.IsNullOrEmpty(goal))
         {
-            throw new SKException("The goal specified is empty");
+            throw new KernelException("The goal specified is empty");
         }
 
         this._context.Variables.Update(goal);
@@ -101,7 +101,7 @@ public sealed class ActionPlanner : IActionPlanner
 
         if (planData == null)
         {
-            throw new SKException("The plan deserialized to a null object");
+            throw new KernelException("The plan deserialized to a null object");
         }
 
         // Build and return plan
@@ -147,7 +147,7 @@ public sealed class ActionPlanner : IActionPlanner
     [SKFunction, Description("List all functions available in the kernel")]
     public async Task<string> ListOfFunctionsAsync(
         [Description("The current goal processed by the planner")] string goal,
-        SKContext context,
+        KernelContext context,
         CancellationToken cancellationToken = default)
     {
         // Prepare list using the format used by skprompt.txt
@@ -169,7 +169,7 @@ public sealed class ActionPlanner : IActionPlanner
     [SKFunction, Description("List a few good examples of plans to generate")]
     public string GoodExamples(
         [Description("The current goal processed by the planner")] string goal,
-        SKContext context)
+        KernelContext context)
     {
         return @"
 [EXAMPLE]
@@ -210,7 +210,7 @@ Goal: create a file called ""something.txt"".
     [SKFunction, Description("List a few edge case examples of plans to handle")]
     public string EdgeCaseExamples(
         [Description("The current goal processed by the planner")] string goal,
-        SKContext context)
+        KernelContext context)
     {
         return @"
 [EXAMPLE]
@@ -271,12 +271,12 @@ Goal: tell me a joke.
             }
             catch (Exception e)
             {
-                throw new SKException("Plan parsing error, invalid JSON", e);
+                throw new KernelException("Plan parsing error, invalid JSON", e);
             }
         }
         else
         {
-            throw new SKException($"Failed to extract valid json string from planner result: '{plannerResult}'");
+            throw new KernelException($"Failed to extract valid json string from planner result: '{plannerResult}'");
         }
     }
 

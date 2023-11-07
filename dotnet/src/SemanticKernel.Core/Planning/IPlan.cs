@@ -7,7 +7,7 @@ namespace Microsoft.SemanticKernel.Planning;
 /// <summary>
 /// Interface for standard Semantic Kernel callable plan.
 /// </summary>
-[Obsolete("This interface is obsoleted, use ISKFunction interface instead")]
-public interface IPlan : ISKFunction
+[Obsolete("This interface is obsoleted, use IKernelFunction interface instead")]
+public interface IPlan : IKernelFunction
 {
 }

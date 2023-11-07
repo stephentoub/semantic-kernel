@@ -107,7 +107,7 @@ internal static class Verify
 
                 if (!seen.Add(p.Name))
                 {
-                    throw new SKException($"The function has two or more parameters with the same name '{p.Name}'");
+                    throw new KernelException($"The function has two or more parameters with the same name '{p.Name}'");
                 }
             }
         }
@@ -115,7 +115,7 @@ internal static class Verify
 
     [DoesNotReturn]
     private static void ThrowInvalidName(string kind, string name) =>
-        throw new SKException($"A {kind} can contain only ASCII letters, digits, and underscores: '{name}' is not a valid name.");
+        throw new KernelException($"A {kind} can contain only ASCII letters, digits, and underscores: '{name}' is not a valid name.");
 
     [DoesNotReturn]
     internal static void ThrowArgumentNullException(string? paramName) =>
