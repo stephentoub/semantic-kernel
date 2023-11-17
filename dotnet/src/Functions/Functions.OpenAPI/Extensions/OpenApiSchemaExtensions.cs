@@ -14,12 +14,12 @@ internal static class OpenApiSchemaExtensions
     /// </summary>
     /// <param name="schema">The schema.</param>
     /// <returns>An instance of <see cref="JsonDocument"/> that contains the Json Schema.</returns>
-    internal static JsonDocument ToJsonDocument(this OpenApiSchema schema)
+    internal static SKParameterTypeJsonSchema ToSKTypeJsonSchema(this OpenApiSchema schema)
     {
         var schemaBuilder = new StringBuilder();
         var jsonWriter = new OpenApiJsonWriter(new StringWriter(schemaBuilder));
         jsonWriter.Settings.InlineLocalReferences = true;
         schema.SerializeAsV3(jsonWriter);
-        return JsonDocument.Parse(schemaBuilder.ToString());
+        return SKParameterTypeJsonSchema.Parse(schemaBuilder.ToString());
     }
 }

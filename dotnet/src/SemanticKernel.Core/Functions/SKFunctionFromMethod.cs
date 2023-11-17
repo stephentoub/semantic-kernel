@@ -297,8 +297,8 @@ internal sealed class SKFunctionFromMethod : ISKFunction
             Description = method.GetCustomAttribute<DescriptionAttribute>(inherit: true)?.Description ?? "",
             Parameters = stringParameterViews,
             ReturnParameter = new ReturnParameterView(
-                Description: method.ReturnParameter.GetCustomAttribute<DescriptionAttribute>(inherit: true)?.Description ?? "",
-                ParameterType: method.ReturnType),
+                method.ReturnParameter.GetCustomAttribute<DescriptionAttribute>(inherit: true)?.Description ?? "",
+                method.ReturnType),
         };
     }
 
@@ -465,8 +465,8 @@ internal sealed class SKFunctionFromMethod : ISKFunction
                 name,
                 parameter.GetCustomAttribute<DescriptionAttribute>(inherit: true)?.Description ?? string.Empty,
                 defaultValue?.ToString() ?? string.Empty,
-                IsRequired: !parameter.IsOptional,
-                ParameterType: type);
+                isRequired: !parameter.IsOptional,
+                type: type);
 
             return (parameterFunc, parameterView);
         }

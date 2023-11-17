@@ -2,9 +2,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
-using Json.More;
 using Json.Schema;
+using System.Text.Json;
 using Json.Schema.Generation;
 
 namespace Microsoft.SemanticKernel.Connectors.AI.OpenAI.AzureSdk;
@@ -27,18 +26,17 @@ public static class FunctionViewExtensions
             openAIParams.Add(new OpenAIFunctionParameter
             {
                 Name = param.Name,
-                Description = (param.Description ?? string.Empty)
-                    + (string.IsNullOrEmpty(param.DefaultValue) ? string.Empty : $" (default value: {param.DefaultValue})"),
-                Type = param.Type?.Name ?? "string",
-                IsRequired = param.IsRequired ?? false,
-                Schema = param.Schema ?? GetJsonSchemaDocument(param.ParameterType, param.Description),
+                Description = (param.Description ?? string.Empty) + (string.IsNullOrEmpty(param.DefaultValue) ? string.Empty : $" (default value: {param.DefaultValue})"),
+                Type = param.JsonType?.Name ?? "string",
+                IsRequired = param.IsRequired,
+                Schema = param.JsonSchema ?? GetSchema(param.Type, param.Description),
             });
         }
 
         var returnParameter = new OpenAIFunctionReturnParameter
         {
             Description = functionView.ReturnParameter.Description ?? string.Empty,
-            Schema = functionView.ReturnParameter.Schema ?? GetJsonSchemaDocument(functionView.ReturnParameter.ParameterType, functionView.ReturnParameter.Description),
+            Schema = functionView.ReturnParameter.JsonSchema ?? GetSchema(functionView.ReturnParameter.Type, functionView.ReturnParameter.Description),
         };
 
         return new OpenAIFunction
@@ -57,19 +55,16 @@ public static class FunctionViewExtensions
     /// <param name="type">The object Type.</param>
     /// <param name="description">The object description.</param>
     /// <returns></returns>
-    private static JsonDocument? GetJsonSchemaDocument(Type? type, string? description)
+    private static SKParameterTypeJsonSchema? GetSchema(Type? type, string? description)
     {
         if (type == null)
         {
             return null;
         }
 
-        var schemaDocument = new JsonSchemaBuilder()
-                        .FromType(type)
-                        .Description(description ?? string.Empty)
-                        .Build()
-                        .ToJsonDocument();
-
-        return schemaDocument;
+        return SKParameterTypeJsonSchema.Parse(JsonSerializer.Serialize(new JsonSchemaBuilder()
+            .FromType(type)
+            .Description(description ?? string.Empty)
+            .Build()));
     }
 }

@@ -396,7 +396,7 @@ internal sealed class ReActEngine
             Constants.StopAndPromptParameterName,
             "The message to be shown to the user.",
             string.Empty,
-            ParameterViewType.String);
+            jsonType: ParameterViewJsonType.String);
 
         return new FunctionView(
             Constants.StopAndPromptFunctionName,

@@ -4,10 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using Azure.AI.OpenAI;
-using Json.More;
 using Json.Schema;
 using Json.Schema.Generation;
-using Microsoft.SemanticKernel.Extensions;
 using Microsoft.SemanticKernel.Text;
 
 namespace Microsoft.SemanticKernel.Connectors.AI.OpenAI.AzureSdk;
@@ -40,7 +38,7 @@ public class OpenAIFunctionParameter
     /// <summary>
     /// The Json Schema of the parameter.
     /// </summary>
-    public JsonDocument? Schema { get; set; } = null;
+    public SKParameterTypeJsonSchema? Schema { get; set; } = null;
 
     /// <summary>
     /// The parameter Type.
@@ -61,7 +59,7 @@ public class OpenAIFunctionReturnParameter
     /// <summary>
     /// The Json Schema of the parameter.
     /// </summary>
-    public JsonDocument? Schema { get; set; } = null;
+    public SKParameterTypeJsonSchema? Schema { get; set; } = null;
 
     /// <summary>
     /// The <see cref="Type"/> of the return parameter.
@@ -113,29 +111,56 @@ public class OpenAIFunction
     public OpenAIFunctionReturnParameter ReturnParameter { get; set; } = new OpenAIFunctionReturnParameter();
 
     /// <summary>
+    /// Cached <see cref="BinaryData"/> storing the JSON for a function with no parameters.
+    /// </summary>
+    private static readonly BinaryData s_zeroFunctionParametersSchema = new("{\"type\":\"object\",\"required\":[],\"properties\":{}}");
+
+    /// <summary>
     /// Converts the <see cref="OpenAIFunction"/> to OpenAI's <see cref="FunctionDefinition"/>.
     /// </summary>
     /// <returns>A <see cref="FunctionDefinition"/> containing all the function information.</returns>
     public FunctionDefinition ToFunctionDefinition()
     {
-        JsonDocument schemaBuilderDelegate(Type type, string description)
+        BinaryData resultParameters = s_zeroFunctionParametersSchema;
+        if (this.Parameters.Count > 0)
         {
-            var schema = new JsonSchemaBuilder()
-                .FromType(type)
-                .Description(description ?? string.Empty)
-                .Build()
-                .ToJsonDocument();
+            var properties = new Dictionary<string, SKParameterTypeJsonSchema>();
+            var required = new List<string>();
 
-            return schema;
+            foreach (var parameter in this.Parameters)
+            {
+                if (parameter.Schema is not null || parameter.ParameterType is not null)
+                {
+                    SKParameterTypeJsonSchema schema = parameter.Schema is not null ?
+                        parameter.Schema :
+                        SKParameterTypeJsonSchema.Parse(JsonSerializer.Serialize(
+                            new JsonSchemaBuilder()
+                                .FromType(parameter.ParameterType!)
+                                .Description(parameter.Description ?? string.Empty)
+                                .Build()));
+
+                    properties.Add(parameter.Name, schema);
+
+                    if (parameter.IsRequired)
+                    {
+                        required.Add(parameter.Name);
+                    }
+                }
+            }
+
+            resultParameters = BinaryData.FromObjectAsJson(new
+            {
+                type = "object",
+                required = required,
+                properties = properties,
+            });
         }
-
-        JsonSchemaFunctionManual jsonSchemaManual = this.ToFunctionView().ToJsonSchemaManual(schemaBuilderDelegate, false);
 
         return new FunctionDefinition
         {
             Name = this.FullyQualifiedName,
             Description = this.Description,
-            Parameters = BinaryData.FromObjectAsJson(jsonSchemaManual.Parameters),
+            Parameters = resultParameters,
         };
     }
 }

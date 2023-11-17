@@ -65,8 +65,8 @@ public sealed class OpenApiDocumentParserV31Tests : IDisposable
         Assert.NotNull(valueProperty.Properties);
         Assert.False(valueProperty.Properties.Any());
         Assert.NotNull(valueProperty.Schema);
-        Assert.Equal("string", valueProperty.Schema.RootElement.GetProperty("type").GetString());
-        Assert.Equal("The value of the secret.", valueProperty.Schema.RootElement.GetProperty("description").GetString());
+        Assert.Equal("string", valueProperty.Schema.Element.GetProperty("type").GetString());
+        Assert.Equal("The value of the secret.", valueProperty.Schema.Element.GetProperty("description").GetString());
 
         var attributesProperty = properties.FirstOrDefault(p => p.Name == "attributes");
         Assert.NotNull(attributesProperty);
@@ -76,8 +76,8 @@ public sealed class OpenApiDocumentParserV31Tests : IDisposable
         Assert.NotNull(attributesProperty.Properties);
         Assert.True(attributesProperty.Properties.Any());
         Assert.NotNull(attributesProperty.Schema);
-        Assert.Equal("object", attributesProperty.Schema.RootElement.GetProperty("type").GetString());
-        Assert.Equal("attributes", attributesProperty.Schema.RootElement.GetProperty("description").GetString());
+        Assert.Equal("object", attributesProperty.Schema.Element.GetProperty("type").GetString());
+        Assert.Equal("attributes", attributesProperty.Schema.Element.GetProperty("description").GetString());
 
         var enabledProperty = attributesProperty.Properties.FirstOrDefault(p => p.Name == "enabled");
         Assert.NotNull(enabledProperty);
@@ -86,8 +86,8 @@ public sealed class OpenApiDocumentParserV31Tests : IDisposable
         Assert.Equal("boolean", enabledProperty.Type);
         Assert.False(enabledProperty.Properties?.Any());
         Assert.NotNull(enabledProperty.Schema);
-        Assert.Equal("boolean", enabledProperty.Schema.RootElement.GetProperty("type").GetString());
-        Assert.Equal("Determines whether the object is enabled.", enabledProperty.Schema.RootElement.GetProperty("description").GetString());
+        Assert.Equal("boolean", enabledProperty.Schema.Element.GetProperty("type").GetString());
+        Assert.Equal("Determines whether the object is enabled.", enabledProperty.Schema.Element.GetProperty("description").GetString());
     }
 
     [Fact]
@@ -116,15 +116,15 @@ public sealed class OpenApiDocumentParserV31Tests : IDisposable
         Assert.Equal(RestApiOperationParameterLocation.Path, pathParameter.Location);
         Assert.Null(pathParameter.DefaultValue);
         Assert.NotNull(pathParameter.Schema);
-        Assert.Equal("string", pathParameter.Schema.RootElement.GetProperty("type").GetString());
+        Assert.Equal("string", pathParameter.Schema.Element.GetProperty("type").GetString());
 
         var apiVersionParameter = parameters.Single(p => p.Name == "api-version"); //'api-version' query string parameter.
         Assert.True(apiVersionParameter.IsRequired);
         Assert.Equal(RestApiOperationParameterLocation.Query, apiVersionParameter.Location);
         Assert.Equal("7.0", apiVersionParameter.DefaultValue);
         Assert.NotNull(apiVersionParameter.Schema);
-        Assert.Equal("string", apiVersionParameter.Schema.RootElement.GetProperty("type").GetString());
-        Assert.Equal("7.0", apiVersionParameter.Schema.RootElement.GetProperty("default").GetString());
+        Assert.Equal("string", apiVersionParameter.Schema.Element.GetProperty("type").GetString());
+        Assert.Equal("7.0", apiVersionParameter.Schema.Element.GetProperty("default").GetString());
 
         var payloadParameter = parameters.Single(p => p.Name == "payload"); //'payload' artificial parameter.
         Assert.True(payloadParameter.IsRequired);
@@ -132,7 +132,7 @@ public sealed class OpenApiDocumentParserV31Tests : IDisposable
         Assert.Null(payloadParameter.DefaultValue);
         Assert.Equal("REST API request body.", payloadParameter.Description);
         Assert.NotNull(payloadParameter.Schema);
-        Assert.Equal("object", payloadParameter.Schema.RootElement.GetProperty("type").GetString());
+        Assert.Equal("object", payloadParameter.Schema.Element.GetProperty("type").GetString());
 
         var contentTypeParameter = parameters.Single(p => p.Name == "content-type"); //'content-type' artificial parameter.
         Assert.False(contentTypeParameter.IsRequired);

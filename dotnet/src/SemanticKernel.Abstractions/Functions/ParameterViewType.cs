@@ -12,32 +12,32 @@ namespace Microsoft.SemanticKernel;
 /// <summary>
 /// Represents the type for the parameter view.
 /// </summary>
-public readonly record struct ParameterViewType(string Name)
+public readonly record struct ParameterViewJsonType(string Name)
 {
     /// <summary>
     /// Represents the "string" parameter view type.
     /// </summary>
-    public static readonly ParameterViewType String = new("string");
+    public static readonly ParameterViewJsonType String = new("string");
 
     /// <summary>
     /// Represents the "number" parameter view type.
     /// </summary>
-    public static readonly ParameterViewType Number = new("number");
+    public static readonly ParameterViewJsonType Number = new("number");
 
     /// <summary>
     /// Represents the "object" parameter view type.
     /// </summary>
-    public static readonly ParameterViewType Object = new("object");
+    public static readonly ParameterViewJsonType Object = new("object");
 
     /// <summary>
     /// Represents the "array" parameter view type.
     /// </summary>
-    public static readonly ParameterViewType Array = new("array");
+    public static readonly ParameterViewJsonType Array = new("array");
 
     /// <summary>
     /// Represents the "boolean" parameter view type.
     /// </summary>
-    public static readonly ParameterViewType Boolean = new("boolean");
+    public static readonly ParameterViewJsonType Boolean = new("boolean");
 
     /// <summary>
     /// Gets the name of the parameter view type.

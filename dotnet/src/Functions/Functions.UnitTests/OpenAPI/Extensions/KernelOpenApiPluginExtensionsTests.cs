@@ -61,13 +61,13 @@ public sealed class KernelOpenApiPluginExtensionsTests : IDisposable
         Assert.NotNull(functionView);
 
         var secretNameParameter = functionView.Parameters.First(p => p.Name == "secret_name");
-        Assert.Equal(ParameterViewType.String, secretNameParameter.Type);
+        Assert.Equal(ParameterViewJsonType.String, secretNameParameter.JsonType);
 
         var apiVersionParameter = functionView.Parameters.First(p => p.Name == "api_version");
-        Assert.Equal("string", apiVersionParameter?.Type?.ToString());
+        Assert.Equal("string", apiVersionParameter?.JsonType?.ToString());
 
         var payloadParameter = functionView.Parameters.First(p => p.Name == "payload");
-        Assert.Equal(ParameterViewType.Object, payloadParameter.Type);
+        Assert.Equal(ParameterViewJsonType.Object, payloadParameter.JsonType);
     }
 
     [Theory]

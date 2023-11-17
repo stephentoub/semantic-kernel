@@ -51,7 +51,7 @@ public class FunctionViewTests
     public void ItReturnsFunctionReturnParameter()
     {
         // Arrange
-        var ReturnParameterViewA = new ReturnParameterView("ReturnParameterA", ParameterType: typeof(string), Schema: System.Text.Json.JsonDocument.Parse("\"schema\""));
+        var ReturnParameterViewA = new ReturnParameterView("ReturnParameterA", typeof(string), SKParameterTypeJsonSchema.Parse("\"schema\""));
 
         // Act
         var funcViewA = new FunctionView("funcA", "s1", "", null, ReturnParameterViewA);
@@ -60,8 +60,8 @@ public class FunctionViewTests
         Assert.NotNull(funcViewA);
 
         Assert.Equal("ReturnParameterA", funcViewA.ReturnParameter.Description);
-        Assert.Equal(typeof(string), funcViewA.ReturnParameter.ParameterType);
-        Assert.Equivalent(System.Text.Json.JsonDocument.Parse("\"schema\""), funcViewA.ReturnParameter.Schema);
+        Assert.Equal(typeof(string), funcViewA.ReturnParameter.Type);
+        Assert.Equivalent(SKParameterTypeJsonSchema.Parse("\"schema\""), funcViewA.ReturnParameter.JsonSchema);
     }
 
     [Fact]
@@ -127,11 +127,11 @@ public class FunctionViewTests
         // Assert
         Assert.Equal("function description", fv.Description);
         Assert.Equal("first parameter description", fv.Parameters[0].Description);
-        Assert.Equal(typeof(int), fv.Parameters[0].ParameterType);
+        Assert.Equal(typeof(int), fv.Parameters[0].Type);
         Assert.Equal("second parameter description", fv.Parameters[1].Description);
-        Assert.Equal(typeof(int), fv.Parameters[1].ParameterType);
+        Assert.Equal(typeof(int), fv.Parameters[1].Type);
         Assert.Equal("return parameter description", fv.ReturnParameter.Description);
-        Assert.Equal(typeof(void), fv.ReturnParameter.ParameterType);
+        Assert.Equal(typeof(void), fv.ReturnParameter.Type);
     }
 
     [Fact]
@@ -149,11 +149,11 @@ public class FunctionViewTests
         // Assert
         Assert.Equal(string.Empty, fv.Description);
         Assert.Equal(string.Empty, fv.Parameters[0].Description);
-        Assert.Equal(typeof(int), fv.Parameters[0].ParameterType);
+        Assert.Equal(typeof(int), fv.Parameters[0].Type);
         Assert.Equal(string.Empty, fv.Parameters[1].Description);
-        Assert.Equal(typeof(int), fv.Parameters[1].ParameterType);
+        Assert.Equal(typeof(int), fv.Parameters[1].Type);
         Assert.Equal(string.Empty, fv.ReturnParameter.Description);
-        Assert.Equal(typeof(void), fv.ReturnParameter.ParameterType);
+        Assert.Equal(typeof(void), fv.ReturnParameter.Type);
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public class FunctionViewTests
         var emptyList = new List<ParameterView>();
 
         Assert.Equal(emptyList, fv.Parameters);
-        Assert.Equal(typeof(void), fv.ReturnParameter.ParameterType);
+        Assert.Equal(typeof(void), fv.ReturnParameter.Type);
     }
 
     private static void ValidFunctionName() { }

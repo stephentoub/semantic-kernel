@@ -321,14 +321,13 @@ public static class KernelOpenApiPluginExtensions
         }
 
         var parameters = restOperationParameters
-            .Select(p => new ParameterView(p.AlternativeName ?? p.Name)
-            {
-                Description = $"{p.Description ?? p.Name}{(p.IsRequired ? " (required)" : string.Empty)}",
-                DefaultValue = p.DefaultValue ?? string.Empty,
-                Type = string.IsNullOrEmpty(p.Type) ? null : new ParameterViewType(p.Type),
-                IsRequired = p.IsRequired,
-                Schema = p.Schema,
-            })
+            .Select(p => new ParameterView(
+                name: p.AlternativeName ?? p.Name,
+                description: $"{p.Description ?? p.Name}{(p.IsRequired ? " (required)" : string.Empty)}",
+                defaultValue: p.DefaultValue ?? string.Empty,
+                isRequired: p.IsRequired,
+                jsonType: string.IsNullOrEmpty(p.Type) ? null : new ParameterViewJsonType(p.Type),
+                jsonSchema: p.Schema))
             .ToList();
 
         return SKFunction.FromMethod(

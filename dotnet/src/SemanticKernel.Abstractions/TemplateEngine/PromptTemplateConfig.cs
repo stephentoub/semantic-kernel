@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel.AI;
-using Microsoft.SemanticKernel.Text;
 
 namespace Microsoft.SemanticKernel.TemplateEngine;
 
@@ -107,7 +106,7 @@ public class PromptTemplateConfig
     /// <exception cref="ArgumentException">Thrown when the deserialization returns null.</exception>
     public static PromptTemplateConfig FromJson(string json)
     {
-        var result = Json.Deserialize<PromptTemplateConfig>(json);
+        var result = Microsoft.SemanticKernel.Text.Json.Deserialize<PromptTemplateConfig>(json);
         return result ?? throw new ArgumentException("Unable to deserialize prompt template config from argument. The deserialization returned null.", nameof(json));
     }
 }
