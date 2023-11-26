@@ -7,7 +7,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel.AI.ChatCompletion;
 using Microsoft.SemanticKernel.Orchestration;
 
@@ -38,7 +40,7 @@ public sealed class HandlebarsPlanner
     {
         this._kernel = kernel;
         this._config = config ?? new HandlebarsPlannerConfig();
-        this._logger = kernel.LoggerFactory.CreateLogger(this.GetType());
+        this._logger = kernel.GetService<ILoggerFactory>().CreateLogger(this.GetType());
     }
 
     /// <summary>Creates a plan for the specified goal.</summary>

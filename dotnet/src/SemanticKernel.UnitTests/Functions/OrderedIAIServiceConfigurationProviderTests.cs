@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI;
 using Microsoft.SemanticKernel.AI.TextCompletion;
@@ -77,7 +78,7 @@ public class OrderedIAIServiceConfigurationProviderTests
         (var aiService, var defaultRequestSettings) = serviceSelector.SelectAIService<ITextCompletion>(kernel, variables, function);
 
         // Assert
-        Assert.Equal(kernel.ServiceProvider.GetService<ITextCompletion>("service2"), aiService);
+        Assert.Equal(kernel.GetService<ITextCompletion>("service2"), aiService);
         Assert.Equal(requestSettings, defaultRequestSettings);
     }
 
@@ -105,7 +106,7 @@ public class OrderedIAIServiceConfigurationProviderTests
         // Arrange
         var kernel = new KernelBuilder()
             .WithAIService<ITextCompletion>("service1", new TextCompletion())
-            .WithAIService<ITextCompletion>("service2", new TextCompletion(), true)
+            .WithAIService<ITextCompletion>("service2", new TextCompletion())
             .Build();
         var variables = new ContextVariables();
         var function = kernel.CreateFunctionFromPrompt("Hello AI");
@@ -115,7 +116,7 @@ public class OrderedIAIServiceConfigurationProviderTests
         (var aiService, var defaultRequestSettings) = serviceSelector.SelectAIService<ITextCompletion>(kernel, variables, function);
 
         // Assert
-        Assert.Equal(kernel.ServiceProvider.GetService<ITextCompletion>("service2"), aiService);
+        Assert.Equal(kernel.GetService<ITextCompletion>("service2"), aiService);
         Assert.Null(defaultRequestSettings);
     }
 
@@ -126,7 +127,7 @@ public class OrderedIAIServiceConfigurationProviderTests
         // Arrange
         var kernel = new KernelBuilder()
             .WithAIService<ITextCompletion>("service1", new TextCompletion())
-            .WithAIService<ITextCompletion>("service2", new TextCompletion(), true)
+            .WithAIService<ITextCompletion>("service2", new TextCompletion())
             .Build();
         var variables = new ContextVariables();
         var requestSettings = new PromptExecutionSettings();
@@ -137,7 +138,7 @@ public class OrderedIAIServiceConfigurationProviderTests
         (var aiService, var defaultRequestSettings) = serviceSelector.SelectAIService<ITextCompletion>(kernel, variables, function);
 
         // Assert
-        Assert.Equal(kernel.ServiceProvider.GetService<ITextCompletion>("service2"), aiService);
+        Assert.Equal(kernel.GetService<ITextCompletion>("service2"), aiService);
         Assert.Equal(requestSettings, defaultRequestSettings);
     }
 
@@ -147,7 +148,7 @@ public class OrderedIAIServiceConfigurationProviderTests
         // Arrange
         var kernel = new KernelBuilder()
             .WithAIService<ITextCompletion>("service1", new TextCompletion())
-            .WithAIService<ITextCompletion>("service2", new TextCompletion(), true)
+            .WithAIService<ITextCompletion>("service2", new TextCompletion())
             .Build();
         var variables = new ContextVariables();
         var requestSettings = new PromptExecutionSettings() { ServiceId = "" };
@@ -158,7 +159,7 @@ public class OrderedIAIServiceConfigurationProviderTests
         (var aiService, var defaultRequestSettings) = serviceSelector.SelectAIService<ITextCompletion>(kernel, variables, function);
 
         // Assert
-        Assert.Equal(kernel.ServiceProvider.GetService<ITextCompletion>("service2"), aiService);
+        Assert.Equal(kernel.GetService<ITextCompletion>("service2"), aiService);
         Assert.Equal(requestSettings, defaultRequestSettings);
     }
 
@@ -188,7 +189,7 @@ public class OrderedIAIServiceConfigurationProviderTests
         (var aiService, var defaultRequestSettings) = serviceSelector.SelectAIService<ITextCompletion>(kernel, variables, function);
 
         // Assert
-        Assert.Equal(kernel.ServiceProvider.GetService<ITextCompletion>(expectedServiceId), aiService);
+        Assert.Equal(kernel.GetService<ITextCompletion>(expectedServiceId), aiService);
         Assert.Equal(expectedServiceId, defaultRequestSettings!.ServiceId);
     }
 

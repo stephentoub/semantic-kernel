@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +9,6 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI.TextCompletion;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI.TextCompletion;
 using Microsoft.SemanticKernel.Memory;
-using Microsoft.SemanticKernel.Services;
 using RepoUtils;
 
 /**
@@ -69,24 +69,20 @@ public static class Example40_DIContainer
         //For regular .NET applications, the bootstrapping code usually resides either in the Main method or very close to it.
         //In ASP.NET Core applications, the bootstrapping code is typically located in the ConfigureServices method of the Startup class.
 
-        //Registering AI services Kernel is going to use
-        var aiServicesCollection = new AIServiceCollection();
-        aiServicesCollection.SetService<ITextCompletion>(() => new OpenAITextCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey));
-
-        //Registering Kernel dependencies
+        // Registering Kernel dependencies
         var collection = new ServiceCollection();
-        collection.AddTransient<ILoggerFactory>((_) => ConsoleLogger.LoggerFactory);
+        collection.AddSingleton<ITextCompletion>(serviceProvider => new OpenAITextCompletion(TestConfiguration.OpenAI.ModelId, TestConfiguration.OpenAI.ApiKey));
+        collection.AddTransient<ILoggerFactory>(serviceProvider => ConsoleLogger.LoggerFactory);
+        collection.AddTransient<ISemanticTextMemory>(serviceProvider => NullMemory.Instance);
         collection.AddHttpClient();
-        collection.AddTransient<ISemanticTextMemory>((_) => NullMemory.Instance);
-        collection.AddTransient<IAIServiceProvider>((_) => aiServicesCollection.Build()); //Registering AI service provider that is used by Kernel to resolve AI services runtime
 
-        //Registering Kernel
+        // Registering Kernel
         collection.AddTransient<Kernel>();
 
-        //Registering class that uses Kernel to execute a plugin
+        // Registering class that uses Kernel to execute a plugin
         collection.AddTransient<KernelClient>();
 
-        //Creating a service provider for resolving registered services
+        // Creating a service provider for resolving registered services
         var serviceProvider = collection.BuildServiceProvider();
 
         //If an application follows DI guidelines, the following line is unnecessary because DI will inject an instance of the KernelClient class to a class that references it.

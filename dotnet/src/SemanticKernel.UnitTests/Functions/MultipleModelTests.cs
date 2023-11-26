@@ -24,8 +24,8 @@ public class MultipleModelTests
         mockCompletionResult.Setup(cr => cr.GetCompletionAsync(It.IsAny<CancellationToken>())).ReturnsAsync("llmResult");
 
         var kernel = new KernelBuilder()
-            .WithAIService("service1", mockTextCompletion1.Object, false)
-            .WithAIService("service2", mockTextCompletion2.Object, true)
+            .WithAIService("service1", mockTextCompletion1.Object)
+            .WithAIService("service2", mockTextCompletion2.Object)
             .Build();
 
         var templateConfig = new PromptTemplateConfig();
@@ -48,8 +48,8 @@ public class MultipleModelTests
         var mockTextCompletion2 = new Mock<ITextCompletion>();
 
         var kernel = new KernelBuilder()
-            .WithAIService("service1", mockTextCompletion1.Object, false)
-            .WithAIService("service2", mockTextCompletion2.Object, true)
+            .WithAIService("service1", mockTextCompletion1.Object)
+            .WithAIService("service2", mockTextCompletion2.Object)
             .Build();
 
         var templateConfig = new PromptTemplateConfig();
@@ -64,11 +64,9 @@ public class MultipleModelTests
     }
 
     [Theory]
-    [InlineData(new string[] { "service1" }, 1, new int[] { 1, 0, 0 })]
-    [InlineData(new string[] { "service2" }, 2, new int[] { 0, 1, 0 })]
-    [InlineData(new string[] { "service3" }, 0, new int[] { 0, 0, 1 })]
-    [InlineData(new string[] { "service4", "service1" }, 1, new int[] { 1, 0, 0 })]
-    public async Task ItUsesServiceIdByOrderAsync(string[] serviceIds, int defaultServiceIndex, int[] callCount)
+    [InlineData(new string[] { "service1" }, new int[] { 1, 0, 0 })]
+    [InlineData(new string[] { "service4", "service1" }, new int[] { 1, 0, 0 })]
+    public async Task ItUsesServiceIdByOrderAsync(string[] serviceIds, int[] callCount)
     {
         // Arrange
         var mockTextCompletion1 = new Mock<ITextCompletion>();
@@ -82,9 +80,9 @@ public class MultipleModelTests
         mockCompletionResult.Setup(cr => cr.GetCompletionAsync(It.IsAny<CancellationToken>())).ReturnsAsync("llmResult");
 
         var kernel = new KernelBuilder()
-            .WithAIService("service1", mockTextCompletion1.Object, defaultServiceIndex == 0)
-            .WithAIService("service2", mockTextCompletion2.Object, defaultServiceIndex == 1)
-            .WithAIService("service3", mockTextCompletion3.Object, defaultServiceIndex == 2)
+            .WithAIService("service1", mockTextCompletion1.Object)
+            .WithAIService("service2", mockTextCompletion2.Object)
+            .WithAIService("service3", mockTextCompletion3.Object)
             .Build();
 
         var templateConfig = new PromptTemplateConfig();
@@ -118,9 +116,9 @@ public class MultipleModelTests
         mockCompletionResult.Setup(cr => cr.GetCompletionAsync(It.IsAny<CancellationToken>())).ReturnsAsync("llmResult");
 
         var kernel = new KernelBuilder()
-            .WithAIService("service1", mockTextCompletion1.Object, true)
-            .WithAIService("service2", mockTextCompletion2.Object, false)
-            .WithAIService("service3", mockTextCompletion3.Object, false)
+            .WithAIService("service1", mockTextCompletion1.Object)
+            .WithAIService("service2", mockTextCompletion2.Object)
+            .WithAIService("service3", mockTextCompletion3.Object)
             .Build();
 
         var json = @"{

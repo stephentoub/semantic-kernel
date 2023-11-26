@@ -23,6 +23,6 @@ public interface IAIServiceSelector
     /// <param name="function">Semantic Kernel callable function interface</param>
     /// <returns></returns>
 #pragma warning disable CA1716 // Identifiers should not match keywords
-    (T?, PromptExecutionSettings?) SelectAIService<T>(Kernel kernel, ContextVariables variables, KernelFunction function) where T : IAIService;
+    (T?, PromptExecutionSettings?) SelectAIService<T>(Kernel kernel, ContextVariables variables, KernelFunction function) where T : class, IAIService;
 #pragma warning restore CA1716
 }

@@ -1,7 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
+using System;
 using System.Net.Http;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
 /// Provides functionality for retrieving instances of HttpClient.
@@ -13,10 +14,18 @@ internal static class HttpClientProvider
     /// <summary>
     /// Retrieves an instance of HttpClient.
     /// </summary>
-    /// <param name="httpClient">An optional pre-existing instance of HttpClient.</param>
-    /// <param name="loggerFactory">The <see cref="ILoggerFactory"/> to use for logging. If null, no logging will be performed.</param>
     /// <returns>An instance of HttpClient.</returns>
-    public static HttpClient GetHttpClient(HttpClient? httpClient, ILoggerFactory? loggerFactory) =>
+    public static HttpClient GetHttpClient(IServiceProvider? serviceProvider = null) =>
+        serviceProvider?.GetService<HttpClient>() ??
+        CreateHttpClient();
+
+    /// <summary>
+    /// Retrieves an instance of HttpClient.
+    /// </summary>
+    /// <returns>An instance of HttpClient.</returns>
+    public static HttpClient GetHttpClient(HttpClient? httpClient) =>
         httpClient ??
-        new HttpClient(s_sharedHandler, disposeHandler: false);
+        CreateHttpClient();
+
+    public static HttpClient CreateHttpClient() => new(s_sharedHandler, disposeHandler: false);
 }

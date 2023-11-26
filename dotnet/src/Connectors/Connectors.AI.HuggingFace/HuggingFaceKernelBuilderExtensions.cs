@@ -24,7 +24,6 @@ public static class HuggingFaceKernelBuilderExtensions
     /// <param name="apiKey">The API key required for accessing the Hugging Face service.</param>
     /// <param name="endpoint">The endpoint URL for the text completion service.</param>
     /// <param name="serviceId">A local identifier for the given AI service.</param>
-    /// <param name="setAsDefault">Indicates whether the service should be the default for its type.</param>
     /// <param name="httpClient">The optional <see cref="HttpClient"/> to be used for making HTTP requests.
     /// If not provided, a default <see cref="HttpClient"/> instance will be used.</param>
     /// <returns>The modified <see cref="KernelBuilder"/> instance.</returns>
@@ -33,16 +32,14 @@ public static class HuggingFaceKernelBuilderExtensions
         string? apiKey = null,
         string? endpoint = null,
         string? serviceId = null,
-        bool setAsDefault = false,
         HttpClient? httpClient = null)
     {
-        builder.WithAIService<ITextCompletion>(serviceId, (loggerFactory, injectedClient) =>
+        builder.WithAIService<ITextCompletion>(serviceId, serviceProvider =>
             new HuggingFaceTextCompletion(
                 model,
                 apiKey,
-                HttpClientProvider.GetHttpClient(httpClient ?? injectedClient, loggerFactory),
-                endpoint),
-                setAsDefault);
+                HttpClientProvider.GetHttpClient(serviceProvider),
+                endpoint));
 
         return builder;
     }
@@ -54,20 +51,17 @@ public static class HuggingFaceKernelBuilderExtensions
     /// <param name="model">The name of the Hugging Face model.</param>
     /// <param name="endpoint">The endpoint for the text embedding generation service.</param>
     /// <param name="serviceId">A local identifier for the given AI service.</param>
-    /// <param name="setAsDefault">Indicates whether the service should be the default for its type.</param>
     /// <returns>The <see cref="KernelBuilder"/> instance.</returns>
     public static KernelBuilder WithHuggingFaceTextEmbeddingGenerationService(this KernelBuilder builder,
         string model,
         string endpoint,
-        string? serviceId = null,
-        bool setAsDefault = false)
+        string? serviceId = null)
     {
-        builder.WithAIService<ITextEmbeddingGeneration>(serviceId, (loggerFactory, injectedClient) =>
+        builder.WithAIService<ITextEmbeddingGeneration>(serviceId, serviceProvider =>
             new HuggingFaceTextEmbeddingGeneration(
                 model,
-                HttpClientProvider.GetHttpClient(injectedClient, loggerFactory),
-                endpoint),
-                setAsDefault);
+                HttpClientProvider.GetHttpClient(serviceProvider),
+                endpoint));
 
         return builder;
     }
@@ -80,21 +74,18 @@ public static class HuggingFaceKernelBuilderExtensions
     /// <param name="httpClient">The optional <see cref="HttpClient"/> instance used for making HTTP requests.</param>
     /// <param name="endpoint">The endpoint for the text embedding generation service.</param>
     /// <param name="serviceId">A local identifier for the given AI serviceю</param>
-    /// <param name="setAsDefault">Indicates whether the service should be the default for its type.</param>
     /// <returns>The <see cref="KernelBuilder"/> instance.</returns>
     public static KernelBuilder WithHuggingFaceTextEmbeddingGenerationService(this KernelBuilder builder,
         string model,
         HttpClient? httpClient = null,
         string? endpoint = null,
-        string? serviceId = null,
-        bool setAsDefault = false)
+        string? serviceId = null)
     {
-        builder.WithAIService<ITextEmbeddingGeneration>(serviceId, (loggerFactory, injectedClient) =>
+        builder.WithAIService<ITextEmbeddingGeneration>(serviceId, serviceProvider =>
             new HuggingFaceTextEmbeddingGeneration(
                 model,
-                HttpClientProvider.GetHttpClient(httpClient ?? injectedClient, loggerFactory),
-                endpoint),
-                setAsDefault);
+                HttpClientProvider.GetHttpClient(serviceProvider),
+                endpoint));
 
         return builder;
     }

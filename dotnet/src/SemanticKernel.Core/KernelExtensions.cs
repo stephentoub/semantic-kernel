@@ -39,7 +39,7 @@ public static class KernelExtensions
     {
         Verify.NotNull(kernel);
 
-        return KernelFunctionFactory.CreateFromMethod(method.Method, method.Target, functionName, description, parameters, returnParameter, kernel.LoggerFactory);
+        return KernelFunctionFactory.CreateFromMethod(method.Method, method.Target, functionName, description, parameters, returnParameter, kernel.GetService<ILoggerFactory>());
     }
 
     /// <summary>
@@ -65,7 +65,7 @@ public static class KernelExtensions
     {
         Verify.NotNull(kernel);
 
-        return KernelFunctionFactory.CreateFromMethod(method, target, functionName, description, parameters, returnParameter, kernel.LoggerFactory);
+        return KernelFunctionFactory.CreateFromMethod(method, target, functionName, description, parameters, returnParameter, kernel.GetService<ILoggerFactory>());
     }
     #endregion
 
@@ -92,7 +92,7 @@ public static class KernelExtensions
     {
         Verify.NotNull(kernel);
 
-        return KernelFunctionFactory.CreateFromPrompt(promptTemplate, requestSettings, functionName, description, kernel.LoggerFactory);
+        return KernelFunctionFactory.CreateFromPrompt(promptTemplate, requestSettings, functionName, description, kernel.GetService<ILoggerFactory>());
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public static class KernelExtensions
     {
         Verify.NotNull(kernel);
 
-        return KernelFunctionFactory.CreateFromPrompt(promptTemplate, promptTemplateConfig, functionName, promptTemplateFactory, kernel.LoggerFactory);
+        return KernelFunctionFactory.CreateFromPrompt(promptTemplate, promptTemplateConfig, functionName, promptTemplateFactory, kernel.GetService<ILoggerFactory>());
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ public static class KernelExtensions
     {
         Verify.NotNull(kernel);
 
-        return KernelFunctionFactory.CreateFromPrompt(promptTemplate, promptTemplateConfig, functionName, kernel.LoggerFactory);
+        return KernelFunctionFactory.CreateFromPrompt(promptTemplate, promptTemplateConfig, functionName, kernel.GetService<ILoggerFactory>());
     }
     #endregion
 
@@ -151,7 +151,7 @@ public static class KernelExtensions
     {
         Verify.NotNull(kernel);
 
-        return KernelPluginFactory.CreateFromObject<T>(pluginName, kernel.LoggerFactory);
+        return KernelPluginFactory.CreateFromObject<T>(pluginName, kernel.GetService<ILoggerFactory>());
     }
 
     /// <summary>Creates a plugin that wraps the specified target object.</summary>
@@ -167,7 +167,7 @@ public static class KernelExtensions
     {
         Verify.NotNull(kernel);
 
-        return KernelPluginFactory.CreateFromObject(target, pluginName, kernel.LoggerFactory);
+        return KernelPluginFactory.CreateFromObject(target, pluginName, kernel.GetService<ILoggerFactory>());
     }
     #endregion
 
@@ -250,10 +250,10 @@ public static class KernelExtensions
         Verify.ValidPluginName(pluginName, kernel.Plugins);
         Verify.DirectoryExists(pluginDirectory);
 
-        var factory = promptTemplateFactory ?? new KernelPromptTemplateFactory(kernel.LoggerFactory);
+        var factory = promptTemplateFactory ?? new KernelPromptTemplateFactory(kernel.GetService<ILoggerFactory>());
 
         KernelPlugin plugin = new(pluginName);
-        ILogger logger = kernel.LoggerFactory.CreateLogger(typeof(Kernel));
+        ILogger logger = kernel.GetService<ILoggerFactory>().CreateLogger(typeof(Kernel));
 
         foreach (string functionDirectory in Directory.EnumerateDirectories(pluginDirectory))
         {

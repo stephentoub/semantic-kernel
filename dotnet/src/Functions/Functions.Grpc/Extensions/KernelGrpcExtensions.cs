@@ -7,7 +7,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel.Functions.Grpc.Model;
 using Microsoft.SemanticKernel.Functions.Grpc.Protobuf;
 using Microsoft.SemanticKernel.Orchestration;
@@ -105,9 +107,7 @@ public static class KernelGrpcExtensions
             throw new FileNotFoundException($"No .proto document for the specified path - {filePath} is found.");
         }
 
-        kernel.LoggerFactory
-              .CreateLogger(typeof(KernelGrpcExtensions))
-              .LogTrace("Registering gRPC functions from {0} .proto document", filePath);
+        kernel.GetService<ILoggerFactory>().CreateLogger(typeof(KernelGrpcExtensions)).LogTrace("Registering gRPC functions from {0} .proto document", filePath);
 
         using var stream = File.OpenRead(filePath);
 
@@ -133,9 +133,7 @@ public static class KernelGrpcExtensions
             throw new FileNotFoundException($"No .proto document for the specified path - {filePath} is found.");
         }
 
-        kernel.LoggerFactory
-              .CreateLogger(typeof(KernelGrpcExtensions))
-              .LogTrace("Registering gRPC functions from {0} .proto document", filePath);
+        kernel.GetService<ILoggerFactory>().CreateLogger(typeof(KernelGrpcExtensions)).LogTrace("Registering gRPC functions from {0} .proto document", filePath);
 
         using var stream = File.OpenRead(filePath);
 
@@ -166,17 +164,19 @@ public static class KernelGrpcExtensions
 
         var plugin = new KernelPlugin(pluginName);
 
-        var client = HttpClientProvider.GetHttpClient(httpClient ?? kernel.HttpClient, kernel.LoggerFactory);
+        ILoggerFactory loggerFactory = kernel.GetService<ILoggerFactory>();
+
+        var client = HttpClientProvider.GetHttpClient(httpClient ?? kernel.Services.GetService<HttpClient>());
 
         var runner = new GrpcOperationRunner(client);
 
-        ILogger logger = kernel.LoggerFactory.CreateLogger(typeof(KernelGrpcExtensions));
+        ILogger logger = loggerFactory.CreateLogger(typeof(KernelGrpcExtensions));
         foreach (var operation in operations)
         {
             try
             {
                 logger.LogTrace("Registering gRPC function {0}.{1}", pluginName, operation.Name);
-                plugin.AddFunction(CreateGrpcFunction(runner, operation, kernel.LoggerFactory));
+                plugin.AddFunction(CreateGrpcFunction(runner, operation, loggerFactory));
             }
             catch (Exception ex) when (!ex.IsCriticalException())
             {

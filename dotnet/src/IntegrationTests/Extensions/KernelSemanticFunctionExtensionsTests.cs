@@ -26,7 +26,7 @@ public sealed class KernelFunctionExtensionsTests : IDisposable
     public async Task ItSupportsFunctionCallsAsync()
     {
         var builder = new KernelBuilder()
-                .WithAIService<ITextCompletion>(null, new RedirectTextCompletion(), true)
+                .WithAIService<ITextCompletion>(null, new RedirectTextCompletion())
                 .WithLoggerFactory(this._logger);
         Kernel target = builder.Build();
 
@@ -45,7 +45,7 @@ public sealed class KernelFunctionExtensionsTests : IDisposable
     public async Task ItSupportsFunctionCallsWithInputAsync()
     {
         var builder = new KernelBuilder()
-                .WithAIService<ITextCompletion>(null, new RedirectTextCompletion(), true)
+                .WithAIService<ITextCompletion>(null, new RedirectTextCompletion())
                 .WithLoggerFactory(this._logger);
         Kernel target = builder.Build();
 

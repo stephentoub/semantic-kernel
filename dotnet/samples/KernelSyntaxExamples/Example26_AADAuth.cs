@@ -3,6 +3,7 @@
 using System;
 using System.Threading.Tasks;
 using Azure.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI.ChatCompletion;
 using RepoUtils;

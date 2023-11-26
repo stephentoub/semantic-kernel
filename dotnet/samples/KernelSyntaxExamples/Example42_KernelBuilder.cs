@@ -8,6 +8,8 @@
 
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI.TextCompletion;
@@ -15,7 +17,6 @@ using Microsoft.SemanticKernel.Connectors.AI.OpenAI.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI.TextEmbedding;
 using Microsoft.SemanticKernel.Memory;
 using Microsoft.SemanticKernel.Plugins.Memory;
-using Microsoft.SemanticKernel.Services;
 
 // ReSharper disable once InconsistentNaming
 public static class Example42_KernelBuilder
@@ -65,25 +66,22 @@ public static class Example42_KernelBuilder
         var textEmbeddingGenerator = new AzureOpenAITextEmbeddingGeneration(
             deploymentName: azureOpenAIEmbeddingDeployment,
             endpoint: azureOpenAIEndpoint,
-            apiKey: azureOpenAIKey,
-            loggerFactory: loggerFactory);
+            apiKey: azureOpenAIKey);
 
         var memory = new SemanticTextMemory(memoryStorage, textEmbeddingGenerator);
-        var plugins = new KernelPluginCollection();
 
-        using var httpClient = new HttpClient();
-        var aiServices = new AIServiceCollection();
-        ITextCompletion Factory() => new AzureOpenAIChatCompletion(
-            deploymentName: azureOpenAIChatCompletionDeployment,
-            endpoint: azureOpenAIEndpoint,
-            apiKey: azureOpenAIKey,
-            httpClient: httpClient,
-            loggerFactory: loggerFactory);
-        aiServices.SetService("foo", Factory);
-        IAIServiceProvider aiServiceProvider = aiServices.Build();
+        var services = new ServiceCollection();
+        services.AddSingleton<ISemanticTextMemory>(memory);
+        services.AddKeyedSingleton<ITextCompletion>("foo", (serviceProvider, key) =>
+            new AzureOpenAIChatCompletion(
+                deploymentName: azureOpenAIChatCompletionDeployment,
+                endpoint: azureOpenAIEndpoint,
+                apiKey: azureOpenAIKey,
+                httpClient: serviceProvider.GetService<HttpClient>(),
+                loggerFactory: serviceProvider.GetService<ILoggerFactory>()));
 
         // Create kernel manually injecting all the dependencies
-        var kernel3 = new Kernel(aiServiceProvider, plugins, httpClient: httpClient, loggerFactory: loggerFactory);
+        var kernel3 = new Kernel(services.BuildServiceProvider());
 
         // ==========================================================================================================
         // The kernel builder purpose is to simplify this process, automating how dependencies
@@ -92,12 +90,11 @@ public static class Example42_KernelBuilder
         // ==========================================================================================================
         // The AI services are defined with the builder
 
-        var kernel7 = new KernelBuilder()
+        var kernel4 = new KernelBuilder()
             .WithAzureOpenAIChatCompletionService(
                 deploymentName: azureOpenAIChatCompletionDeployment,
                 endpoint: azureOpenAIEndpoint,
-                apiKey: azureOpenAIKey,
-                setAsDefault: true)
+                apiKey: azureOpenAIKey)
             .Build();
 
         return Task.CompletedTask;

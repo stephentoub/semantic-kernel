@@ -3,8 +3,8 @@
 using System;
 using System.Globalization;
 using System.Net.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel.Services;
 
 namespace Microsoft.SemanticKernel;
@@ -14,10 +14,7 @@ namespace Microsoft.SemanticKernel;
 /// </summary>
 public sealed class KernelBuilder
 {
-    private ILoggerFactory _loggerFactory = NullLoggerFactory.Instance;
-    private HttpClient? _httpClient;
-    private readonly AIServiceCollection _aiServices = new();
-    private IAIServiceSelector? _serviceSelector;
+    private ServiceCollection? _services;
     private CultureInfo? _culture;
 
     /// <summary>
@@ -36,15 +33,7 @@ public sealed class KernelBuilder
     /// <returns>Kernel instance</returns>
     public Kernel Build()
     {
-#pragma warning disable CS8604 // Possible null reference argument.
-        var instance = new Kernel(
-            this._aiServices.Build(),
-            new KernelPluginCollection(),
-            this._serviceSelector,
-            this._httpClient,
-            this._loggerFactory
-        );
-#pragma warning restore CS8604 // Possible null reference argument.
+        var instance = new Kernel(this._services?.BuildServiceProvider());
 
         if (this._culture != null)
         {
@@ -62,7 +51,7 @@ public sealed class KernelBuilder
     public KernelBuilder WithLoggerFactory(ILoggerFactory loggerFactory)
     {
         Verify.NotNull(loggerFactory);
-        this._loggerFactory = loggerFactory;
+        (this._services ??= new()).AddSingleton(loggerFactory);
         return this;
     }
 
@@ -74,7 +63,7 @@ public sealed class KernelBuilder
     public KernelBuilder WithHttpClient(HttpClient httpClient)
     {
         Verify.NotNull(httpClient);
-        this._httpClient = httpClient;
+        (this._services ??= new()).AddSingleton(httpClient);
         return this;
     }
 
@@ -82,9 +71,9 @@ public sealed class KernelBuilder
     /// Adds a <typeparamref name="TService"/> instance to the services collection
     /// </summary>
     /// <param name="instance">The <typeparamref name="TService"/> instance.</param>
-    public KernelBuilder WithDefaultAIService<TService>(TService instance) where TService : IAIService
+    public KernelBuilder WithDefaultAIService<TService>(TService instance) where TService : class, IAIService
     {
-        this._aiServices.SetService<TService>(instance);
+        (this._services ??= new()).AddSingleton(instance);
         return this;
     }
 
@@ -92,9 +81,9 @@ public sealed class KernelBuilder
     /// Adds a <typeparamref name="TService"/> factory method to the services collection
     /// </summary>
     /// <param name="factory">The factory method that creates the AI service instances of type <typeparamref name="TService"/>.</param>
-    public KernelBuilder WithDefaultAIService<TService>(Func<ILoggerFactory, TService> factory) where TService : IAIService
+    public KernelBuilder WithDefaultAIService<TService>(Func<IServiceProvider, TService> factory) where TService : class, IAIService
     {
-        this._aiServices.SetService<TService>(() => factory(this._loggerFactory));
+        (this._services ??= new()).AddSingleton<TService>(factory);
         return this;
     }
 
@@ -103,13 +92,19 @@ public sealed class KernelBuilder
     /// </summary>
     /// <param name="serviceId">The service ID</param>
     /// <param name="instance">The <typeparamref name="TService"/> instance.</param>
-    /// <param name="setAsDefault">Optional: set as the default AI service for type <typeparamref name="TService"/></param>
     public KernelBuilder WithAIService<TService>(
         string? serviceId,
-        TService instance,
-        bool setAsDefault = false) where TService : IAIService
+        TService instance) where TService : class, IAIService
     {
-        this._aiServices.SetService<TService>(serviceId, instance, setAsDefault);
+        this._services ??= new();
+        if (serviceId is not null)
+        {
+            this._services.AddKeyedSingleton(serviceId, instance);
+        }
+        else
+        {
+            this._services.AddSingleton(instance);
+        }
         return this;
     }
 
@@ -118,28 +113,19 @@ public sealed class KernelBuilder
     /// </summary>
     /// <param name="serviceId">The service ID</param>
     /// <param name="factory">The factory method that creates the AI service instances of type <typeparamref name="TService"/>.</param>
-    /// <param name="setAsDefault">Optional: set as the default AI service for type <typeparamref name="TService"/></param>
     public KernelBuilder WithAIService<TService>(
         string? serviceId,
-        Func<ILoggerFactory, TService> factory,
-        bool setAsDefault = false) where TService : IAIService
+        Func<IServiceProvider, TService> factory) where TService : class, IAIService
     {
-        this._aiServices.SetService<TService>(serviceId, () => factory(this._loggerFactory), setAsDefault);
-        return this;
-    }
-
-    /// <summary>
-    /// Adds a <typeparamref name="TService"/> factory method to the services collection
-    /// </summary>
-    /// <param name="serviceId">The service ID</param>
-    /// <param name="factory">The factory method that creates the AI service instances of type <typeparamref name="TService"/>.</param>
-    /// <param name="setAsDefault">Optional: set as the default AI service for type <typeparamref name="TService"/></param>
-    public KernelBuilder WithAIService<TService>(
-        string? serviceId,
-        Func<ILoggerFactory, HttpClient?, TService> factory,
-        bool setAsDefault = false) where TService : IAIService
-    {
-        this._aiServices.SetService<TService>(serviceId, () => factory(this._loggerFactory, this._httpClient), setAsDefault);
+        this._services ??= new();
+        if (serviceId is not null)
+        {
+            this._services.AddKeyedSingleton<TService>(serviceId, (serviceProvider, _) => factory(serviceProvider));
+        }
+        else
+        {
+            this._services.AddSingleton<TService>(factory);
+        }
         return this;
     }
 
@@ -148,7 +134,7 @@ public sealed class KernelBuilder
     /// </summary>
     public KernelBuilder WithAIServiceSelector(IAIServiceSelector serviceSelector)
     {
-        this._serviceSelector = serviceSelector;
+        (this._services ??= new()).AddSingleton(serviceSelector);
         return this;
     }
 

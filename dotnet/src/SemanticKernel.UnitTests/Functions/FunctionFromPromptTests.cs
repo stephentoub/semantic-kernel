@@ -23,7 +23,7 @@ public class FunctionFromPromptTests
     public void ItProvidesAccessToFunctionsViaFunctionCollection()
     {
         // Arrange
-        var factory = new Mock<Func<ILoggerFactory, ITextCompletion>>();
+        var factory = new Mock<Func<IServiceProvider, ITextCompletion>>();
         var kernel = new KernelBuilder()
             .WithDefaultAIService(factory.Object)
             .Build();
@@ -67,34 +67,6 @@ public class FunctionFromPromptTests
     }
 
     [Fact]
-    public async Task ItUsesDefaultServiceWhenSpecifiedAsync()
-    {
-        // Arrange
-        var mockTextCompletion1 = new Mock<ITextCompletion>();
-        var mockTextCompletion2 = new Mock<ITextCompletion>();
-        var mockCompletionResult = new Mock<ITextResult>();
-
-        mockTextCompletion1.Setup(c => c.GetCompletionsAsync(It.IsAny<string>(), null, It.IsAny<CancellationToken>())).ReturnsAsync(new[] { mockCompletionResult.Object });
-        mockTextCompletion2.Setup(c => c.GetCompletionsAsync(It.IsAny<string>(), null, It.IsAny<CancellationToken>())).ReturnsAsync(new[] { mockCompletionResult.Object });
-        mockCompletionResult.Setup(cr => cr.GetCompletionAsync(It.IsAny<CancellationToken>())).ReturnsAsync("llmResult");
-
-        var kernel = new KernelBuilder()
-            .WithAIService("service1", mockTextCompletion1.Object, false)
-            .WithAIService("service2", mockTextCompletion2.Object, true)
-            .Build();
-
-        var templateConfig = new PromptTemplateConfig();
-        var func = kernel.CreateFunctionFromPrompt("template", templateConfig, "pluginName");
-
-        // Act
-        await kernel.InvokeAsync(func);
-
-        // Assert
-        mockTextCompletion1.Verify(a => a.GetCompletionsAsync("template", null, It.IsAny<CancellationToken>()), Times.Never());
-        mockTextCompletion2.Verify(a => a.GetCompletionsAsync("template", null, It.IsAny<CancellationToken>()), Times.Once());
-    }
-
-    [Fact]
     public async Task ItUsesServiceIdWhenProvidedAsync()
     {
         // Arrange
@@ -107,8 +79,8 @@ public class FunctionFromPromptTests
         mockCompletionResult.Setup(cr => cr.GetCompletionAsync(It.IsAny<CancellationToken>())).ReturnsAsync("llmResult");
 
         var kernel = new KernelBuilder()
-            .WithAIService("service1", mockTextCompletion1.Object, false)
-            .WithAIService("service2", mockTextCompletion2.Object, true)
+            .WithAIService("service1", mockTextCompletion1.Object)
+            .WithAIService("service2", mockTextCompletion2.Object)
             .Build();
 
         var templateConfig = new PromptTemplateConfig();
@@ -131,8 +103,8 @@ public class FunctionFromPromptTests
         var mockTextCompletion2 = new Mock<ITextCompletion>();
 
         var kernel = new KernelBuilder()
-            .WithAIService("service1", mockTextCompletion1.Object, false)
-            .WithAIService("service2", mockTextCompletion2.Object, true)
+            .WithAIService("service1", mockTextCompletion1.Object)
+            .WithAIService("service2", mockTextCompletion2.Object)
             .Build();
 
         var templateConfig = new PromptTemplateConfig();

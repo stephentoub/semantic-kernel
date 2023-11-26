@@ -9,6 +9,7 @@ using Azure.AI.OpenAI;
 using Azure.Core;
 using Azure.Core.Pipeline;
 using Azure.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI.ChatCompletion;
@@ -59,8 +60,8 @@ public static class Example52_ApimAuth
 
         var kernel = new KernelBuilder()
             .WithLoggerFactory(loggerFactory)
-            .WithAIService<IChatCompletion>(TestConfiguration.AzureOpenAI.ChatDeploymentName, (loggerFactory) =>
-                new AzureOpenAIChatCompletion(deploymentName: TestConfiguration.AzureOpenAI.ChatDeploymentName, openAIClient: openAIClient, loggerFactory: loggerFactory))
+            .WithAIService<IChatCompletion>(TestConfiguration.AzureOpenAI.ChatDeploymentName, serviceProvider =>
+                new AzureOpenAIChatCompletion(deploymentName: TestConfiguration.AzureOpenAI.ChatDeploymentName, openAIClient: openAIClient, loggerFactory: serviceProvider.GetService<ILoggerFactory>()))
             .Build();
 
         // Load semantic plugin defined with prompt templates

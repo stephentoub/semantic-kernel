@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Orchestration;
-using Microsoft.SemanticKernel.Services;
 using Moq;
 using Xunit;
 
@@ -16,7 +15,7 @@ namespace SemanticKernel.UnitTests.Functions;
 
 public sealed class KernelFunctionTests3
 {
-    private readonly Kernel _kernel = new(new Mock<IAIServiceProvider>().Object);
+    private readonly Kernel _kernel = new(new Mock<IServiceProvider>().Object);
 
     [Fact]
     public void ItDoesntThrowForValidFunctionsViaDelegate()

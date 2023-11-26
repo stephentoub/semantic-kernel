@@ -55,8 +55,7 @@ public sealed class OpenAICompletionTests : IDisposable
             .WithOpenAITextCompletionService(
                 serviceId: openAIConfiguration.ServiceId,
                 modelId: openAIConfiguration.ModelId,
-                apiKey: openAIConfiguration.ApiKey,
-                setAsDefault: true)
+                apiKey: openAIConfiguration.ApiKey)
             .Build();
 
         IReadOnlyKernelPluginCollection plugins = TestHelpers.ImportSamplePlugins(target, "ChatPlugin");
@@ -435,8 +434,7 @@ public sealed class OpenAICompletionTests : IDisposable
         kernelBuilder.WithOpenAIChatCompletionService(
             modelId: openAIConfiguration.ChatModelId,
             apiKey: openAIConfiguration.ApiKey,
-            serviceId: openAIConfiguration.ServiceId,
-            setAsDefault: true);
+            serviceId: openAIConfiguration.ServiceId);
     }
 
     private void ConfigureAzureOpenAI(KernelBuilder kernelBuilder)
@@ -453,8 +451,7 @@ public sealed class OpenAICompletionTests : IDisposable
             deploymentName: azureOpenAIConfiguration.DeploymentName,
             endpoint: azureOpenAIConfiguration.Endpoint,
             apiKey: azureOpenAIConfiguration.ApiKey,
-            serviceId: azureOpenAIConfiguration.ServiceId,
-            setAsDefault: true);
+            serviceId: azureOpenAIConfiguration.ServiceId);
     }
     private void ConfigureInvalidAzureOpenAI(KernelBuilder kernelBuilder)
     {
@@ -468,8 +465,7 @@ public sealed class OpenAICompletionTests : IDisposable
             deploymentName: azureOpenAIConfiguration.DeploymentName,
             endpoint: azureOpenAIConfiguration.Endpoint,
             apiKey: "invalid-api-key",
-            serviceId: $"invalid-{azureOpenAIConfiguration.ServiceId}",
-            setAsDefault: true);
+            serviceId: $"invalid-{azureOpenAIConfiguration.ServiceId}");
     }
 
     private void ConfigureAzureOpenAIChatAsText(KernelBuilder kernelBuilder)

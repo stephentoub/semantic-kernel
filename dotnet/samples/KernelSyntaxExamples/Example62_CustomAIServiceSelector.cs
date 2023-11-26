@@ -2,6 +2,7 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI;
 using Microsoft.SemanticKernel.Connectors.AI.OpenAI;
@@ -46,8 +47,7 @@ public static class Example62_CustomAIServiceSelector
                 endpoint: azureEndpoint,
                 serviceId: "AzureOpenAIChat",
                 modelId: azureModelId,
-                apiKey: azureApiKey,
-                setAsDefault: true)
+                apiKey: azureApiKey)
             .WithOpenAIChatCompletionService(
                 modelId: openAIModelId,
                 serviceId: "OpenAIChat",
@@ -66,10 +66,9 @@ public static class Example62_CustomAIServiceSelector
     /// </summary>
     private sealed class Gpt3xAIServiceSelector : IAIServiceSelector
     {
-        public (T?, PromptExecutionSettings?) SelectAIService<T>(Kernel kernel, ContextVariables variables, KernelFunction function) where T : IAIService
+        public (T?, PromptExecutionSettings?) SelectAIService<T>(Kernel kernel, ContextVariables variables, KernelFunction function) where T : class, IAIService
         {
-            var services = kernel.ServiceProvider.GetServices<T>();
-            foreach (var service in services)
+            foreach (var service in kernel.GetServices<T>())
             {
                 // Find the first service that has a model id that starts with "gpt-3"
                 var serviceModelId = service.GetModelId();

@@ -18,10 +18,10 @@ public static class ChromaMemoryBuilderExtensions
     /// <returns>Updated Memory builder including Chroma memory connector.</returns>
     public static MemoryBuilder WithChromaMemoryStore(this MemoryBuilder builder, string endpoint)
     {
-        builder.WithMemoryStore((loggerFactory, injectedClient) =>
+        builder.WithMemoryStore(loggerFactory =>
         {
             return new ChromaMemoryStore(
-                HttpClientProvider.GetHttpClient(injectedClient, loggerFactory),
+                HttpClientProvider.GetHttpClient(),
                 endpoint,
                 loggerFactory);
         });
@@ -41,10 +41,10 @@ public static class ChromaMemoryBuilderExtensions
         HttpClient httpClient,
         string? endpoint = null)
     {
-        builder.WithMemoryStore((loggerFactory, injectedClient) =>
+        builder.WithMemoryStore(loggerFactory =>
         {
             return new ChromaMemoryStore(
-                HttpClientProvider.GetHttpClient(httpClient ?? injectedClient, loggerFactory),
+                HttpClientProvider.GetHttpClient(httpClient),
                 endpoint,
                 loggerFactory);
         });

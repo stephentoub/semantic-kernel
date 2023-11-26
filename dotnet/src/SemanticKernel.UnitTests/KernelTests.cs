@@ -7,12 +7,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.AI.TextCompletion;
 using Microsoft.SemanticKernel.Events;
 using Microsoft.SemanticKernel.Orchestration;
-using Microsoft.SemanticKernel.Services;
 using Moq;
 using Xunit;
 
@@ -26,7 +26,7 @@ public class KernelTests
     public void ItProvidesAccessToFunctionsViaFunctionCollection()
     {
         // Arrange
-        var factory = new Mock<Func<ILoggerFactory, ITextCompletion>>();
+        var factory = new Mock<Func<IServiceProvider, ITextCompletion>>();
         var kernel = new KernelBuilder()
             .WithDefaultAIService<ITextCompletion>(factory.Object)
             .Build();
@@ -493,12 +493,12 @@ public class KernelTests
     public async Task ItCanFindAndRunFunctionAsync()
     {
         //Arrange
-        var serviceProvider = new Mock<IAIServiceProvider>();
+        var serviceProvider = new Mock<IServiceProvider>();
         var serviceSelector = new Mock<IAIServiceSelector>();
 
         var function = KernelFunctionFactory.CreateFromMethod(() => "fake result", "function");
 
-        var kernel = new Kernel(new Mock<IAIServiceProvider>().Object);
+        var kernel = new Kernel(new Mock<IServiceProvider>().Object);
         kernel.Plugins.Add(new KernelPlugin("plugin", new[] { function }));
 
         //Act
@@ -542,20 +542,23 @@ public class KernelTests
     public void ItDeepClonesAllRelevantStateInClone()
     {
         // Kernel with all properties set
-        var serviceProvider = new Mock<IAIServiceProvider>();
         var serviceSelector = new Mock<IAIServiceSelector>();
-        using var httpClient = new HttpClient();
         var loggerFactory = new Mock<ILoggerFactory>();
+        var serviceProvider = new ServiceCollection()
+            .AddSingleton(serviceSelector.Object)
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            .AddSingleton(new HttpClient())
+#pragma warning restore CA2000
+            .AddSingleton(loggerFactory.Object)
+            .BuildServiceProvider();
         var plugin = new KernelPlugin("plugin1");
         var plugins = new KernelPluginCollection() { plugin };
-        Kernel kernel1 = new(serviceProvider.Object, plugins, serviceSelector.Object, httpClient, loggerFactory.Object);
+        Kernel kernel1 = new(serviceProvider, plugins);
         kernel1.Data["key"] = "value";
 
         // Clone and validate it
         Kernel kernel2 = kernel1.Clone();
-        Assert.Same(kernel1.ServiceProvider, kernel2.ServiceProvider);
-        Assert.Same(kernel1.ServiceSelector, kernel2.ServiceSelector);
-        Assert.Same(kernel1.HttpClient, kernel2.HttpClient);
+        Assert.Same(kernel1.Services, kernel2.Services);
         Assert.Same(kernel1.Culture, kernel2.Culture);
         Assert.NotSame(kernel1.Data, kernel2.Data);
         Assert.Equal(kernel1.Data.Count, kernel2.Data.Count);
@@ -564,14 +567,11 @@ public class KernelTests
         Assert.Equal(kernel1.Plugins, kernel2.Plugins);
 
         // Minimally configured kernel
-        Kernel kernel3 = new(serviceProvider.Object);
+        Kernel kernel3 = new();
 
         // Clone and validate it
         Kernel kernel4 = kernel3.Clone();
-        Assert.Same(kernel3.ServiceProvider, kernel4.ServiceProvider);
-        Assert.Same(kernel3.ServiceSelector, kernel4.ServiceSelector);
-        Assert.Null(kernel3.HttpClient);
-        Assert.Null(kernel4.HttpClient);
+        Assert.Same(kernel3.Services, kernel4.Services);
         Assert.NotSame(kernel3.Data, kernel4.Data);
         Assert.Empty(kernel4.Data);
         Assert.NotSame(kernel1.Plugins, kernel2.Plugins);
