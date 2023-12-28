@@ -17,7 +17,7 @@ namespace Microsoft.SemanticKernel.Planning.Handlebars;
 /// <summary>
 /// Represents a Handlebars planner.
 /// </summary>
-public sealed class HandlebarsPlanner
+public sealed partial class HandlebarsPlanner
 {
     /// <summary>
     /// Represents static options for all Handlebars Planner prompt templates.
@@ -32,13 +32,16 @@ public sealed class HandlebarsPlanner
         RegisterCustomHelpers = HandlebarsPromptTemplateExtensions.RegisterCustomCreatePlanHelpers,
     };
 
+    /// <summary>Default options to use when none are supplied.</summary>
+    private static readonly HandlebarsPlannerOptions s_defaultOptions = new();
+
     /// <summary>
     /// Initializes a new instance of the <see cref="HandlebarsPlanner"/> class.
     /// </summary>
     /// <param name="options">Configuration options for Handlebars Planner.</param>
     public HandlebarsPlanner(HandlebarsPlannerOptions? options = default)
     {
-        this._options = options ?? new HandlebarsPlannerOptions();
+        this._options = options ?? s_defaultOptions;
         this._templateFactory = new HandlebarsPromptTemplateFactory(options: PromptTemplateOptions);
     }
 
@@ -65,8 +68,7 @@ public sealed class HandlebarsPlanner
     #region private
 
     private readonly HandlebarsPlannerOptions _options;
-
-    private HandlebarsPromptTemplateFactory _templateFactory { get; }
+    private readonly HandlebarsPromptTemplateFactory _templateFactory;
 
     /// <summary>
     /// Error message if kernel does not contain sufficient functions to create a plan.
@@ -78,7 +80,7 @@ public sealed class HandlebarsPlanner
         // Get CreatePlan prompt template
         var availableFunctions = this.GetAvailableFunctionsManual(kernel, out var complexParameterTypes, out var complexParameterSchemas);
         var createPlanPrompt = await this.GetHandlebarsTemplateAsync(kernel, goal, availableFunctions, complexParameterTypes, complexParameterSchemas, cancellationToken).ConfigureAwait(false);
-        ChatHistory chatMessages = this.GetChatHistoryFromPrompt(createPlanPrompt);
+        ChatHistory chatMessages = GetChatHistoryFromPrompt(createPlanPrompt);
 
         // Get the chat completion results
         var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
@@ -91,7 +93,7 @@ public sealed class HandlebarsPlanner
             throw new KernelException($"[{HandlebarsPlannerErrorCodes.InsufficientFunctionsForGoal}] Unable to create plan for goal with available functions.\nGoal: {goal}\nAvailable Functions: {string.Join(", ", functionNames)}\nPlanner output:\n{completionResults}");
         }
 
-        Match match = Regex.Match(completionResults.Content, @"```\s*(handlebars)?\s*(.*)\s*```", RegexOptions.Singleline);
+        Match match = Regex.Match(completionResults.Content ?? string.Empty, @"```\s*(handlebars)?\s*(.*)\s*```", RegexOptions.Singleline);
         if (!match.Success)
         {
             throw new KernelException($"[{HandlebarsPlannerErrorCodes.InvalidTemplate}] Could not find the plan in the results");
@@ -124,12 +126,12 @@ public sealed class HandlebarsPlanner
             var parametersMetadata = new List<KernelParameterMetadata>();
             foreach (var parameter in kernelFunction.Parameters)
             {
-                var paramToAdd = this.SetComplexTypeDefinition(parameter, complexParameterTypes, complexParameterSchemas);
+                var paramToAdd = SetComplexTypeDefinition(parameter, complexParameterTypes, complexParameterSchemas);
                 parametersMetadata.Add(paramToAdd);
             }
 
             var returnParameter = kernelFunction.ReturnParameter.ToKernelParameterMetadata(kernelFunction.Name);
-            returnParameter = this.SetComplexTypeDefinition(returnParameter, complexParameterTypes, complexParameterSchemas);
+            returnParameter = SetComplexTypeDefinition(returnParameter, complexParameterTypes, complexParameterSchemas);
 
             // Need to override function metadata in case parameter metadata changed (e.g., converted primitive types from schema objects)
             var functionMetadata = new KernelFunctionMetadata(kernelFunction.Name)
@@ -146,7 +148,7 @@ public sealed class HandlebarsPlanner
     }
 
     // Extract any complex types or schemas for isolated render in prompt template
-    private KernelParameterMetadata SetComplexTypeDefinition(
+    private static KernelParameterMetadata SetComplexTypeDefinition(
         KernelParameterMetadata parameter,
         HashSet<HandlebarsParameterTypeMetadata> complexParameterTypes,
         Dictionary<string, string> complexParameterSchemas)
@@ -178,15 +180,15 @@ public sealed class HandlebarsPlanner
         return parameter;
     }
 
-    private ChatHistory GetChatHistoryFromPrompt(string prompt)
-    {
-        // Extract the chat history from the rendered prompt
-        string pattern = @"<(user~|system~|assistant~)>(.*?)<\/\1>";
-        MatchCollection matches = Regex.Matches(prompt, pattern, RegexOptions.Singleline);
+    private static readonly Regex s_extractHistoryFromPromptRegex = new(@"<(user~|system~|assistant~)>(.*?)<\/\1>", RegexOptions.Singleline);
 
-        // Add the chat history to the chat
+    private static ChatHistory GetChatHistoryFromPrompt(string prompt)
+    {
         var chatMessages = new ChatHistory();
-        foreach (Match m in matches.Cast<Match>())
+
+        // Extract the chat history from the rendered prompt
+        Match m = s_extractHistoryFromPromptRegex.Match(prompt);
+        while (m.Success)
         {
             string role = m.Groups[1].Value;
             string message = m.Groups[2].Value;
@@ -203,12 +205,14 @@ public sealed class HandlebarsPlanner
                     chatMessages.AddAssistantMessage(message);
                     break;
             }
+
+            m = m.NextMatch();
         }
 
         return chatMessages;
     }
 
-    private async Task<string> GetHandlebarsTemplateAsync(
+    private Task<string> GetHandlebarsTemplateAsync(
         Kernel kernel, string goal,
         List<KernelFunctionMetadata> availableFunctions,
         HashSet<HandlebarsParameterTypeMetadata> complexParameterTypes,
@@ -237,7 +241,7 @@ public sealed class HandlebarsPlanner
         };
 
         var handlebarsTemplate = this._templateFactory.Create(promptTemplateConfig);
-        return await handlebarsTemplate!.RenderAsync(kernel, arguments, cancellationToken).ConfigureAwait(true);
+        return handlebarsTemplate!.RenderAsync(kernel, arguments, cancellationToken);
     }
 
     private static string MinifyHandlebarsTemplate(string template)

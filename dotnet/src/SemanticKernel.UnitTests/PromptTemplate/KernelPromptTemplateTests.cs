@@ -38,7 +38,7 @@ public sealed class KernelPromptTemplateTests
         var promptTemplateConfig = new PromptTemplateConfig(template);
 
         // Act
-        var target = (KernelPromptTemplate)this._factory.Create(promptTemplateConfig);
+        _ = (KernelPromptTemplate)this._factory.Create(promptTemplateConfig);
 
         // Assert
         Assert.Equal(6, promptTemplateConfig.InputVariables.Count);
@@ -58,7 +58,7 @@ public sealed class KernelPromptTemplateTests
         var promptTemplateConfig = new PromptTemplateConfig(template);
 
         // Act
-        var target = (KernelPromptTemplate)this._factory.Create(promptTemplateConfig);
+        _ = (KernelPromptTemplate)this._factory.Create(promptTemplateConfig);
 
         // Assert
         Assert.Single(promptTemplateConfig.InputVariables);
@@ -73,7 +73,7 @@ public sealed class KernelPromptTemplateTests
         var promptTemplateConfig = new PromptTemplateConfig(template);
 
         // Act
-        var target = (KernelPromptTemplate)this._factory.Create(promptTemplateConfig);
+        _ = (KernelPromptTemplate)this._factory.Create(promptTemplateConfig);
 
         // Assert
         Assert.Single(promptTemplateConfig.InputVariables);
@@ -91,7 +91,7 @@ public sealed class KernelPromptTemplateTests
         promptTemplateConfig.InputVariables.Add(new InputVariable { Name = "c" });
 
         // Act
-        var target = (KernelPromptTemplate)this._factory.Create(promptTemplateConfig);
+        _ = (KernelPromptTemplate)this._factory.Create(promptTemplateConfig);
 
         // Assert
         Assert.Equal(3, promptTemplateConfig.InputVariables.Count);

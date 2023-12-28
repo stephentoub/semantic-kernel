@@ -27,6 +27,5 @@ public interface IFlowCatalog
     /// Register flow in the catalog
     /// </summary>
     /// <param name="flow">flow</param>
-    /// <returns></returns>
     Task<bool> RegisterFlowAsync(Flow flow);
 }

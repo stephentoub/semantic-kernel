@@ -35,10 +35,10 @@ public static class Example10_DescribeAllPluginsAndFunctions
         kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "SummarizePlugin"));
 
         // Define a prompt function inline, without naming
-        var sFun1 = kernel.CreateFunctionFromPrompt("tell a joke about {{$input}}", new OpenAIPromptExecutionSettings() { MaxTokens = 150 });
+        _ = kernel.CreateFunctionFromPrompt("tell a joke about {{$input}}", new OpenAIPromptExecutionSettings() { MaxTokens = 150 });
 
         // Define a prompt function inline, with plugin name
-        var sFun2 = kernel.CreateFunctionFromPrompt(
+        _ = kernel.CreateFunctionFromPrompt(
             "write a novel about {{$input}} in {{$language}} language",
             new OpenAIPromptExecutionSettings() { MaxTokens = 150 },
             functionName: "Novel",

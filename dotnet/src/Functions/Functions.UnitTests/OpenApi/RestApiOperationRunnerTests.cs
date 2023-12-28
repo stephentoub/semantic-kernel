@@ -385,7 +385,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
         var sut = new RestApiOperationRunner(this._httpClient, this._authenticationHandlerMock.Object, enableDynamicPayload: true);
 
         // Act
-        var result = await sut.RunAsync(operation, arguments);
+        await sut.RunAsync(operation, arguments);
 
         // Assert
         var messageContent = this._httpMessageHandlerStub.RequestContent;
@@ -682,7 +682,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
             enablePayloadNamespacing: true);
 
         // Act
-        var result = await sut.RunAsync(operation, arguments);
+        await sut.RunAsync(operation, arguments);
 
         // Assert
         var messageContent = this._httpMessageHandlerStub.RequestContent;
@@ -728,7 +728,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
             enablePayloadNamespacing: true);
 
         // Act
-        var result = await sut.RunAsync(operation, arguments);
+        await sut.RunAsync(operation, arguments);
 
         // Assert
         var messageContent = this._httpMessageHandlerStub.RequestContent;
@@ -783,7 +783,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
         var sut = new RestApiOperationRunner(this._httpClient, this._authenticationHandlerMock.Object);
 
         // Act
-        var result = await sut.RunAsync(operation, arguments);
+        await sut.RunAsync(operation, arguments);
 
         // Assert
         Assert.NotNull(this._httpMessageHandlerStub.RequestUri);
@@ -831,7 +831,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
         var sut = new RestApiOperationRunner(this._httpClient, this._authenticationHandlerMock.Object);
 
         // Act
-        var result = await sut.RunAsync(operation, arguments);
+        await sut.RunAsync(operation, arguments);
 
         // Assert
         Assert.NotNull(this._httpMessageHandlerStub.RequestUri);
@@ -878,7 +878,7 @@ public sealed class RestApiOperationRunnerTests : IDisposable
         var sut = new RestApiOperationRunner(this._httpClient, this._authenticationHandlerMock.Object);
 
         // Act
-        var result = await sut.RunAsync(operation, arguments);
+        await sut.RunAsync(operation, arguments);
 
         // Assert
         Assert.NotNull(this._httpMessageHandlerStub.RequestUri);

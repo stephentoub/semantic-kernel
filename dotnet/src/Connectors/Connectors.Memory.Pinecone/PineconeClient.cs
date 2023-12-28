@@ -99,7 +99,7 @@ public sealed class PineconeClient : IPineconeClient
         bool includeMetadata = true,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Querying top {0} nearest vectors", query.TopK);
+        this._logger.LogDebug("Querying top {TopK} nearest vectors", query.TopK);
 
         using HttpRequestMessage request = QueryRequest.QueryIndex(query)
             .WithMetadata(includeMetadata)
@@ -152,7 +152,7 @@ public sealed class PineconeClient : IPineconeClient
         Dictionary<string, object>? filter = default,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Searching top {0} nearest vectors with threshold {1}", topK, threshold);
+        this._logger.LogDebug("Searching top {TopK} nearest vectors with threshold {Threshold}", topK, threshold);
 
         List<(PineconeDocument document, float score)> documents = new();
 
@@ -237,10 +237,10 @@ public sealed class PineconeClient : IPineconeClient
 
             totalUpserted += data.UpsertedCount;
 
-            this._logger.LogDebug("Upserted batch {0} with {1} vectors", totalBatches, data.UpsertedCount);
+            this._logger.LogDebug("Upserted batch {Batches} with {Upserted} vectors", totalBatches, data.UpsertedCount);
         }
 
-        this._logger.LogDebug("Upserted {0} vectors in {1} batches", totalUpserted, totalBatches);
+        this._logger.LogDebug("Upserted {Upserted} vectors in {Batches} batches", totalUpserted, totalBatches);
 
         return totalUpserted;
     }
@@ -269,7 +269,7 @@ public sealed class PineconeClient : IPineconeClient
                 .FromNamespace(indexNamespace)
                 .FilterBy(filter);
 
-        this._logger.LogDebug("Delete operation for Index {0}: {1}", indexName, deleteRequest.ToString());
+        this._logger.LogDebug("Delete operation for Index {Index}: {Request}", indexName, deleteRequest.ToString());
 
         string basePath = await this.GetVectorOperationsApiBasePathAsync(indexName).ConfigureAwait(false);
 
@@ -289,7 +289,7 @@ public sealed class PineconeClient : IPineconeClient
     /// <inheritdoc />
     public async Task UpdateAsync(string indexName, PineconeDocument document, string indexNamespace = "", CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Updating vector: {0}", document.Id);
+        this._logger.LogDebug("Updating vector: {Id}", document.Id);
 
         string basePath = await this.GetVectorOperationsApiBasePathAsync(indexName).ConfigureAwait(false);
 
@@ -315,7 +315,7 @@ public sealed class PineconeClient : IPineconeClient
         Dictionary<string, object>? filter = default,
         CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Getting index stats for index {0}", indexName);
+        this._logger.LogDebug("Getting index stats for index {Index}", indexName);
 
         string basePath = await this.GetVectorOperationsApiBasePathAsync(indexName).ConfigureAwait(false);
 
@@ -352,7 +352,7 @@ public sealed class PineconeClient : IPineconeClient
     /// <inheritdoc />
     public async IAsyncEnumerable<string?> ListIndexesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        using HttpRequestMessage request = ListIndexesRequest.Create().Build();
+        using HttpRequestMessage request = ListIndexesRequest.Build();
 
         (HttpResponseMessage _, string responseContent) = await this.ExecuteHttpRequestAsync(this.GetIndexOperationsApiBasePath(), request, cancellationToken).ConfigureAwait(false);
 
@@ -372,9 +372,7 @@ public sealed class PineconeClient : IPineconeClient
     /// <inheritdoc />
     public async Task CreateIndexAsync(IndexDefinition indexDefinition, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Creating index {0}", indexDefinition.ToString());
-
-        string indexName = indexDefinition.Name;
+        this._logger.LogDebug("Creating index {Index}", indexDefinition.ToString());
 
         using HttpRequestMessage request = indexDefinition.Build();
 
@@ -402,7 +400,7 @@ public sealed class PineconeClient : IPineconeClient
     /// <inheritdoc />
     public async Task DeleteIndexAsync(string indexName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Deleting index {0}", indexName);
+        this._logger.LogDebug("Deleting index {Index}", indexName);
 
         using HttpRequestMessage request = DeleteIndexRequest.Create(indexName).Build();
 
@@ -421,13 +419,13 @@ public sealed class PineconeClient : IPineconeClient
             throw;
         }
 
-        this._logger.LogDebug("Index: {0} has been successfully deleted.", indexName);
+        this._logger.LogDebug("Index: {Index} has been successfully deleted.", indexName);
     }
 
     /// <inheritdoc />
     public async Task<bool> DoesIndexExistAsync(string indexName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Checking for index {0}", indexName);
+        this._logger.LogDebug("Checking for index {Index}", indexName);
 
         List<string?>? indexNames = await this.ListIndexesAsync(cancellationToken).ToListAsync(cancellationToken).ConfigureAwait(false);
 
@@ -444,7 +442,7 @@ public sealed class PineconeClient : IPineconeClient
     /// <inheritdoc />
     public async Task<PineconeIndex?> DescribeIndexAsync(string indexName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Getting Description for Index: {0}", indexName);
+        this._logger.LogDebug("Getting Description for Index: {Index}", indexName);
 
         using HttpRequestMessage request = DescribeIndexRequest.Create(indexName).Build();
 
@@ -478,7 +476,7 @@ public sealed class PineconeClient : IPineconeClient
     /// <inheritdoc />
     public async Task ConfigureIndexAsync(string indexName, int replicas = 1, PodType podType = PodType.P1X1, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Configuring index {0}", indexName);
+        this._logger.LogDebug("Configuring index {Index}", indexName);
 
         using HttpRequestMessage request = ConfigureIndexRequest
             .Create(indexName)
@@ -506,7 +504,7 @@ public sealed class PineconeClient : IPineconeClient
             throw;
         }
 
-        this._logger.LogDebug("Collection created. {0}", indexName);
+        this._logger.LogDebug("Collection created. {Index}", indexName);
     }
 
     #region private ================================================================================
@@ -542,7 +540,7 @@ public sealed class PineconeClient : IPineconeClient
 
         using HttpResponseMessage response = await this._httpClient.SendWithSuccessCheckAsync(request, cancellationToken).ConfigureAwait(false);
 
-        string responseContent = await response.Content.ReadAsStringWithExceptionMappingAsync().ConfigureAwait(false);
+        string responseContent = await response.Content.ReadAsStringWithExceptionMappingAsync(cancellationToken).ConfigureAwait(false);
 
         return (response, responseContent);
     }
@@ -568,7 +566,7 @@ public sealed class PineconeClient : IPineconeClient
             throw new KernelException($"Host of index {indexName} is unknown.");
         }
 
-        this._logger.LogDebug("Found host {0} for index {1}", pineconeIndex.Status.Host, indexName);
+        this._logger.LogDebug("Found host {Host} for index {Index}", pineconeIndex.Status.Host, indexName);
 
         this._indexHostMapping.TryAdd(indexName, pineconeIndex.Status.Host);
 

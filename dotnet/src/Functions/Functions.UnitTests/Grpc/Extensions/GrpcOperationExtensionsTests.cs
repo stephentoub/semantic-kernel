@@ -10,16 +10,12 @@ namespace SemanticKernel.Functions.UnitTests.Grpc;
 
 public class GrpcOperationExtensionsTests
 {
-    private readonly GrpcOperationDataContractType _request;
-
     private readonly GrpcOperationDataContractType _response;
 
     private readonly GrpcOperation _operation;
 
     public GrpcOperationExtensionsTests()
     {
-        this._request = new GrpcOperationDataContractType("fake-name", new List<GrpcOperationDataContractTypeFiled>());
-
         this._response = new GrpcOperationDataContractType("fake-name", new List<GrpcOperationDataContractTypeFiled>());
 
         this._operation = new GrpcOperation("fake-service-name", "fake-operation-name", this._response, this._response);

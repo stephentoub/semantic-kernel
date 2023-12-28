@@ -175,7 +175,6 @@ public static class PineconeUtils
     ///  Utility method to convert a dictionary of filters to the format expected by Pinecone.
     /// </summary>
     /// <param name="filter"></param>
-    /// <returns></returns>
     /// <remarks>
     ///  This is necessary because Pinecone has a different format for filters using the MongoDB query language
     ///  operators. This method converts the filters to the format expected by Pinecone.

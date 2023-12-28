@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -58,7 +57,7 @@ public class ChromaClient : IChromaClient
     /// <inheritdoc />
     public async Task CreateCollectionAsync(string collectionName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Creating collection {0}", collectionName);
+        this._logger.LogDebug("Creating collection {CollectionName}", collectionName);
 
         using var request = CreateCollectionRequest.Create(collectionName).Build();
 
@@ -68,7 +67,7 @@ public class ChromaClient : IChromaClient
     /// <inheritdoc />
     public async Task<ChromaCollectionModel?> GetCollectionAsync(string collectionName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Getting collection {0}", collectionName);
+        this._logger.LogDebug("Getting collection {CollectionName}", collectionName);
 
         using var request = GetCollectionRequest.Create(collectionName).Build();
 
@@ -82,7 +81,7 @@ public class ChromaClient : IChromaClient
     /// <inheritdoc />
     public async Task DeleteCollectionAsync(string collectionName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Deleting collection {0}", collectionName);
+        this._logger.LogDebug("Deleting collection {CollectionName}", collectionName);
 
         using var request = DeleteCollectionRequest.Create(collectionName).Build();
 
@@ -94,7 +93,7 @@ public class ChromaClient : IChromaClient
     {
         this._logger.LogDebug("Listing collections");
 
-        using var request = ListCollectionsRequest.Create().Build();
+        using var request = ListCollectionsRequest.Build();
 
         (HttpResponseMessage response, string responseContent) = await this.ExecuteHttpRequestAsync(request, cancellationToken).ConfigureAwait(false);
 
@@ -109,7 +108,7 @@ public class ChromaClient : IChromaClient
     /// <inheritdoc />
     public async Task UpsertEmbeddingsAsync(string collectionId, string[] ids, ReadOnlyMemory<float>[] embeddings, object[]? metadatas = null, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Upserting embeddings to collection with id: {0}", collectionId);
+        this._logger.LogDebug("Upserting embeddings to collection with id: {Id}", collectionId);
 
         using var request = UpsertEmbeddingsRequest.Create(collectionId, ids, embeddings, metadatas).Build();
 
@@ -119,7 +118,7 @@ public class ChromaClient : IChromaClient
     /// <inheritdoc />
     public async Task<ChromaEmbeddingsModel> GetEmbeddingsAsync(string collectionId, string[] ids, string[]? include = null, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Getting embeddings from collection with id: {0}", collectionId);
+        this._logger.LogDebug("Getting embeddings from collection with id: {Id}", collectionId);
 
         using var request = GetEmbeddingsRequest.Create(collectionId, ids, include).Build();
 
@@ -133,7 +132,7 @@ public class ChromaClient : IChromaClient
     /// <inheritdoc />
     public async Task DeleteEmbeddingsAsync(string collectionId, string[] ids, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Deleting embeddings from collection with id: {0}", collectionId);
+        this._logger.LogDebug("Deleting embeddings from collection with id: {Id}", collectionId);
 
         using var request = DeleteEmbeddingsRequest.Create(collectionId, ids).Build();
 
@@ -143,7 +142,7 @@ public class ChromaClient : IChromaClient
     /// <inheritdoc />
     public async Task<ChromaQueryResultModel> QueryEmbeddingsAsync(string collectionId, ReadOnlyMemory<float>[] queryEmbeddings, int nResults, string[]? include = null, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Query embeddings in collection with id: {0}", collectionId);
+        this._logger.LogDebug("Query embeddings in collection with id: {Id}", collectionId);
 
         using var request = QueryEmbeddingsRequest.Create(collectionId, queryEmbeddings, nResults, include).Build();
 
@@ -160,28 +159,25 @@ public class ChromaClient : IChromaClient
 
     private readonly ILogger _logger;
     private readonly HttpClient _httpClient;
-    private readonly string? _endpoint = null;
+    private readonly string? _endpoint;
 
     private async Task<(HttpResponseMessage response, string responseContent)> ExecuteHttpRequestAsync(
         HttpRequestMessage request,
         CancellationToken cancellationToken = default)
     {
         string endpoint = this._endpoint ?? this._httpClient.BaseAddress!.ToString();
-        endpoint = this.SanitizeEndpoint(endpoint);
+        endpoint = SanitizeEndpoint(endpoint);
 
         string operationName = request.RequestUri!.ToString();
 
         request.RequestUri = new Uri(new Uri(endpoint), operationName);
 
-        HttpResponseMessage? response = null;
-
-        string? responseContent = null;
-
+        HttpResponseMessage? response;
+        string? responseContent;
         try
         {
             response = await this._httpClient.SendWithSuccessCheckAsync(request, cancellationToken).ConfigureAwait(false);
-
-            responseContent = await response.Content.ReadAsStringWithExceptionMappingAsync().ConfigureAwait(false);
+            responseContent = await response.Content.ReadAsStringWithExceptionMappingAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (HttpOperationException e)
         {
@@ -192,19 +188,9 @@ public class ChromaClient : IChromaClient
         return (response, responseContent);
     }
 
-    private string SanitizeEndpoint(string endpoint)
-    {
-        StringBuilder builder = new(endpoint);
-
-        if (!endpoint.EndsWith("/", StringComparison.Ordinal))
-        {
-            builder.Append('/');
-        }
-
-        builder.Append(ApiRoute);
-
-        return builder.ToString();
-    }
-
+    private static string SanitizeEndpoint(string endpoint) =>
+        endpoint.EndsWith("/", StringComparison.Ordinal) ?
+            endpoint + ApiRoute :
+            endpoint + "/" + ApiRoute;
     #endregion
 }

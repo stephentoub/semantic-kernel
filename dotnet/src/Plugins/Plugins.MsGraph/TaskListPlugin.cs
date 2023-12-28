@@ -73,7 +73,7 @@ public sealed class TaskListPlugin
             reminder: reminder);
 
         // Sensitive data, logging as trace, disabled by default
-        this._logger.LogTrace("Adding task '{0}' to task list '{1}'", task.Title, defaultTaskList.Name);
+        this._logger.LogTrace("Adding task '{Title}' to task list '{ListName}'", task.Title, defaultTaskList.Name);
 
         await this._connector.AddTaskAsync(defaultTaskList.Id, task, cancellationToken).ConfigureAwait(false);
     }
@@ -94,7 +94,7 @@ public sealed class TaskListPlugin
 
         if (!bool.TryParse(includeCompleted, out bool includeCompletedValue))
         {
-            this._logger.LogWarning("Invalid value for '{0}' variable: '{1}'", nameof(includeCompleted), includeCompleted);
+            this._logger.LogWarning("Invalid value for '{Name}' variable: '{Value}'", nameof(includeCompleted), includeCompleted);
         }
 
         IEnumerable<TaskManagementTask> tasks = await this._connector.GetTasksAsync(defaultTaskList.Id, includeCompletedValue, cancellationToken).ConfigureAwait(false);

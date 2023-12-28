@@ -69,7 +69,7 @@ public sealed class EmailPlugin
         }
 
         // Sensitive data, logging as trace, disabled by default
-        this._logger.LogTrace("Sending email to '{0}' with subject '{1}'", recipients, subject);
+        this._logger.LogTrace("Sending email to '{Recipients}' with subject '{Subject}'", recipients, subject);
         string[] recipientList = recipients.Split(s_separator, StringSplitOptions.RemoveEmptyEntries);
         await this._connector.SendEmailAsync(subject, content, recipientList, cancellationToken).ConfigureAwait(false);
     }
@@ -83,7 +83,7 @@ public sealed class EmailPlugin
         [Description("Optional number of message to skip before retrieving results.")] int? skip = 0,
         CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Getting email messages with query options top: '{0}', skip:'{1}'.", maxResults, skip);
+        this._logger.LogDebug("Getting email messages with query options top: '{Top}', skip:'{Skip}'.", maxResults, skip);
 
         const string SelectString = "subject,receivedDateTime,bodyPreview";
 

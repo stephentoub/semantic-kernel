@@ -9,7 +9,6 @@ namespace SemanticKernel.UnitTests.Memory;
 
 public class MemoryRecordTests
 {
-    private readonly bool _isReference = false;
     private readonly string _id = "Id";
     private readonly string _text = "text";
     private readonly string _description = "description";
@@ -22,7 +21,7 @@ public class MemoryRecordTests
     {
         // Arrange
         var metadata = new MemoryRecordMetadata(
-            isReference: this._isReference,
+            isReference: false,
             id: this._id,
             text: this._text,
             description: this._description,
@@ -33,7 +32,7 @@ public class MemoryRecordTests
         var memoryRecord = new MemoryRecord(metadata, this._embedding, "key", DateTimeOffset.Now);
 
         // Assert
-        Assert.Equal(this._isReference, memoryRecord.Metadata.IsReference);
+        Assert.False(memoryRecord.Metadata.IsReference);
         Assert.Equal(this._id, memoryRecord.Metadata.Id);
         Assert.Equal(this._text, memoryRecord.Metadata.Text);
         Assert.Equal(this._description, memoryRecord.Metadata.Description);
@@ -96,7 +95,7 @@ public class MemoryRecordTests
         var memoryRecord = MemoryRecord.FromJsonMetadata(jsonString, this._embedding);
 
         // Assert
-        Assert.Equal(this._isReference, memoryRecord.Metadata.IsReference);
+        Assert.False(memoryRecord.Metadata.IsReference);
         Assert.Equal(this._id, memoryRecord.Metadata.Id);
         Assert.Equal(this._text, memoryRecord.Metadata.Text);
         Assert.Equal(this._description, memoryRecord.Metadata.Description);
@@ -131,7 +130,7 @@ public class MemoryRecordTests
 
         // Assert
         Assert.NotNull(memoryRecord);
-        Assert.Equal(this._isReference, memoryRecord.Metadata.IsReference);
+        Assert.False(memoryRecord.Metadata.IsReference);
         Assert.Equal(this._id, memoryRecord.Metadata.Id);
         Assert.Equal(this._text, memoryRecord.Metadata.Text);
         Assert.Equal(this._description, memoryRecord.Metadata.Description);
@@ -163,7 +162,7 @@ public class MemoryRecordTests
             ""timestamp"": null
         }";
         var metadata = new MemoryRecordMetadata(
-            isReference: this._isReference,
+            isReference: false,
             id: this._id,
             text: this._text,
             description: this._description,
@@ -196,7 +195,7 @@ public class MemoryRecordTests
             }";
 
         var metadata = new MemoryRecordMetadata(
-            isReference: this._isReference,
+            isReference: false,
             id: this._id,
             text: this._text,
             description: this._description,

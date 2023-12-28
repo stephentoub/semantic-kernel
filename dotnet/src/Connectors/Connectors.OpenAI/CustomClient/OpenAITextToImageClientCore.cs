@@ -81,7 +81,7 @@ internal sealed class OpenAITextToImageClientCore
     {
         using var content = new StringContent(requestBody, Encoding.UTF8, "application/json");
         using var response = await this.ExecuteRequestAsync(url, HttpMethod.Post, content, cancellationToken).ConfigureAwait(false);
-        string responseJson = await response.Content.ReadAsStringWithExceptionMappingAsync().ConfigureAwait(false);
+        string responseJson = await response.Content.ReadAsStringWithExceptionMappingAsync(cancellationToken).ConfigureAwait(false);
         T result = JsonDeserialize<T>(responseJson);
         return result;
     }
@@ -108,7 +108,7 @@ internal sealed class OpenAITextToImageClientCore
 
         if (this._logger.IsEnabled(LogLevel.Debug))
         {
-            this._logger.LogDebug("HTTP response: {0} {1}", (int)response.StatusCode, response.StatusCode.ToString("G"));
+            this._logger.LogDebug("HTTP response: {StatusCodeValue} {StatusCodeDescription}", (int)response.StatusCode, response.StatusCode.ToString("G"));
         }
 
         return response;

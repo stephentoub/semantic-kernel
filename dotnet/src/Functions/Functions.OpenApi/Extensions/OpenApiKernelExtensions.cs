@@ -187,7 +187,7 @@ public static class OpenApiKernelExtensions
         var httpClient = HttpClientProvider.GetHttpClient(executionParameters?.HttpClient ?? kernel.Services.GetService<HttpClient>());
 #pragma warning restore CA2000
 
-        var openApiSpec = await DocumentLoader.LoadDocumentFromStreamAsync(stream).ConfigureAwait(false);
+        var openApiSpec = await DocumentLoader.LoadDocumentFromStreamAsync(stream, cancellationToken).ConfigureAwait(false);
 
         return await CreateOpenApiPluginAsync(
             kernel,
@@ -234,13 +234,13 @@ public static class OpenApiKernelExtensions
         {
             try
             {
-                logger.LogTrace("Registering Rest function {0}.{1}", pluginName, operation.Id);
+                logger.LogTrace("Registering Rest function {PluginName}.{FunctionName}", pluginName, operation.Id);
                 functions.Add(CreateRestApiFunction(pluginName, runner, operation, executionParameters, documentUri, loggerFactory));
             }
             catch (Exception ex) when (!ex.IsCriticalException())
             {
                 //Logging the exception and keep registering other Rest functions
-                logger.LogWarning(ex, "Something went wrong while rendering the Rest function. Function: {0}.{1}. Error: {2}",
+                logger.LogWarning(ex, "Something went wrong while rendering the Rest function. Function: {PluginName}.{FunctionName}. Error: {Message}",
                     pluginName, operation.Id, ex.Message);
             }
         }
@@ -371,7 +371,7 @@ public static class OpenApiKernelExtensions
             result += CultureInfo.CurrentCulture.TextInfo.ToTitleCase(formattedToken.ToLower(CultureInfo.CurrentCulture));
         }
 
-        logger.LogInformation("Operation name \"{0}\" converted to \"{1}\" to comply with SK Function name requirements. Use \"{2}\" when invoking function.", operationId, result, result);
+        logger.LogInformation("Operation name \"{Id}\" converted to \"{Result}\" to comply with KernelFunction name requirements. Use \"{Result}\" when invoking function.", operationId, result, result);
 
         return result;
     }

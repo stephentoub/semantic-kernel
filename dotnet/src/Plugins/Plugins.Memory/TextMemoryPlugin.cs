@@ -75,7 +75,7 @@ public sealed class TextMemoryPlugin
         if (loggerFactory?.CreateLogger(typeof(TextMemoryPlugin)) is ILogger logger &&
             logger.IsEnabled(LogLevel.Debug))
         {
-            logger.LogDebug("Recalling memory with key '{0}' from collection '{1}'", key, collection);
+            logger.LogDebug("Recalling memory with key '{Key}' from collection '{CollectionName}'", key, collection);
         }
 
         var memory = await this._memory.GetAsync(collection, key, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -109,7 +109,7 @@ public sealed class TextMemoryPlugin
 
         if (logger.IsEnabled(LogLevel.Debug) is true)
         {
-            logger.LogDebug("Searching memories in collection '{0}', relevance '{1}'", collection, relevance);
+            logger.LogDebug("Searching memories in collection '{CollectionName}', relevance '{Relevance}'", collection, relevance);
         }
 
         // Search memory
@@ -122,14 +122,14 @@ public sealed class TextMemoryPlugin
         {
             if (logger.IsEnabled(LogLevel.Warning) is true)
             {
-                logger.LogWarning("Memories not found in collection: {0}", collection);
+                logger.LogWarning("Memories not found in collection: {CollectionName}", collection);
             }
             return string.Empty;
         }
 
         if (logger.IsEnabled(LogLevel.Trace) is true)
         {
-            logger.LogTrace("Done looking for memories in collection '{0}')", collection);
+            logger.LogTrace("Done looking for memories in collection '{CollectionName}')", collection);
         }
 
         return limit == 1 ? memories[0].Metadata.Text : JsonSerializer.Serialize(memories.Select(x => x.Metadata.Text));
@@ -157,7 +157,7 @@ public sealed class TextMemoryPlugin
         if (loggerFactory?.CreateLogger(typeof(TextMemoryPlugin)) is ILogger logger &&
             logger.IsEnabled(LogLevel.Debug))
         {
-            logger.LogDebug("Saving memory to collection '{0}'", collection);
+            logger.LogDebug("Saving memory to collection '{CollectionName}'", collection);
         }
 
         await this._memory.SaveInformationAsync(collection, text: input, id: key, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -183,7 +183,7 @@ public sealed class TextMemoryPlugin
         if (loggerFactory?.CreateLogger(typeof(TextMemoryPlugin)) is ILogger logger &&
             logger.IsEnabled(LogLevel.Debug))
         {
-            logger.LogDebug("Removing memory from collection '{0}'", collection);
+            logger.LogDebug("Removing memory from collection '{CollectionName}'", collection);
         }
 
         await this._memory.RemoveAsync(collection, key, cancellationToken: cancellationToken).ConfigureAwait(false);

@@ -165,7 +165,6 @@ public interface IPineconeMemoryStore : IMemoryStore
     /// <param name="documentId">  the document id to remove.</param>
     /// <param name="indexNamespace"> the namespace to remove from.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     Task RemoveWithDocumentIdAsync(
         string indexName,
         string documentId,
@@ -179,7 +178,6 @@ public interface IPineconeMemoryStore : IMemoryStore
     /// <param name="documentIds"> the document ids to remove.</param>
     /// <param name="indexNamespace"> the namespace to remove from.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public Task RemoveWithDocumentIdBatchAsync(
         string indexName,
         IEnumerable<string> documentIds,

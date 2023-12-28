@@ -404,7 +404,7 @@ public static class KernelExtensions
 
             if (logger.IsEnabled(LogLevel.Trace))
             {
-                logger.LogTrace("Config {0}: {1}", functionName, JsonSerializer.Serialize(promptConfig, JsonOptionsCache.WriteIndented));
+                logger.LogTrace("Config {FunctionName}: {Config}", functionName, JsonSerializer.Serialize(promptConfig, JsonOptionsCache.WriteIndented));
             }
 
             // Load prompt template
@@ -413,7 +413,7 @@ public static class KernelExtensions
 
             if (logger.IsEnabled(LogLevel.Trace))
             {
-                logger.LogTrace("Registering function {0}.{1} loaded from {2}", pluginName, functionName, functionDirectory);
+                logger.LogTrace("Registering function {PluginName}.{FunctionName} loaded from {Directory}", pluginName, functionName, functionDirectory);
             }
 
             functions.Add(KernelFunctionFactory.CreateFromPrompt(promptTemplateInstance, promptConfig, loggerFactory));

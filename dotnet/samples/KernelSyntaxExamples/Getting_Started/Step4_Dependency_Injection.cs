@@ -61,7 +61,7 @@ public static class Step4_Dependency_Injection
         public string GetCurrentUtcTime()
         {
             var utcNow = DateTime.UtcNow.ToString("R");
-            this._logger.LogInformation("Returning current time {0}", utcNow);
+            this._logger.LogInformation("Returning current time {Time}", utcNow);
             return utcNow;
         }
     }

@@ -42,7 +42,6 @@ public class WaitPluginTests
         // Arrange
         var timeProvider = new FakeTimeProvider();
         var target = new WaitPlugin(timeProvider);
-        var expectedTimeSpan = TimeSpan.FromMilliseconds(expectedMilliseconds);
 
         // Act and Assert
         long startingTime = timeProvider.GetTimestamp();

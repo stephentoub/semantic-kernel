@@ -175,7 +175,7 @@ internal static class ReadOnlyPluginCollectionPlannerExtensions
             {
                 if (logger.IsEnabled(LogLevel.Debug))
                 {
-                    logger.LogDebug("Found relevant function. Relevance Score: {0}, Function: {1}", memoryEntry.Relevance, function.ToFullyQualifiedName());
+                    logger.LogDebug("Found relevant function. Relevance Score: {Relevance}, Function: {FunctionName}", memoryEntry.Relevance, function.ToFullyQualifiedName());
                 }
 
                 relevantFunctions.Add(function);

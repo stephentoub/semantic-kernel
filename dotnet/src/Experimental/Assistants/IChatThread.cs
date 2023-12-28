@@ -21,7 +21,6 @@ public interface IChatThread
     /// </summary>
     /// <param name="message">The user message</param>
     /// <param name="cancellationToken">A cancellation token</param>
-    /// <returns></returns>
     Task<IChatMessage> AddUserMessageAsync(string message, CancellationToken cancellationToken = default);
 
     /// <summary>

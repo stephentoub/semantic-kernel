@@ -88,7 +88,6 @@ public class FunctionResultTests
     public void ConstructorSetsPropertiesAndValue()
     {
         // Arrange
-        string functionName = Guid.NewGuid().ToString();
         string value = Guid.NewGuid().ToString();
 
         // Act

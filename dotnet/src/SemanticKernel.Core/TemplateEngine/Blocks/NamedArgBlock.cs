@@ -66,16 +66,15 @@ internal sealed class NamedArgBlock : Block, ITextRendering
     /// If the value is a <see cref="VarBlock"/>, the value of the variable is determined by the arguments passed in.
     /// </summary>
     /// <param name="arguments">Arguments to use for rendering the named argument value when the value is a <see cref="VarBlock"/>.</param>
-    /// <returns></returns>
     internal object? GetValue(KernelArguments? arguments)
     {
-        var valueIsValidValBlock = this._valBlock != null && this._valBlock.IsValid(out var errorMessage);
+        var valueIsValidValBlock = this._valBlock != null && this._valBlock.IsValid(out _);
         if (valueIsValidValBlock)
         {
             return this._valBlock!.Render(arguments);
         }
 
-        var valueIsValidVarBlock = this.VarBlock != null && this.VarBlock.IsValid(out var errorMessage2);
+        var valueIsValidVarBlock = this.VarBlock != null && this.VarBlock.IsValid(out _);
         if (valueIsValidVarBlock)
         {
             return this.VarBlock!.Render(arguments);
@@ -94,7 +93,6 @@ internal sealed class NamedArgBlock : Block, ITextRendering
     /// Returns whether the named arg block has valid syntax.
     /// </summary>
     /// <param name="errorMsg">An error message that gets set when the named arg block is not valid.</param>
-    /// <returns></returns>
 #pragma warning disable CA2254 // error strings are used also internally, not just for logging
     public override bool IsValid(out string errorMsg)
     {

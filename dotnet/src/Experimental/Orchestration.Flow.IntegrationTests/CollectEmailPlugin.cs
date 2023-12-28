@@ -1,12 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Experimental.Orchestration;
 
 namespace SemanticKernel.Experimental.Orchestration.Flow.IntegrationTests;
@@ -27,19 +25,9 @@ Do not expose the regex unless asked.
 
     private readonly IChatCompletionService _chat;
 
-    private int MaxTokens { get; set; } = 256;
-
-    private readonly PromptExecutionSettings _chatRequestSettings;
-
     public CollectEmailPlugin(Kernel kernel)
     {
         this._chat = kernel.GetRequiredService<IChatCompletionService>();
-        this._chatRequestSettings = new OpenAIPromptExecutionSettings
-        {
-            MaxTokens = this.MaxTokens,
-            StopSequences = new List<string>() { "Observation:" },
-            Temperature = 0
-        };
     }
 
     [KernelFunction("ConfigureEmailAddress")]

@@ -18,11 +18,6 @@ namespace SemanticKernel.Functions.UnitTests.OpenApi;
 public sealed class KernelOpenApiPluginExtensionsTests : IDisposable
 {
     /// <summary>
-    /// System under test - an instance of OpenApiDocumentParser class.
-    /// </summary>
-    private readonly OpenApiDocumentParser _sut;
-
-    /// <summary>
     /// OpenAPI function execution parameters.
     /// </summary>
     private readonly OpenApiFunctionExecutionParameters _executionParameters;
@@ -47,8 +42,6 @@ public sealed class KernelOpenApiPluginExtensionsTests : IDisposable
         this._executionParameters = new OpenApiFunctionExecutionParameters() { EnableDynamicPayload = false };
 
         this._openApiDocument = ResourcePluginsProvider.LoadFromResource("documentV2_0.json");
-
-        this._sut = new OpenApiDocumentParser();
     }
 
     [Fact]
@@ -212,7 +205,9 @@ public sealed class KernelOpenApiPluginExtensionsTests : IDisposable
         };
 
         // Act
+#pragma warning disable CA1849 // Call async methods when in an async method
         registerCancellationToken.Cancel();
+#pragma warning restore CA1849
         var result = await kernel.InvokeAsync(openApiPlugins["GetSecret"], arguments, executeCancellationToken.Token);
 
         // Assert

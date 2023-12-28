@@ -153,7 +153,7 @@ internal sealed class ReActEngine
             }
         }
 
-        var functionDesc = this.GetFunctionDescriptions(availableFunctions);
+        var functionDesc = GetFunctionDescriptions(availableFunctions);
         arguments["functionDescriptions"] = functionDesc;
 
         if (this._logger.IsEnabled(LogLevel.Information))
@@ -172,7 +172,7 @@ internal sealed class ReActEngine
             this._logger?.LogDebug("Response : {ActionText}", llmResponseText);
         }
 
-        var actionStep = this.ParseResult(llmResponseText);
+        var actionStep = ParseResult(llmResponseText);
 
         if (!string.IsNullOrEmpty(actionStep.Action) || previousSteps.Count == 0)
         {
@@ -202,7 +202,7 @@ internal sealed class ReActEngine
         var function = kernel.Plugins.GetFunction(targetFunction.PluginName, targetFunction.Name);
         var functionView = function.Metadata;
 
-        var actionContextVariables = this.CreateActionKernelArguments(variables, contextVariables);
+        var actionContextVariables = CreateActionKernelArguments(variables, contextVariables);
 
         foreach (var parameter in functionView.Parameters)
         {
@@ -230,12 +230,12 @@ internal sealed class ReActEngine
         }
         catch (Exception e) when (!e.IsNonRetryable())
         {
-            this._logger?.LogError(e, "Something went wrong in action step: {0}.{1}. Error: {2}", targetFunction.PluginName, targetFunction.Name, e.Message);
+            this._logger?.LogError(e, "Something went wrong in action step: {PluginName}.{FunctionName}. Error: {Error}", targetFunction.PluginName, targetFunction.Name, e.Message);
             return $"Something went wrong in action step: {targetFunction.PluginName}.{targetFunction.Name}. Error: {e.Message} {e.InnerException?.Message}";
         }
     }
 
-    private KernelArguments CreateActionKernelArguments(Dictionary<string, string> actionVariables, KernelArguments context)
+    private static KernelArguments CreateActionKernelArguments(Dictionary<string, string> actionVariables, KernelArguments context)
     {
         var actionContext = new KernelArguments(context);
 
@@ -300,7 +300,7 @@ internal sealed class ReActEngine
         return string.Join("\n", scratchPadLines).Trim();
     }
 
-    private ReActStep ParseResult(string input)
+    private static ReActStep ParseResult(string input)
     {
         var result = new ReActStep
         {
@@ -375,7 +375,7 @@ internal sealed class ReActEngine
         return result;
     }
 
-    private string GetFunctionDescriptions(KernelFunctionMetadata[] functions)
+    private static string GetFunctionDescriptions(KernelFunctionMetadata[] functions)
     {
         return string.Join("\n", functions.Select(ToManualString));
     }

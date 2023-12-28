@@ -30,7 +30,7 @@ public static class Example03_Arguments
 
         // If you need to access the result metadata, you can use the non-generic version to get the FunctionResult
         FunctionResult functionResult = await kernel.InvokeAsync(textPlugin["AppendDay"], arguments);
-        var metadata = functionResult.Metadata;
+        _ = functionResult.Metadata;
 
         // Specify the type from the FunctionResult
         Console.WriteLine($"FunctionResult.GetValue<string>() -> {functionResult.GetValue<string>()}");

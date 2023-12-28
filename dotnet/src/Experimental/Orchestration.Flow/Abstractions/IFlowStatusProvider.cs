@@ -32,7 +32,6 @@ public interface IFlowStatusProvider
     /// </summary>
     /// <param name="sessionId">The session id</param>
     /// <param name="stepId">The step id</param>
-    /// <returns></returns>
     Task<ChatHistory?> GetChatHistoryAsync(string sessionId, string stepId);
 
     /// <summary>
@@ -41,7 +40,6 @@ public interface IFlowStatusProvider
     /// <param name="sessionId">The session id</param>
     /// <param name="stepId">The step id</param>
     /// <param name="history">The chat history</param>
-    /// <returns></returns>
     Task SaveChatHistoryAsync(string sessionId, string stepId, ChatHistory history);
 
     /// <summary>

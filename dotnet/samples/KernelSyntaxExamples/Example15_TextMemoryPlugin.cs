@@ -22,6 +22,9 @@ using Npgsql;
 using RepoUtils;
 using StackExchange.Redis;
 
+#pragma warning disable IDE0051 // Remove unused private members
+#pragma warning disable RCS1213 // Remove unused member declaration.
+
 public static class Example15_TextMemoryPlugin
 {
     private const string MemoryCollectionName = "aboutMe";

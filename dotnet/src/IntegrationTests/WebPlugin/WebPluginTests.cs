@@ -10,12 +10,9 @@ namespace SemanticKernel.IntegrationTests.WebPlugin;
 
 public sealed class WebPluginTests : IDisposable
 {
-    private readonly string _bingApiKey;
-
     public WebPluginTests(ITestOutputHelper output)
     {
         this._logger = new XunitLogger<Kernel>(output);
-        this._output = output;
 
         this._testOutputHelper = new RedirectOutput(output);
         Console.SetOut(this._testOutputHelper);
@@ -30,12 +27,10 @@ public sealed class WebPluginTests : IDisposable
 
         string? bingApiKeyCandidate = configuration["Bing:ApiKey"];
         Assert.NotNull(bingApiKeyCandidate);
-        this._bingApiKey = bingApiKeyCandidate;
     }
 
     #region internals
 
-    private readonly ITestOutputHelper _output;
     private readonly XunitLogger<Kernel> _logger;
     private readonly RedirectOutput _testOutputHelper;
 

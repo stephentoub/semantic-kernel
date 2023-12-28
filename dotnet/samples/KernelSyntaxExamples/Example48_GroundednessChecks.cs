@@ -67,8 +67,7 @@ after this event Caroline became his wife.""";
         string folder = RepoFiles.SamplePluginsPath();
         var summarizePlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "SummarizePlugin"));
         var groundingPlugin = kernel.ImportPluginFromPromptDirectory(Path.Combine(folder, "GroundingPlugin"));
-
-        var create_summary = summarizePlugin["Summarize"];
+        _ = summarizePlugin["Summarize"];
         var entityExtraction = groundingPlugin["ExtractEntities"];
         var reference_check = groundingPlugin["ReferenceCheckEntities"];
         var entity_excision = groundingPlugin["ExciseEntities"];

@@ -43,11 +43,15 @@ public sealed class CloudDrivePlugin
         [Description("Path to file")] string filePath,
         CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Getting file content for '{0}'", filePath);
+        this._logger.LogDebug("Getting file content for '{Path}'", filePath);
         Stream fileContentStream = await this._connector.GetFileContentStreamAsync(filePath, cancellationToken).ConfigureAwait(false);
 
         using StreamReader sr = new(fileContentStream);
-        string content = await sr.ReadToEndAsync().ConfigureAwait(false);
+        string content = await sr.ReadToEndAsync(
+#if NET6_0_OR_GREATER
+            cancellationToken
+#endif
+            ).ConfigureAwait(false);
 
         return content;
     }
@@ -69,7 +73,7 @@ public sealed class CloudDrivePlugin
             throw new ArgumentException("Variable was null or whitespace", nameof(destinationPath));
         }
 
-        this._logger.LogDebug("Uploading file '{0}'", filePath);
+        this._logger.LogDebug("Uploading file '{Path}'", filePath);
 
         // TODO Add support for large file uploads (i.e. upload sessions)
         await this._connector.UploadSmallFileAsync(filePath, destinationPath, cancellationToken).ConfigureAwait(false);
@@ -86,7 +90,7 @@ public sealed class CloudDrivePlugin
         [Description("Path to file")] string filePath,
         CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Creating link for '{0}'", filePath);
+        this._logger.LogDebug("Creating link for '{Path}'", filePath);
         const string Type = "view"; // TODO expose this as an SK variable
         const string Scope = "anonymous"; // TODO expose this as an SK variable
 

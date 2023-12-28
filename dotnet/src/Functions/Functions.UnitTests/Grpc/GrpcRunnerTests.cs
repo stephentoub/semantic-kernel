@@ -62,7 +62,7 @@ public sealed class GrpcRunnerTests : IDisposable
         arguments.Add("payload", JsonSerializer.Serialize(new { name = "author" }));
 
         // Act
-        var result = await sut.RunAsync(operation, arguments);
+        await sut.RunAsync(operation, arguments);
 
         // Assert
         Assert.NotNull(this._httpMessageHandlerStub.RequestUri);
@@ -93,7 +93,7 @@ public sealed class GrpcRunnerTests : IDisposable
         arguments.Add("address", "https://fake-random-test-host-from-args");
 
         // Act
-        var result = await sut.RunAsync(operation, arguments);
+        await sut.RunAsync(operation, arguments);
 
         // Assert
         Assert.NotNull(this._httpMessageHandlerStub.RequestUri);

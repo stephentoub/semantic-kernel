@@ -13,7 +13,7 @@ namespace Microsoft.SemanticKernel.Memory;
 internal sealed class TopNCollection<T> : IEnumerable<ScoredValue<T>>
 {
     private readonly MinHeap<ScoredValue<T>> _heap;
-    private bool _sorted = false;
+    private bool _sorted;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TopNCollection{T}"/> class.

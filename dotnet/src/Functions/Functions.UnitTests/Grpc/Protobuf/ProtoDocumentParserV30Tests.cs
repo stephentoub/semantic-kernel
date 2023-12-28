@@ -11,11 +11,6 @@ namespace SemanticKernel.Functions.UnitTests.Grpc.Protobuf;
 public sealed class ProtoDocumentParserV30Tests
 {
     /// <summary>
-    /// System under test - an instance of ProtoDocumentParser class.
-    /// </summary>
-    private readonly ProtoDocumentParser _sut;
-
-    /// <summary>
     /// .proto document stream.
     /// </summary>
     private readonly Stream _protoDocument;
@@ -26,15 +21,13 @@ public sealed class ProtoDocumentParserV30Tests
     public ProtoDocumentParserV30Tests()
     {
         this._protoDocument = ResourcePluginsProvider.LoadFromResource("protoV3.proto");
-
-        this._sut = new ProtoDocumentParser();
     }
 
     [Fact]
     public void ShouldCreateOperationsForAllServicesInProtoDocument()
     {
         // Act
-        var operations = this._sut.Parse(this._protoDocument, "fake_name");
+        var operations = ProtoDocumentParser.Parse(this._protoDocument, "fake_name");
 
         // Assert
         Assert.NotNull(operations);
@@ -53,7 +46,7 @@ public sealed class ProtoDocumentParserV30Tests
     public void ShouldParseSimpleOperationRequestDataContract()
     {
         // Act
-        var operations = this._sut.Parse(this._protoDocument, "fake_name");
+        var operations = ProtoDocumentParser.Parse(this._protoDocument, "fake_name");
 
         // Assert
         Assert.NotNull(operations);
@@ -81,7 +74,7 @@ public sealed class ProtoDocumentParserV30Tests
     public void ShouldParseSimpleOperationResponseDataContract()
     {
         // Act
-        var operations = this._sut.Parse(this._protoDocument, "fake_name");
+        var operations = ProtoDocumentParser.Parse(this._protoDocument, "fake_name");
 
         // Assert
         Assert.NotNull(operations);

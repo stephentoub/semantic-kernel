@@ -53,7 +53,7 @@ public static class Example40_DIContainer
 
             var result = await this._kernel.InvokeAsync(summarizePlugin["Summarize"], new() { ["input"] = ask });
 
-            this._logger.LogWarning("Result - {0}", result.GetValue<string>());
+            this._logger.LogWarning("Result - {Result}", result.GetValue<string>());
         }
     }
 }

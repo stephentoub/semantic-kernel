@@ -78,7 +78,7 @@ internal sealed class VarBlock : Block, ITextRendering
             return value;
         }
 
-        this.Logger.LogWarning("Variable `{0}{1}` not found", Symbols.VarPrefix, this.Name);
+        this.Logger.LogWarning("Variable `{Prefix}{Name}` not found", Symbols.VarPrefix, this.Name);
 
         return null;
     }

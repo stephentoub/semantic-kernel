@@ -26,9 +26,6 @@ public class KernelFunctionMarkdownTests
     [Fact]
     public void ItShouldCreatePromptFunctionFromMarkdown()
     {
-        // Arrange
-        var kernel = new Kernel();
-
         // Act
         var function = KernelFunctionMarkdown.CreateFromPromptMarkdown(this._markdown, "TellMeAbout");
 

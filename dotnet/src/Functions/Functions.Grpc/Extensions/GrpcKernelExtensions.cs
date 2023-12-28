@@ -103,7 +103,7 @@ public static class GrpcKernelExtensions
         if (kernel.LoggerFactory.CreateLogger(typeof(GrpcKernelExtensions)) is ILogger logger &&
             logger.IsEnabled(LogLevel.Trace))
         {
-            logger.LogTrace("Registering gRPC functions from {0} .proto document", filePath);
+            logger.LogTrace("Registering gRPC functions from {Path} .proto document", filePath);
         }
 
         using var stream = File.OpenRead(filePath);
@@ -131,7 +131,7 @@ public static class GrpcKernelExtensions
         if (kernel.LoggerFactory.CreateLogger(typeof(GrpcKernelExtensions)) is ILogger logger &&
             logger.IsEnabled(LogLevel.Trace))
         {
-            logger.LogTrace("Registering gRPC functions from {0} .proto document", filePath);
+            logger.LogTrace("Registering gRPC functions from {Path} .proto document", filePath);
         }
 
         using var stream = File.OpenRead(filePath);
@@ -155,9 +155,7 @@ public static class GrpcKernelExtensions
         Verify.ValidPluginName(pluginName, kernel.Plugins);
 
         // Parse
-        var parser = new ProtoDocumentParser();
-
-        var operations = parser.Parse(documentStream, pluginName);
+        var operations = ProtoDocumentParser.Parse(documentStream, pluginName);
 
         var functions = new List<KernelFunction>();
 
@@ -172,13 +170,13 @@ public static class GrpcKernelExtensions
         {
             try
             {
-                logger.LogTrace("Registering gRPC function {0}.{1}", pluginName, operation.Name);
+                logger.LogTrace("Registering gRPC function {PluginName}.{FunctionName}", pluginName, operation.Name);
                 functions.Add(CreateGrpcFunction(runner, operation, loggerFactory));
             }
             catch (Exception ex) when (!ex.IsCriticalException())
             {
                 //Logging the exception and keep registering other gRPC functions
-                logger.LogWarning(ex, "Something went wrong while rendering the gRPC function. Function: {0}.{1}. Error: {2}",
+                logger.LogWarning(ex, "Something went wrong while rendering the gRPC function. Function: {PluginName}.{FunctionName}. Error: {Error}",
                     pluginName, operation.Name, ex.Message);
             }
         }
@@ -210,7 +208,7 @@ public static class GrpcKernelExtensions
             }
             catch (Exception ex) when (!ex.IsCriticalException() && loggerFactory.CreateLogger(typeof(GrpcKernelExtensions)) is ILogger logger && logger.IsEnabled(LogLevel.Warning))
             {
-                logger.LogWarning(ex, "Something went wrong while rendering the gRPC function. Function: {0}. Error: {1}", operation.Name, ex.Message);
+                logger.LogWarning(ex, "Something went wrong while rendering the gRPC function. Function: {FunctionName}. Error: {Error}", operation.Name, ex.Message);
                 throw;
             }
         }

@@ -289,7 +289,7 @@ public sealed class QdrantVectorDbClient : IQdrantVectorDbClient
         IEnumerable<string>? requiredTags = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Searching top {0} nearest vectors", top);
+        this._logger.LogDebug("Searching top {Top} nearest vectors", top);
 
         Verify.NotNull(target, "The given vector is NULL");
 
@@ -352,7 +352,7 @@ public sealed class QdrantVectorDbClient : IQdrantVectorDbClient
     /// <inheritdoc/>
     public async Task CreateCollectionAsync(string collectionName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Creating collection {0}", collectionName);
+        this._logger.LogDebug("Creating collection {CollectionName}", collectionName);
 
         using var request = CreateCollectionRequest
             .Create(collectionName, this._vectorSize, QdrantDistanceType.Cosine)
@@ -383,7 +383,7 @@ public sealed class QdrantVectorDbClient : IQdrantVectorDbClient
     /// <inheritdoc/>
     public async Task DeleteCollectionAsync(string collectionName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Deleting collection {0}", collectionName);
+        this._logger.LogDebug("Deleting collection {CollectionName}", collectionName);
 
         using var request = DeleteCollectionRequest.Create(collectionName).Build();
 
@@ -405,7 +405,7 @@ public sealed class QdrantVectorDbClient : IQdrantVectorDbClient
     /// <inheritdoc/>
     public async Task<bool> DoesCollectionExistAsync(string collectionName, CancellationToken cancellationToken = default)
     {
-        this._logger.LogDebug("Fetching collection {0}", collectionName);
+        this._logger.LogDebug("Fetching collection {CollectionName}", collectionName);
 
         using var request = GetCollectionsRequest.Create(collectionName).Build();
 
@@ -432,7 +432,7 @@ public sealed class QdrantVectorDbClient : IQdrantVectorDbClient
     {
         this._logger.LogDebug("Listing collections");
 
-        using var request = ListCollectionsRequest.Create().Build();
+        using var request = ListCollectionsRequest.Build();
 
         string? responseContent = null;
 
@@ -483,7 +483,7 @@ public sealed class QdrantVectorDbClient : IQdrantVectorDbClient
 
         HttpResponseMessage response = await this._httpClient.SendWithSuccessCheckAsync(request, cancellationToken).ConfigureAwait(false);
 
-        string responseContent = await response.Content.ReadAsStringWithExceptionMappingAsync().ConfigureAwait(false);
+        string responseContent = await response.Content.ReadAsStringWithExceptionMappingAsync(cancellationToken).ConfigureAwait(false);
 
         return (response, responseContent);
     }

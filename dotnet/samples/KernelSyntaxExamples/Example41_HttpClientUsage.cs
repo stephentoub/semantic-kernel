@@ -29,7 +29,7 @@ public static class Example41_HttpClientUsage
     /// </summary>
     private static void UseDefaultHttpClient()
     {
-        var kernel = Kernel.CreateBuilder()
+        _ = Kernel.CreateBuilder()
             .AddOpenAIChatCompletion(
                 modelId: TestConfiguration.OpenAI.ChatModelId,
                 apiKey: TestConfiguration.OpenAI.ApiKey) // If you need to use the default HttpClient from the SK SDK, simply omit the argument for the httpMessageInvoker parameter.

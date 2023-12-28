@@ -65,7 +65,6 @@ public static class FunctionResultExtensions
     /// </summary>
     /// <param name="result">Function result.</param>
     /// <param name="flow">flow</param>
-    /// <returns></returns>
     public static bool IsComplete(this FunctionResult result, Flow flow)
     {
         return flow.Provides.All(result.Metadata!.ContainsKey);

@@ -52,7 +52,7 @@ public class WeaviateMemoryStore : IMemoryStore
 
     private readonly HttpClient _httpClient;
     private readonly ILogger _logger;
-    private readonly Uri? _endpoint = null;
+    private readonly Uri? _endpoint;
     private readonly string? _apiVersion;
     private readonly string? _apiKey;
     private static readonly string[] s_stringArray = { "vector" };
@@ -116,7 +116,7 @@ public class WeaviateMemoryStore : IMemoryStore
         string className = ToWeaviateFriendlyClassName(collectionName);
         string description = ToWeaviateFriendlyClassDescription(collectionName);
 
-        this._logger.LogDebug("Creating collection: {0}, with class name: {1}", collectionName, className);
+        this._logger.LogDebug("Creating collection: {CollectionName}, with class name: {ClassName}", collectionName, className);
 
         using HttpRequestMessage request = CreateClassSchemaRequest.Create(className, description).Build();
 
@@ -131,7 +131,7 @@ public class WeaviateMemoryStore : IMemoryStore
                 throw new KernelException($"Name conflict for collection: {collectionName} with class name: {className}");
             }
 
-            this._logger.LogDebug("Created collection: {0}, with class name: {1}", collectionName, className);
+            this._logger.LogDebug("Created collection: {CollectionName}, with class name: {ClassName}", collectionName, className);
         }
         catch (HttpOperationException e)
         {
@@ -186,7 +186,7 @@ public class WeaviateMemoryStore : IMemoryStore
     {
         this._logger.LogDebug("Listing collections");
 
-        using HttpRequestMessage request = GetSchemaRequest.Create().Build();
+        using HttpRequestMessage request = GetSchemaRequest.Build();
 
         string responseContent;
 
@@ -219,7 +219,7 @@ public class WeaviateMemoryStore : IMemoryStore
 
         string className = ToWeaviateFriendlyClassName(collectionName);
 
-        this._logger.LogDebug("Deleting collection: {0}, with class name: {1}", collectionName, className);
+        this._logger.LogDebug("Deleting collection: {CollectionName}, with class name: {ClassName}", collectionName, className);
 
         if (await this.DoesCollectionExistAsync(collectionName, cancellationToken).ConfigureAwait(false))
         {
@@ -330,7 +330,7 @@ public class WeaviateMemoryStore : IMemoryStore
             embedding: weaviateObject.Vector,
             metadata: ToMetadata(weaviateObject));
 
-        this._logger.LogDebug("Vector found with key: {0}", key);
+        this._logger.LogDebug("Vector found with key: {Key}", key);
 
         return record;
     }
@@ -348,7 +348,7 @@ public class WeaviateMemoryStore : IMemoryStore
             }
             else
             {
-                this._logger.LogWarning("Unable to locate object with id: {0}", key);
+                this._logger.LogWarning("Unable to locate object with id: {Key}", key);
             }
         }
     }
@@ -361,7 +361,7 @@ public class WeaviateMemoryStore : IMemoryStore
 
         string className = ToWeaviateFriendlyClassName(collectionName);
 
-        this._logger.LogDebug("Deleting vector with key: {0}, from collection {1}, with class name: {2}:", key, collectionName, className);
+        this._logger.LogDebug("Deleting vector with key: {Key}, from collection {CollectionName}, with class name: {ClassName}:", key, collectionName, className);
 
         DeleteObjectRequest requestBuilder = new()
         {
@@ -522,7 +522,7 @@ public class WeaviateMemoryStore : IMemoryStore
     // Execute the HTTP request
     private async Task<(HttpResponseMessage response, string responseContent)> ExecuteHttpRequestAsync(
         HttpRequestMessage request,
-        CancellationToken cancel = default)
+        CancellationToken cancellationToken = default)
     {
         var apiVersion = !string.IsNullOrWhiteSpace(this._apiVersion) ? this._apiVersion : DefaultApiVersion;
         var baseAddress = this._endpoint ?? this._httpClient.BaseAddress;
@@ -536,9 +536,9 @@ public class WeaviateMemoryStore : IMemoryStore
 
         try
         {
-            HttpResponseMessage response = await this._httpClient.SendWithSuccessCheckAsync(request, cancel).ConfigureAwait(false);
+            HttpResponseMessage response = await this._httpClient.SendWithSuccessCheckAsync(request, cancellationToken).ConfigureAwait(false);
 
-            string? responseContent = await response.Content.ReadAsStringWithExceptionMappingAsync().ConfigureAwait(false);
+            string? responseContent = await response.Content.ReadAsStringWithExceptionMappingAsync(cancellationToken).ConfigureAwait(false);
 
             this._logger.LogDebug("Weaviate responded with {StatusCode}", response.StatusCode);
 

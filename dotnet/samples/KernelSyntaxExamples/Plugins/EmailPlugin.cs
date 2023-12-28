@@ -21,7 +21,7 @@ internal sealed class EmailPlugin
         ILogger? logger = null)
     {
         // Sensitive data, logging as trace, disabled by default
-        logger?.LogTrace("Returning hard coded email for {0}", input);
+        logger?.LogTrace("Returning hard coded email for {Input}", input);
 
         return input switch
         {

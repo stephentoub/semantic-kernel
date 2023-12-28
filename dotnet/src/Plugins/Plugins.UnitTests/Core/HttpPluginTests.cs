@@ -28,7 +28,7 @@ public class HttpPluginTests : IDisposable
     public void ItCanBeInstantiated()
     {
         // Act - Assert no exception occurs
-        var plugin = new HttpPlugin();
+        _ = new HttpPlugin();
     }
 
     [Fact]

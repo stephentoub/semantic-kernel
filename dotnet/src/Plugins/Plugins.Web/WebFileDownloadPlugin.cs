@@ -62,15 +62,15 @@ public sealed class WebFileDownloadPlugin
     {
         this._logger.LogDebug($"{nameof(this.DownloadToFileAsync)} got called");
 
-        this._logger.LogDebug("Sending GET request for {0}", url);
+        this._logger.LogDebug("Sending GET request for {Url}", url);
 
         using HttpRequestMessage request = new(HttpMethod.Get, url);
 
         using HttpResponseMessage response = await this._httpClient.SendWithSuccessCheckAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
-        this._logger.LogDebug("Response received: {0}", response.StatusCode);
+        this._logger.LogDebug("Response received: {StatusCode}", response.StatusCode);
 
-        using Stream webStream = await response.Content.ReadAsStreamAndTranslateExceptionAsync().ConfigureAwait(false);
+        using Stream webStream = await response.Content.ReadAsStreamAndTranslateExceptionAsync(cancellationToken).ConfigureAwait(false);
         using FileStream outputFileStream = new(Environment.ExpandEnvironmentVariables(filePath), FileMode.Create);
 
         await webStream.CopyToAsync(outputFileStream, 81920 /*same value used by default*/, cancellationToken).ConfigureAwait(false);

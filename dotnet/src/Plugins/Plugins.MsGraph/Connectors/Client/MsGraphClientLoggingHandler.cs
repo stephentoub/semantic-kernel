@@ -75,7 +75,7 @@ public class MsGraphClientLoggingHandler : DelegatingHandler
                 }
             }
 
-            this._logger.LogDebug("{0}", message);
+            this._logger.LogDebug("{Message}", message);
         }
     }
 }

@@ -15,7 +15,6 @@ public class ChatHistoryTests
     public void ItCanBeSerialised()
     {
         // Arrange
-        var options = new JsonSerializerOptions();
         var chatHistory = new ChatHistory();
         chatHistory.AddMessage(AuthorRole.User, "Hello");
         chatHistory.AddMessage(AuthorRole.Assistant, "Hi");

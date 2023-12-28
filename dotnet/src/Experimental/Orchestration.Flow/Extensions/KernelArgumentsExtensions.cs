@@ -47,7 +47,6 @@ public static class KernelArgumentsExtensions
     /// </summary>
     /// <param name="arguments">Context arguments.</param>
     /// <param name="flow">flow</param>
-    /// <returns></returns>
     public static bool IsComplete(this KernelArguments arguments, Flow flow)
     {
         return flow.Provides.All(arguments.ContainsName);

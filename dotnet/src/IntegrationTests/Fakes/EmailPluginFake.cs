@@ -27,11 +27,11 @@ internal sealed class EmailPluginFake
     {
         if (string.IsNullOrEmpty(input))
         {
-            logger.LogTrace("Returning hard coded email for {0}", input);
+            logger.LogTrace("Returning hard coded email for {Input}", input);
             return Task.FromResult("johndoe1234@example.com");
         }
 
-        logger.LogTrace("Returning dynamic email for {0}", input);
+        logger.LogTrace("Returning dynamic email for {Input}", input);
         return Task.FromResult($"{input}@example.com");
     }
 

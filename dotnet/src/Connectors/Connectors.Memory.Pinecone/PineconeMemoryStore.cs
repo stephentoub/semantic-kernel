@@ -248,7 +248,7 @@ public class PineconeMemoryStore : IPineconeMemoryStore
                                withEmbedding,
                                cancellationToken))
             {
-                return record?.ToMemoryRecord(transferVectorOwnership: true);
+                return record?.ToMemoryRecord();
             }
         }
         catch (HttpOperationException ex)
@@ -305,7 +305,6 @@ public class PineconeMemoryStore : IPineconeMemoryStore
     /// <param name="indexNamespace"> The namespace associated with the Pinecone vector record to get.</param>
     /// <param name="withEmbedding">If true, the embedding will be returned in the memory record.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns></returns>
     /// <exception cref="KernelException"></exception>
     public async IAsyncEnumerable<MemoryRecord?> GetWithDocumentIdAsync(string indexName,
         string documentId,
@@ -329,7 +328,6 @@ public class PineconeMemoryStore : IPineconeMemoryStore
     /// <param name="indexNamespace"> The namespace associated with the Pinecone vector records to get.</param>
     /// <param name="withEmbeddings">If true, the embeddings will be returned in the memory records.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns></returns>
     public async IAsyncEnumerable<MemoryRecord?> GetWithDocumentIdBatchAsync(string indexName,
         IEnumerable<string> documentIds,
         int limit = 3,
@@ -379,7 +377,7 @@ public class PineconeMemoryStore : IPineconeMemoryStore
 
         foreach (PineconeDocument? record in vectorDataList)
         {
-            yield return record?.ToMemoryRecord(transferVectorOwnership: true);
+            yield return record?.ToMemoryRecord();
         }
     }
 
@@ -456,7 +454,6 @@ public class PineconeMemoryStore : IPineconeMemoryStore
     /// <param name="documentId">The unique indexed ID associated with the Pinecone vector record to remove.</param>
     /// <param name="indexNamespace">The name associated with a collection of embeddings.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns></returns>
     /// <exception cref="KernelException"></exception>
     public async Task RemoveWithDocumentIdAsync(string indexName, string documentId, string indexNamespace, CancellationToken cancellationToken = default)
     {
@@ -481,7 +478,6 @@ public class PineconeMemoryStore : IPineconeMemoryStore
     /// <param name="documentIds">The unique indexed IDs associated with the Pinecone vector records to remove.</param>
     /// <param name="indexNamespace">The name associated with a collection of embeddings.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns></returns>
     /// <exception cref="KernelException"></exception>
     public async Task RemoveWithDocumentIdBatchAsync(
         string indexName,
@@ -552,7 +548,7 @@ public class PineconeMemoryStore : IPineconeMemoryStore
 
         await foreach ((PineconeDocument, double) result in results.WithCancellation(cancellationToken))
         {
-            yield return (result.Item1.ToMemoryRecord(transferVectorOwnership: true), result.Item2);
+            yield return (result.Item1.ToMemoryRecord(), result.Item2);
         }
     }
 
@@ -625,7 +621,7 @@ public class PineconeMemoryStore : IPineconeMemoryStore
 
         await foreach ((PineconeDocument, double) result in results.WithCancellation(cancellationToken))
         {
-            yield return (result.Item1.ToMemoryRecord(transferVectorOwnership: true), result.Item2);
+            yield return (result.Item1.ToMemoryRecord(), result.Item2);
         }
     }
 
