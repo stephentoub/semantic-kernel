@@ -122,14 +122,15 @@ public abstract class AgentActor : OrchestrationActor
 
     private async Task InvokeAsync(IList<ChatMessageContent> input, AgentInvokeOptions options, CancellationToken cancellationToken)
     {
-        AgentResponseItem<ChatMessageContent>? lastResponse =
-            await this.Agent.InvokeAsync(
-                input,
-                this.Thread,
-                options,
-                cancellationToken).LastOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        await foreach (var item in this.Agent.InvokeAsync(input, this.Thread, options, cancellationToken).ConfigureAwait(false))
+        {
+            if (this.Thread is null)
+            {
+                break;
+            }
 
-        this.Thread ??= lastResponse?.Thread;
+            this.Thread = item.Thread;
+        }
     }
 
     private async Task InvokeStreamingAsync(IList<ChatMessageContent> input, AgentInvokeOptions options, CancellationToken cancellationToken)

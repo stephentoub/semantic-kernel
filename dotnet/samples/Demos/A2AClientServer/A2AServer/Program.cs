@@ -6,7 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents.A2A;
-using SharpA2A.AspNetCore;
+using A2A.AspNetCore;
 
 string agentId = string.Empty;
 string agentType = string.Empty;

@@ -2,7 +2,8 @@
 
 using System;
 using System.Net.Http;
-using SharpA2A.Core;
+using System.Threading.Tasks;
+using A2A;
 
 namespace SemanticKernel.Agents.UnitTests.A2A;
 public class BaseA2AClientTest : IDisposable
@@ -14,11 +15,8 @@ public class BaseA2AClientTest : IDisposable
     internal BaseA2AClientTest()
     {
         this.MessageHandlerStub = new MultipleHttpMessageHandlerStub();
-        this.HttpClient = new HttpClient(this.MessageHandlerStub, disposeHandler: false)
-        {
-            BaseAddress = new Uri("http://127.0.0.1/")
-        };
-        this.Client = new A2AClient(this.HttpClient);
+        this.HttpClient = new HttpClient(this.MessageHandlerStub, disposeHandler: false);
+        this.Client = new A2AClient(new Uri("http://127.0.0.1/"), this.HttpClient);
     }
 
     /// <inheritdoc />
@@ -30,7 +28,7 @@ public class BaseA2AClientTest : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    protected AgentCard CreateAgentCard()
+    protected Task<AgentCard> CreateAgentCardAsync()
     {
         var capabilities = new AgentCapabilities()
         {
@@ -50,7 +48,7 @@ public class BaseA2AClientTest : IDisposable
             ],
         };
 
-        return new AgentCard()
+        return Task.FromResult(new AgentCard()
         {
             Name = "InvoiceAgent",
             Description = "Handles requests relating to invoices.",
@@ -60,6 +58,6 @@ public class BaseA2AClientTest : IDisposable
             DefaultOutputModes = ["text"],
             Capabilities = capabilities,
             Skills = [invoiceQuery],
-        };
+        });
     }
 }
